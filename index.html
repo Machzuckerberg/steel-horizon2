@@ -783,6 +783,7 @@ const Sfx = {
       this.engine = { smp: true, src, g, tsrc, tg };
       return;
     }
+    return;
     const src = c.createBufferSource(); src.buffer = this.noise; src.loop = true;
     const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 180; f.Q.value = 2;
     const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 32;
@@ -2558,7 +2559,7 @@ class GameMap {
         vis -= near ? 0.3 : 0.1; if (vis <= 0.05) return 0;
       }
     }
-    if (smokes) for (const s of smokes) { if (s.life < 0.8) continue; if (segCircle(ax, ay, dx, dy, L, s.x, s.y, s.r * 0.8) >= 0) return 0; }
+    if (smokes) for (const s of smokes) { if (s.life < 0.12) continue; if (segCircle(ax, ay, dx, dy, L, s.x, s.y, s.r * 0.8) >= 0) return 0; }
     return vis;
   }
 
@@ -4134,9 +4135,9 @@ const MAP_THEMES = {
           if (R() < 0.5) { x += 30 + R() * 50; continue; }
           const n = 2 + Math.floor(R() * 3), derail = R() < 0.25;
           for (let k = 0; k < n && x < W - 30; k++) {
-            const L = 11 + R() * 3, cx = x + L / 2, a = derail ? (R() - 0.5) * 0.7 : 0, cy = ty + (derail ? (R() - 0.5) * 3 : 0);
+            const loco = k === 0 && R() < 0.55, L = loco ? 19 : 12 + R() * 3, cx = x + L / 2, a = derail ? (R() - 0.5) * 0.7 : 0, cy = ty + (derail ? (R() - 0.5) * 3 : 0);
             if (!m.inClear(cx, cy, 8) && !m.points.some(p => dist(cx, cy, p.x, p.y) < p.r + 10) && !m.collidesStatic(cx, cy, 2))
-              m.walls.push({ kind: 'railcar', x: cx, y: cy, a, hx: L / 2, hy: 1.5, hp: 9999, tall: true, car: pick2(R, ['box', 'box', 'box', 'tank', 'gondola', 'flat']), burnt: R() < 0.4, seed: Math.floor(R() * 1e6) });
+              m.walls.push({ kind: 'railcar', x: cx, y: cy, a, hx: L / 2, hy: 1.5, hp: 9999, tall: true, car: loco ? 'loco' : pick2(R, ['box', 'box', 'box', 'tank', 'tank', 'gondola', 'flat']), burnt: R() < 0.3, seed: Math.floor(R() * 1e6) });
             x += L + 1.1;
           }
           x += 34 + R() * 60;
@@ -6057,7 +6058,7 @@ class AI {
     for (const e of B.vehicles) {
       if (!e.alive || e.team === team || !e.seenBy[team]) continue;
       const d = dist(v.x, v.y, e.x, e.y); if (d > maxR) continue;
-      if (B.map.los(tx, ty, e.x, e.y, B.smokes) < 0.3) continue;
+      if (B.map.los(tx, ty, e.x, e.y, B.smokesFor(this.v.team)) < 0.3) continue;
       let s = d;
       if (e === this.threat) s -= 350;
       if (e === this.focus) s -= 900; // ordered to focus this one
@@ -6223,7 +6224,7 @@ class AI {
       if (B.vehicles.some(q => q !== v && q.alive && dist(q.x, q.y, x, y) < 7)) continue;
       const tx = x + Math.cos(v.ang) * v.def.tx, ty = y + Math.sin(v.ang) * v.def.tx;
       if (!this.shotClear(tx, ty, e.x, e.y, 'hull', e) && !(e.def.turret && this.shotClear(tx, ty, ...e.turretPos(), 'turret', e))) continue;
-      if (B.map.los(tx, ty, e.x, e.y, B.smokes) < 0.3) continue;
+      if (B.map.los(tx, ty, e.x, e.y, B.smokesFor(this.v.team)) < 0.3) continue;
       this.detour = { x, y, t: B.time + 7 }; this.path = null; return true;
     }
     // nothing nearby: close in along the bearing
@@ -6293,7 +6294,7 @@ class AI {
   // is this spot hidden from (tx,ty)? buildings, rocks, walls, wrecks, dense woods or sitting in a pit all count
   coverFrom(tx, ty, x = this.v.x, y = this.v.y) {
     const m = B.map; if (m.hullDown(x, y) || m.heavyWoods(x, y)) return true;
-    if (m.los(tx, ty, x, y, B.smokes) < 0.3) return true;
+    if (m.los(tx, ty, x, y, B.smokesFor(1 - this.v.team)) < 0.3) return true;
     const L = dist(tx, ty, x, y), dx = (x - tx) / L, dy = (y - ty) / L, Lc = L - 4, tmp = this._ct || (this._ct = []);
     for (const w of m.segObjects(tx, ty, x, y, 'w', tmp)) { if (w.kind === 'log') continue; const h = rayOBB(tx, ty, dx, dy, Lc, w.x, w.y, w.a, w.hx, w.hy); if (h && !h.inside) return true; }
     for (const k of m.segObjects(tx, ty, x, y, 'k', tmp)) if (segCircle(tx, ty, dx, dy, Lc, k.x, k.y, k.r * 0.85) >= 0) return true;
@@ -6824,7 +6825,7 @@ class Battle {
           e.seenBy[team] = seen; if (seen) { e.lastSeen = e.lastSeen || [0, 0]; e.lastSeen[team] = this.time; }
           // not "spotted" (no tag, no minimap, AI won't target it) — but a sharp-eyed player can still make out the hull under the trees
           e.woodsVis = e.woodsVis || [false, false];
-          e.woodsVis[team] = !seen && this.vehicles.some(a => a.alive && a.team === team && dist(a.x, a.y, e.x, e.y) < 750 && map.los(a.x, a.y, e.x, e.y, this.smokes, true) > 0.1);
+          e.woodsVis[team] = !seen && this.vehicles.some(a => a.alive && a.team === team && dist(a.x, a.y, e.x, e.y) < 750 && map.los(a.x, a.y, e.x, e.y, this.smokesFor(team), true) > 0.1);
           continue;
         }
         for (const a of this.vehicles) {
@@ -6835,17 +6836,17 @@ class Battle {
           if (a.human != null && a.ctrl.sight && Math.abs(angDiff(a.turretWorldAng ? a.turretWorldAng() : a.ang, Math.atan2(e.y - a.y, e.x - a.x))) < 0.2) range = Math.max(range, 2200);
           if (conceal < Infinity && e.revealT <= 0) range = Math.min(range, conceal);
           if (e.revealT > 0) range *= 1.4;
-          if (inSmoke) range = Math.min(range, 25);
-          if (d < 150 && !inSmoke) { seen = true; break; } // nothing sneaks up unseen at close range
+          if (this.inSmokeFor(e, team)) range = Math.min(range, 25);
+          if (d < 150 && !this.inSmokeFor(e, team) && !this.smokeCut(a, e, team)) { seen = true; break; } // nothing sneaks up unseen at close range
           if (d > range) continue;
-          if (map.los(a.x, a.y, e.x, e.y, this.smokes) > 0.12) { seen = true; break; }
+          if (map.los(a.x, a.y, e.x, e.y, this.smokesFor(team)) > 0.12) { seen = true; break; }
         }
         // once spotted, a target stays tracked while anyone on the team still has a line of sight to it
         // (spotting range / forest limits only apply to the first detection) — no popping out mid-fight
-        if (!seen && e.seenBy[team]) seen = this.vehicles.some(a => a.alive && a.team === team && dist(a.x, a.y, e.x, e.y) < 1300 && map.los(a.x, a.y, e.x, e.y, this.smokes) > 0.08);
+        if (!seen && e.seenBy[team]) seen = this.vehicles.some(a => a.alive && a.team === team && dist(a.x, a.y, e.x, e.y) < 1300 && map.los(a.x, a.y, e.x, e.y, this.smokesFor(team)) > 0.08);
         if (!seen && e.exposeT && this.time < e.exposeT[team]) seen = true;
         // a gun firing within ~900 m gives itself away (flash, dust, sound) even from cover
-        if (!seen && e.flashT > 0) seen = this.vehicles.some(a => a.alive && a.team === team && dist(a.x, a.y, e.x, e.y) < 900);
+        if (!seen && e.flashT > 0) seen = this.vehicles.some(a => a.alive && a.team === team && dist(a.x, a.y, e.x, e.y) < 900 && !this.smokeCut(a, e, team));
         // keep a contact on screen briefly after line of sight breaks, instead of popping out
         e.seenLinger = e.seenLinger || [0, 0];
         if (seen) e.seenLinger[team] = this.time + 3;
@@ -8678,7 +8679,7 @@ Object.assign(Battle.prototype, {
   },
   fxSplinters(x, y) { for (let i = 0; i < 6; i++) { const a = rnd(TAU), s = rnd(3, 8); FX.add('debris', x, y, { vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: rnd(2, 6), r: 0.25, life: 1.6, col: '#5b4026', vr: rnd(-9, 9), hi: false }); } },
   addSmoke(x, y, r, dur, delay = 0) {
-    this.smokes.push({ x, y, r: r * 0.3, rmax: r, life: 1, dur, seed: Math.random() * 100 });
+    this.smokes.push({ x, y, r: r * 0.3, rmax: r, life: 1, dur, seed: Math.random() * 100, team: this._smokeTeam });
     for (let i = 0; i < 10; i++) { const a = rnd(TAU), s = rnd(2, 6); FX.add('white', x, y, { vx: Math.cos(a) * s, vy: Math.sin(a) * s, r: rnd(2, 4), gr: 2, life: rnd(4, 7), a: 0.7, wind: 0.6, drag: 0.3 }); }
   },
   trackDecal(v) {
@@ -10222,7 +10223,7 @@ const Tank3D = {
       // Japanese tanks: big exhaust muffler on the rear (Ha-Go one on the left, Chi-Ha one each side)
       if (G.muffler) for (const sy of G.hoop ? [-1, 1] : [-1]) cyl('hull', [-Li - 0.18, sy * inner * 0.62 - (G.hoop ? 0.18 : 0.42), zD(-Li + 0.2) * 0.78], 'y', G.hoop ? 0.36 : 0.84, 0.2, C([0.36, 0.26, 0.2]), 10, 0, 0.2, true, C([0.25, 0.18, 0.14]));
       // bow machine gun poking out of the front plate
-      if (G.hullMG) { const x = Li - glIn * 0.4, y = -inner * 0.35, z = zOnGlacis(x) - 0.08; box('hull', x - 0.1, x + 0.06, y - 0.1, y + 0.1, z - 0.08, z + 0.1, C(hcol, 0.75)); cyl('hull', [x + 0.05, y, z], 'x', 0.55, 0.035, C(DARK, 1.2), 6); }
+      if (G.hullMG) { const x = Li - glIn * 0.4, y = -inner * 0.35, z = zOnGlacis(x) - 0.08; this._bow = [x + 0.5, y, z]; box('hull', x - 0.1, x + 0.06, y - 0.1, y + 0.1, z - 0.08, z + 0.1, C(hcol, 0.75)); cyl('hull', [x + 0.05, y, z], 'x', 0.55, 0.035, C(DARK, 1.2), 6); }
       // Tiger II: tall exhaust stacks on the rear plate
       if (G.stacks) for (const sy of [-1, 1]) cyl('hull', [-Li + 0.12, sy * inner * 0.42, H * 0.6], 'z', H * 0.62, 0.11, C([0.26, 0.2, 0.17]), 8, 0, 0.1, true, C([0.05, 0.04, 0.04]));
       if (G.jerry) for (let k = 0; k < 3; k++) box('hull', -Li + 0.25 + k * 0.32, -Li + 0.53 + k * 0.32, inner - 0.05, inner + 0.12, H, H + 0.42, C([0.3, 0.32, 0.24]));
@@ -10514,7 +10515,10 @@ const Tank3D = {
       for (const gy of [-0.28, 0.28]) cyl('mini', [0.6, gy, 0.9], 'x', 2.2, 0.07, C(DARK, 1.2), 6, 0, 0.06, true, C([0.03, 0.03, 0.03]));
       box('mini', -0.5, 0.1, -0.5, 0.5, 1.25, 1.4, C(DARK, 1.4));
     }
-    const M = { H: U && d.tx >= ux0 + (U.rs || 0) && d.tx <= ux1 - (U.fs || 0) ? Htop : H, buf: {}, tur, col: hcol, tcol };
+    let coax = null;
+    if (d.turret && groups.tur.length && !(MG_SPECS[d.id] && MG_SPECS[d.id].mount === 'hull')) { let gx = 1e9, zs = 0, n = 0; const tt = groups.tur; for (let i = 0; i < tt.length; i += 13) if (tt[i + 12] > 1.5) { gx = Math.min(gx, tt[i]); zs += tt[i + 2]; n++; } if (n) { const hs = [...d.id].reduce((a, ch) => a + ch.charCodeAt(0), 0), sd = hs % 5 === 0 ? -1 : 1, y = sd * clamp(d.cal / 1000 * 1.9 + 0.13, 0.2, d.tw * 0.6), z = zs / n + (hs % 3 - 1) * 0.03; cyl('tur', [gx - 0.1, y, z], 'x', 0.62, 0.042, C(DARK, 1.1), 6, 2, 0.036, true, C([0.02, 0.02, 0.02])); coax = [gx + 0.52, y, z]; } }
+    const bow = this._bow; this._bow = null;
+    const M = { coax, bow, H: U && d.tx >= ux0 + (U.rs || 0) && d.tx <= ux1 - (U.fs || 0) ? Htop : H, buf: {}, tur, col: hcol, tcol };
     for (const [k, arr] of Object.entries(groups)) { if (!arr.length) continue; const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr), gl.STATIC_DRAW); M.buf[k] = { b, n: arr.length / this.STRIDE }; }
     { let gx = 1e9, zs = 0, n = 0; const tt = groups.tur; for (let i = 0; i < tt.length; i += 13) if (tt[i + 12] > 1.5) { gx = Math.min(gx, tt[i]); zs += tt[i + 2]; n++; } M.gunX = n ? gx : 0; M.gunZ = n ? zs / n : 0.4; }
     { const thin = (t, i) => { const e = [0, 3, 6].map(o => [t[i + o], t[i + o + 1], t[i + o + 2]]), L = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]); return Math.min(L(e[0], e[1]), L(e[1], e[2]), L(e[2], e[0])) < 0.012; }, ext = (A, skipGun, out) => { for (let i = 0; i + 39 <= A.length; i += 39) { if (skipGun && A[i + 12] > 1.5) continue; const t = [A[i], A[i + 1], A[i + 2], A[i + 13], A[i + 14], A[i + 15], A[i + 26], A[i + 27], A[i + 28]]; if (!thin(t, 0)) out.push(...t); } }, h = [], u = []; ext(groups.track, false, h); const nT = h.length / 9; ext(groups.hull, false, h); ext(groups.tur, true, u); M.geo = { hull: new Float32Array(h), tur: new Float32Array(u), nTrack: nT }; }
@@ -12235,7 +12239,13 @@ const W3 = {
         float mod_ = mix(1.0, (1.0 - amp * 0.5) + amp * dv, vis * (c > 3.5 && c < 4.5 ? 0.0 : 1.0));
         if (c < 0.5 || (c > 2.5 && c < 3.5)) alb *= mix(vec3(0.92, 0.95, 0.85), vec3(1.05, 1.1, 0.9), d0);
         alb *= 0.9 + 0.2 * texture(uDA, W * 0.008).g;
+        vec3 Nf = normalize(cross(dFdx(vW), dFdy(vW))); if (Nf.z < 0.0) Nf = -Nf; float st = smoothstep(0.86, 0.55, Nf.z);
         float s = shade(vW, 0.0012), light = L.r * 2.0, ao = mix(1.0, L.g, 0.7);
+        if (st > 0.0) { // cut faces (trench walls, crater sides): earth lit by the real slope, not the map paint stretched down the wall
+          vec2 wu = vec2(W.x + W.y, vW.z * 1.7); float e1 = texture(uDA, wu * 0.16).g, e2 = texture(uDA, wu * 0.47).r;
+          vec3 base = textureLod(uAlb, W / uTex, 4.0).rgb * vec3(0.8, 0.72, 0.62); alb = mix(alb, base * (0.6 + 0.75 * e1) * (0.72 + 0.56 * e2), st); mod_ = mix(mod_, 1.0, st);
+          light = mix(light, 0.62 + 0.85 * max(dot(Nf, uSun), 0.0) / uSun.z, st); ao *= 1.0 - st * 0.08;
+        }
         vec3 col = alb * mod_ * (uAmb * 0.62 + uSunC * 0.72 * light * s) * ao * (1.0 + bump * vis) * 1.08;
         // capture zones: a painted ring on the ground in the owner's colour
         for (int i = 0; i < uNP; i++) { float dd = length(W - uPts[i].xy), r = uPts[i].z; float ring = smoothstep(1.3, 0.2, abs(dd - r)), fill = (dd < r ? 0.05 : 0.0), dash = step(0.36, fract(atan(W.y - uPts[i].y, W.x - uPts[i].x) * 7.6)); col = mix(col, uPtC[i], ring * 0.82 * dash + fill); }
@@ -12244,11 +12254,12 @@ const W3 = {
     // ---------------------------------------------------- static objects: buildings, walls, rocks, far land
     const OVS = `layout(location=0) in vec3 aP; layout(location=1) in vec3 aN; layout(location=2) in vec3 aC; layout(location=3) in vec2 aU; layout(location=4) in float aM; uniform mat4 uVP; out vec3 vW, vN, vC; out vec2 vU; flat out float vM;
       void main(){ vW = aP; vN = aN; vC = aC; vU = aU; vM = aM; gl_Position = uVP * vec4(aP, 1.0); }`;
-    this.P.obj = this.prog(OVS, `in vec3 vW, vN, vC; in vec2 vU; flat in float vM; out vec4 o; uniform sampler2D uRoof, uDA; ${SH_COMMON}
+    this.P.obj = this.prog(OVS, `in vec3 vW, vN, vC; in vec2 vU; flat in float vM; out vec4 o; uniform sampler2D uRoof, uDA, uRail; ${SH_COMMON}
       float h(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
       void main(){
         vec3 n = normalize(vN), c = vC; float m = vM, s2 = 0.0;
         if (m > 0.5 && m < 1.5) { c = texture(uRoof, vU).rgb; }
+        else if (m > 4.5) { c = texture(uRail, vU).rgb * vC; s2 = m > 5.5 ? 0.3 : 0.0; }
         else if (m > 1.5 && m < 3.5) { // walls with rows of windows; uv in metres
           float fl = floor(vU.y / 3.3), fy = fract(vU.y / 3.3), gx = vU.x / 2.9, wx = fract(gx), idx = floor(gx);
           float g = texture(uDA, vU * 0.11).r; c *= 0.93 + 0.14 * g;
@@ -12259,7 +12270,7 @@ const W3 = {
             if (abs(wx - 0.5) < 0.012 || abs(fy - 0.52) < 0.012) c *= 0.5;
           } else if (m < 2.5 && wx > 0.24 && wx < 0.76 && fy > 0.23 && fy < 0.26) c *= 1.2;
           c *= 0.9 + 0.1 * smoothstep(0.0, 1.0, vU.y); // grime at the foot
-        } else if (m > 3.5) { float g = texture(uDA, vW.xy * 0.13 + vW.z * 0.1).a; c *= 0.7 + 0.6 * g; }
+        } else if (m > 3.5 && m < 4.5) { float g = texture(uDA, vW.xy * 0.13 + vW.z * 0.1).a; c *= 0.7 + 0.6 * g; }
         float ndl = max(dot(n, uSun), 0.0), s = ndl > 0.0 ? shade(vW + n * 0.08, 0.001) : 0.0;
         vec3 lit = uAmb * (0.62 + 0.38 * n.z) + uSunC * ndl * s;
         vec3 col = c * lit;
@@ -12460,6 +12471,7 @@ const W3 = {
     if (map.g3) return map.g3;
     const W = Math.ceil(map.W) + 1, H = Math.ceil(map.H) + 1, d = new Float32Array(W * H), hasPits = map.depthShapes && map.depthShapes.length;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) d[y * W + x] = map.heightAt(x, y) - (hasPits ? map.depthAt(Math.min(x, map.W - 0.5), Math.min(y, map.H - 0.5)) : 0);
+    if (hasPits) { const o = d.slice(); for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; d[i] = (o[i] * 4 + (o[i - 1] + o[i + 1] + o[i - W] + o[i + W]) * 2 + o[i - W - 1] + o[i - W + 1] + o[i + W - 1] + o[i + W + 1]) / 16; } } // softens the stair-steps along diagonal trench lips
     return map.g3 = { W, H, d };
   },
   // ---------------------------------------------------------------- one-time upload of a map
@@ -12484,7 +12496,9 @@ const W3 = {
     this.chunkList = []; for (let y = 0; y * this.CH < G.H - 1; y++) for (let x = 0; x * this.CH < G.W - 1; x++) {
       let lo = 1e9, hi = -1e9; const ox = x * this.CH, oy = y * this.CH;
       for (let j = 0; j <= this.CH; j += 4) for (let i = 0; i <= this.CH; i += 4) { const z = G.d[Math.min(oy + j, G.H - 1) * G.W + Math.min(ox + i, G.W - 1)]; if (z < lo) lo = z; if (z > hi) hi = z; }
-      this.chunkList.push({ ox, oy, cx: ox + 32, cy: oy + 32, cz: (lo + hi) / 2, r: Math.hypot(46, 46, (hi - lo) / 2 + 6) });
+      const err = [0, 0, 0, 0, 0], Gd = G.d, Gw = G.W, at = (q, r) => Gd[Math.min(r, G.H - 1) * Gw + Math.min(q, Gw - 1)];
+      [2, 4, 8, 16].forEach((st, li) => { let m = 0; for (let j = 0; j < this.CH; j += st) for (let i = 0; i < this.CH; i += st) { const a = at(ox + i, oy + j), b = at(ox + i + st, oy + j), cc = at(ox + i, oy + j + st), dd = at(ox + i + st, oy + j + st); for (let v = 0; v <= st; v++) for (let u = 0; u <= st; u++) { const fu = u / st, fv = v / st, h = fu + fv <= 1 ? a + (b - a) * fu + (cc - a) * fv : dd + (cc - dd) * (1 - fu) + (b - dd) * (1 - fv), q = Math.abs(h - at(ox + i + u, oy + j + v)); if (q > m) m = q; } } err[li + 1] = m; });
+      this.chunkList.push({ ox, oy, cx: ox + 32, cy: oy + 32, cz: (lo + hi) / 2, r: Math.hypot(46, 46, (hi - lo) / 2 + 6), err });
     }
     W3Scene.build(map);
     this.loadedFor = map;
@@ -12549,11 +12563,13 @@ const W3 = {
     const pts = (map.points || []).slice(0, 6), pos = new Float32Array(24), col = new Float32Array(18);
     pts.forEach((p, i) => { pos.set([p.x, p.y, p.r, 0], i * 4); const c = p.owner === B.myTeam ? [0.3, 0.65, 1] : p.owner >= 0 ? [1, 0.3, 0.25] : [0.92, 0.9, 0.8]; col.set(c, i * 3); });
     gl.uniform1i(U.uNP, pts.length); if (U.uPts) gl.uniform4fv(U.uPts, pos); if (U.uPtC) gl.uniform3fv(U.uPtC, col);
-    let cur = null;
+    let cur = null; const tol = GFX.cur().shadow >= 2048 ? 1.2 : GFX.cur().shadow > 0 ? 2 : 3.5;
     for (const c of this.chunkList) {
       if (!this.inFrustum(c.cx, c.cy, c.cz, c.r)) continue;
-      const d = Math.hypot(c.cx - e[0], c.cy - e[1]) * Math.min(1, (this.view.fov / 0.95) * 1.05);
-      const l = d < 150 ? 0 : d < 260 ? 1 : d < 480 ? 2 : d < 900 ? 3 : 4, L = this.LOD[l];
+      // keep each chunk fine enough that its shape never moves by more than a pixel or so: trenches stay trenches at any range
+      const d = Math.max(1, Math.hypot(c.cx - e[0], c.cy - e[1], c.cz - e[2]) - 46); let l = 0;
+      if (d > 40) { const K = this.cv.height / (2 * this.view.tanY) / d; for (let q = 4; q > 0; q--) if (c.err[q] * K < tol) { l = q; break; } }
+      const L = this.LOD[l];
       if (cur !== L) { gl.bindVertexArray(L.vao); gl.uniform1i(U.uStep, L.step); cur = L; }
       gl.uniform2i(U.uOrg, c.ox, c.oy); gl.drawElements(gl.TRIANGLES, L.n, gl.UNSIGNED_SHORT, 0);
     }
@@ -12663,7 +12679,7 @@ W3.makeTreeMeshes = function () {
   // 3 shrub
   { const n = [], f = []; lump(n, 0, 0, 0.42, 0.62, 0.44, 12, 7, 1); lump(n, 0.34, 0.2, 0.3, 0.42, 0.3, 10, 6, 2); lump(f, 0, 0, 0.4, 0.74, 0.44, 6, 3, 1); TM.push([mesh(n), mesh(f)]); }
 };
-const WALL_H = { wall: 1.5, ruin: 3.2, mudwall: 2, jersey: 0.85, cube: 1.2, sandbag: 1.05, berm: 1.5, dune: 2.4, rubble: 1.5, logs: 1.1, log: 0.5, wreck: 2, plane: 2.2, railcar: 3.1, craneleg: 13 };
+const WALL_H = { wall: 1.5, ruin: 3.2, mudwall: 2, jersey: 0.85, cube: 1.2, sandbag: 1.05, berm: 1.5, dune: 2.4, rubble: 1.5, logs: 1.1, log: 0.5, wreck: 2, plane: 2.2, railcar: 4, craneleg: 13 };
 const wallH = w => w.h3 || (w.kind === 'log' ? w.hy * 2 : w.tall && !WALL_H[w.kind] ? 3 : WALL_H[w.kind] || 1.4);
 const W3Scene = {
   cells: new Map(), CS: 220, waterZ: null,
@@ -12678,6 +12694,7 @@ const W3Scene = {
     for (const b of map.buildings) put(b, b.x, b.y, 'b');
     for (const w of map.walls) put(w, w.x, w.y, 'w');
     for (const b of map.ruins3 || []) put(b, b.x, b.y, 'rf');
+    if (map.rail) for (const ty of map.rail.tracks) for (let x = 0; x < map.W; x += 44) { const o = { x: x + 22, y: ty, a: 0 }; put(o, o.x, o.y, 'rl'); }
     for (const k of map.rocks) put(k, k.x, k.y, 'k');
     for (const b of map.bridges || []) put(b, b.x, b.y, 'br');
     for (const b of map.tBridges || []) put(b, b.x, b.y, 'br');
@@ -12775,7 +12792,8 @@ const W3Scene = {
       case 'sandbag': { const n = Math.max(2, Math.round(w.hx / 0.55)); for (let row = 0; row < 3; row++) for (let i = 0; i < n; i++) { const lx = -w.hx + (i + 0.5 + (row % 2) * 0.5) * (w.hx * 2 / n), [x, y] = toWorld(lx, 0, w.x, w.y, w.a), c = [0.5 + sd() * 0.08, 0.44 + sd() * 0.07, 0.3]; this.box(a, x, y, w.a, w.hx / n * 0.98, w.hy * 0.9 * (1 - row * 0.12), zg + row * 0.34 - (row ? 0 : 0.5), zg + (row + 1) * 0.34, c, c); } return; }
       case 'logs': { const n = 3; for (let i = 0; i < n; i++) { const [x, y] = toWorld(0, (i - 1) * w.hy * 0.66, w.x, w.y, w.a); this.cyl(a, x, y, zg + 0.35, w.a, w.hx, 0.34, [0.34, 0.25, 0.17]); } this.cyl(a, w.x, w.y, zg + 0.9, w.a, w.hx, 0.32, [0.38, 0.28, 0.19]); return; }
       case 'log': { if (w.hide3) return; const rr = Math.max(0.16, w.hy), cz = W3.gz(w.x, w.y) + rr; this.cyl(a, w.x, w.y, cz, w.a, w.hx, rr, [0.3, 0.22, 0.15]); if (w.leaf && w.br) { const lc = cssRGB(w.leaf); for (const b of w.br.slice(0, 5)) { const [x, y] = toWorld(b[0], b[1], w.x, w.y, w.a); this.lumpMesh(a, x, y, cz, b[3] * 1.1, b[3] * 1.1, b[3] * 0.8, 0, lc.map(v => v * 0.8), (x | 0) % 41, 4, 6, 3); } } return; }
-      case 'railcar': { const c = w.burnt ? [0.14, 0.13, 0.12] : w.car === 'tank' ? [0.24, 0.24, 0.24] : [0.38, 0.22, 0.15]; this.box(a, w.x, w.y, w.a, w.hx, w.hy, zg + 0.8, zg + H, c, c.map(v => v * 0.8), 3); this.box(a, w.x, w.y, w.a, w.hx * 0.9, w.hy * 0.7, zg, zg + 0.8, [0.1, 0.1, 0.1]); return; }
+      case 'railcar': { W3Train.car(a, w); return; }
+      case 'railcarOld': { const c = w.burnt ? [0.14, 0.13, 0.12] : w.car === 'tank' ? [0.24, 0.24, 0.24] : [0.38, 0.22, 0.15]; this.box(a, w.x, w.y, w.a, w.hx, w.hy, zg + 0.8, zg + H, c, c.map(v => v * 0.8), 3); this.box(a, w.x, w.y, w.a, w.hx * 0.9, w.hy * 0.7, zg, zg + 0.8, [0.1, 0.1, 0.1]); return; }
       case 'craneleg': box([0.5, 0.36, 0.14]); return;
       case 'jersey': box([0.66, 0.65, 0.62]); return;
       case 'cube': box([0.55, 0.54, 0.5]); return;
@@ -12795,6 +12813,7 @@ const W3Scene = {
     for (const [t, o] of c.items) {
       if (t === 'b') this.addBuilding(a, o);
       else if (t === 'w') this.addWall(a, o);
+      else if (t === 'rl') W3Train.track(a, o);
       else if (t === 'rf') { const z = W3.gz(o.x, o.y), c0 = o.tint === 'sand' ? [0.55, 0.45, 0.32] : o.tint === 'brick' ? [0.3, 0.24, 0.21] : [0.33, 0.32, 0.3]; this.box(a, o.x, o.y, o.a, o.hx, o.hy, z - 0.6, z + 0.09, c0, c0); }
       else if (t === 'k') { const z = W3.gz(o.x, o.y), s = this.map.biome.dirt ? 0.8 : 1, g = 0.34 + hash01(o.x, o.y) * 0.12; this.lumpMesh(a, o.x, o.y, z - o.r * 0.25, o.r, o.r * 0.9, o.r * 1.05, (o.x | 0) * 0.7, [g * 1.05, g, g * 0.92 * s + 0.03], (o.y | 0) % 89); }
       else if (t === 'br') { const z = W3.gz(o.x, o.y) + 0.22, w = [0.3, 0.23, 0.16], along = o.hx >= o.hy, a2 = along ? o.a : o.a + Math.PI / 2, hl = Math.max(o.hx, o.hy), hw = Math.min(o.hx, o.hy); this.box(a, o.x, o.y, a2, hl, hw, z - 0.6, z, w, w); for (const s of [-1, 1]) { const [x, y] = toWorld(0, s * (hw - 0.1), o.x, o.y, a2); this.box(a, x, y, a2, hl, 0.09, z, z + 0.9, [0.24, 0.19, 0.14]); } }
@@ -12894,7 +12913,7 @@ const W3Scene = {
     const gl = W3.gl, P = shadow ? W3.P.sObj : W3.P.obj, U = P.U;
     gl.useProgram(P.p);
     if (shadow) gl.uniformMatrix4fv(U.uVP, false, W3.shVP);
-    else { W3.common(P); W3.bindT(0, this.atlas, U.uRoof); }
+    else { W3.common(P); W3.bindT(0, this.atlas, U.uRoof); if (U.uRail) W3.bindT(9, W3Train.tex(), U.uRail); }
     let built = 0;
     for (const c of this.cells.values()) {
       if (shadow ? Math.hypot(c.cx - focus[0], c.cy - focus[1]) > rad + 170 : !W3.inFrustum(c.cx, c.cy, W3.gz(c.cx, c.cy), 190)) continue;
@@ -13054,7 +13073,7 @@ const W3Scene = {
   drawFX() {
     this.vn = 0; const e = W3.view.eye, S = W3.sky, amb = S.amb, lit = [Math.min(1.1, amb[0] + S.sun[0] * 0.5), Math.min(1.1, amb[1] + S.sun[1] * 0.5), Math.min(1.1, amb[2] + S.sun[2] * 0.5)], fr = W3.fxRise, parts = FX.parts;
     const L = []; for (const p of parts) { const hg = p.gd ? W3.gz(p.x, p.y) + 0.05 : p.bz === undefined ? (p.bz = W3.gz(p.x, p.y) + 0.4) : p.bz; const z = hg + (p.z || 0) + (p.rise ? p.rise * (1 - Math.exp(-p.t * 0.5)) / 0.5 : 0); const d = (p.x - e[0]) ** 2 + (p.y - e[1]) ** 2 + (z - e[2]) ** 2; if (d > 2.5e6) continue; L.push([d, p, z]); }
-    for (const s of B.smokes || []) { const a = clamp(s.life * 1.6, 0, 1) * 0.85; for (let i = 0; i < 7; i++) { const ang = s.seed + i * 1.05 + B.time * 0.05, rr = s.r * (0.3 + (i % 3) * 0.16), x = s.x + Math.cos(ang) * rr, y = s.y + Math.sin(ang) * rr, z = W3.gz(x, y) + s.r * (0.35 + (i % 3) * 0.2); L.push([(x - e[0]) ** 2 + (y - e[1]) ** 2 + (z - e[2]) ** 2, { k: 'white', x, y, r: s.r * 0.95, t: 1, life: 2, a: a * 0.72, rot: ang, sm: true }, z]); } }
+    for (const s of B.smokes || []) { const a = clamp(s.life * 1.6, 0, 1) * 0.85 * (s.team !== undefined && s.team === B.myTeam ? 0.26 : 1); for (let i = 0; i < 7; i++) { const ang = s.seed + i * 1.05 + B.time * 0.05, rr = s.r * (0.3 + (i % 3) * 0.16), x = s.x + Math.cos(ang) * rr, y = s.y + Math.sin(ang) * rr, z = W3.gz(x, y) + s.r * (0.35 + (i % 3) * 0.2); L.push([(x - e[0]) ** 2 + (y - e[1]) ** 2 + (z - e[2]) ** 2, { k: 'white', x, y, r: s.r * 0.95, t: 1, life: 2, a: a * 0.72, rot: ang, sm: true }, z]); } }
     L.sort((a, b) => b[0] - a[0]);
     for (const [, p, z] of L) {
       const f = p.t / p.life, cellP = p.sid === undefined ? (p.sid = Math.random() * 4 | 0) : p.sid;
@@ -13065,6 +13084,7 @@ const W3Scene = {
       if (p.k === 'debris' || p.k === 'chunk' || p.k === 'wheel') { const a = Math.min(1, (1 - f) * 3) * p.a, col = p.k === 'wheel' ? [0.12, 0.11, 0.1] : cssRGB(p.col || '#3a3328'); this.bill(p.x, p.y, z, Math.max(0.1, p.r * 0.55), p.rot || 0, 7, col[0] * lit[0] * a, col[1] * lit[1] * a, col[2] * lit[2] * a, a); continue; }
       let a = p.a; const kk = p.k;
       if (p.sm) { } else if (kk === 'smoke' || kk === 'dark' || kk === 'dust' || kk === 'white') a *= f < 0.1 ? f * 10 : 1 - (f - 0.1) / 0.9; else a *= 1 - f;
+      if (p.team !== undefined && p.team === B.myTeam) a *= 0.26; // you can see out through your own screen
       if (a <= 0.004) continue;
       const c = this.PCOL[kk] || this.PCOL.smoke, add = p.add || kk === 'fire' || kk === 'flash' || kk === 'glow' || kk === 'ember', sz = Math.max(0.05, p.r);
       if (add) this.bill(p.x, p.y, z, sz, 0, 4, c[0] * a, c[1] * a, c[2] * a, 0);
@@ -13109,13 +13129,139 @@ const WATER_LEVEL = -0.8;
         bz = W3.gz(x, y) + 0.4;
         for (const v of B.vehicles) { if (v.z3 === undefined || Math.abs(v.x - x) > 7 || Math.abs(v.y - y) > 7) continue; if (pointInOBB(x, y, v.x, v.y, v.ang, v.def.L / 2 + 0.4, v.def.W / 2 + 0.4)) { bz = v.z3 + hullHeight(v.def) * 0.85; break; } }
       }
-      p.sid = Math.random() * 4 | 0; p.rot = p.rot || Math.random() * TAU;
+      p.sid = Math.random() * 4 | 0; p.rot = p.rot || Math.random() * TAU; if (B._smokeTeam !== undefined) p.team = B._smokeTeam;
       if (k === 'debris' || k === 'chunk' || k === 'wheel' || k === 'leaf') { p.gd = true; p.z = Math.max(0, (p.z || 0) + (bz - W3.gz(x, y))); }
       p.bz = bz; const r = RISE[k]; if (r) p.rise = rnd(r[0], r[1]);
     }
     return p;
   };
 }
+
+// =====================================================================
+//  RAILWAY — real rails and sleepers, and detailed rolling stock: ribbed boxcars, framed tank containers on flatcars,
+//  gondolas and diesel locomotives. Liveries are painted once into a shared atlas.
+// =====================================================================
+const W3Train = {
+  t: null, R: {},
+  rect(k, x, y, w, h) { this.R[k] = [x / 2048, y / 1024, w / 2048, h / 1024]; },
+  tex() {
+    if (this.t) return this.t;
+    const cv = document.createElement('canvas'); cv.width = 2048; cv.height = 1024; const c = cv.getContext('2d'), Rn = mulberry32(4242);
+    const weather = (x, y, w, h, k = 1) => {
+      c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip();
+      for (let i = 0; i < w * h * 0.0022 * k; i++) { const px = x + Rn() * w, py = y + Rn() * h, r = 1 + Rn() * 6; c.fillStyle = Rn() < 0.6 ? `rgba(70,40,22,${0.1 + Rn() * 0.3})` : `rgba(20,16,14,${0.08 + Rn() * 0.25})`; c.beginPath(); c.ellipse(px, py, r, r * (0.4 + Rn()), Rn() * 3, 0, TAU); c.fill(); }
+      for (let i = 0; i < w * 0.09 * k; i++) { const px = x + Rn() * w, py = y + Rn() * h * 0.5, L = 20 + Rn() * h * 0.7, g = c.createLinearGradient(0, py, 0, py + L), col = Rn() < 0.7 ? '110,58,26' : '26,20,16'; g.addColorStop(0, `rgba(${col},${0.2 + Rn() * 0.42})`); g.addColorStop(1, `rgba(${col},0)`); c.fillStyle = g; c.fillRect(px, py, 1.5 + Rn() * 6, L); }
+      c.restore();
+    };
+    const box = (k, x, y, w, h, fn) => { this.rect(k, x, y, w, h); c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip(); c.translate(x, y); fn(w, h); c.restore(); };
+    const boxcar = (k, x, y, base, mark, nm) => box(k, x, y, 1000, 160, (w, h) => {
+      c.fillStyle = base; c.fillRect(0, 0, w, h); const n = 16; for (let i = 0; i <= n; i++) { const px = i / n * w; c.fillStyle = 'rgba(0,0,0,.55)'; c.fillRect(px - 4, 0, 8, h); c.fillStyle = 'rgba(255,255,255,.08)'; c.fillRect(px + 4, 0, 3, h); }
+      c.fillStyle = 'rgba(0,0,0,.28)'; c.fillRect(0, 0, w, 7); c.fillRect(0, h - 10, w, 10);
+      const d = w * 0.36; c.fillStyle = 'rgba(0,0,0,.35)'; c.fillRect(d, 6, w * 0.26, h - 12); for (let i = 0; i < 15; i++) { c.fillStyle = i % 2 ? 'rgba(255,255,255,.1)' : 'rgba(0,0,0,.3)'; c.fillRect(d + 4, 10 + i * 9.6, w * 0.26 - 8, 6); }
+      c.fillStyle = mark; c.beginPath(); c.moveTo(60, 12); c.lineTo(150, 80); c.lineTo(60, 148); c.closePath(); c.globalAlpha = 0.75; c.fill(); c.globalAlpha = 1;
+      c.font = '700 26px Arial'; c.fillStyle = 'rgba(240,235,220,.72)'; c.fillText(nm, w * 0.7, 62); c.font = '600 13px Arial'; c.fillText('LOAD 80000  LT WT 46500', w * 0.7, 88);
+      weather(0, 0, w, h, 1.5);
+    });
+    boxcar('boxR', 8, 8, '#7c3c30', '#d8d4c8', 'NR 40816'); boxcar('boxY', 1036, 8, '#8d7330', '#46362c', 'HX 30807');
+    const tank = (k, x, y, base, band, nm) => box(k, x, y, 500, 200, (w, h) => {
+      const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, base); g.addColorStop(1, base); c.fillStyle = g; c.fillRect(0, 0, w, h);
+      for (let i = 1; i < 6; i++) { c.fillStyle = 'rgba(0,0,0,.3)'; c.fillRect(i / 6 * w, 0, 3, h); c.fillStyle = 'rgba(255,255,255,.14)'; c.fillRect(i / 6 * w + 3, 0, 2, h); }
+      c.fillStyle = band; c.fillRect(30, h * 0.42, 110, 9); c.fillRect(30, h * 0.53, 110, 9); c.fillRect(w - 140, h * 0.42, 110, 9); c.fillRect(w - 140, h * 0.53, 110, 9);
+      c.font = '800 34px Arial'; c.fillStyle = '#2a2622'; c.textAlign = 'center'; c.fillText(nm, w / 2, h * 0.56); c.textAlign = 'left'; weather(0, 0, w, h, 1.4);
+    });
+    tank('tankW', 8, 180, '#c9c5ba', '#a4342c', 'NEFT-12'); tank('tankY', 516, 180, '#bfa95e', '#3c3a2e', 'GAZ-07');
+    box('flat', 1024, 180, 1000, 60, (w, h) => { c.fillStyle = '#3f4a2c'; c.fillRect(0, 0, w, h); c.fillStyle = 'rgba(0,0,0,.35)'; c.fillRect(0, h - 8, w, 8); c.font = '700 24px Arial'; c.fillStyle = 'rgba(235,235,215,.8)'; c.fillText('55559835', 60, 38); c.fillText('31956', 460, 38); c.fillText('55559835', 800, 38); weather(0, 0, w, h, 2); });
+    box('deck', 1024, 250, 300, 100, (w, h) => { c.fillStyle = '#343632'; c.fillRect(0, 0, w, h); c.strokeStyle = 'rgba(0,0,0,.4)'; for (let i = 0; i < 30; i++) { c.beginPath(); c.moveTo(i * 10, 0); c.lineTo(i * 10, h); c.stroke(); } weather(0, 0, w, h, 2); });
+    box('ribs', 1340, 250, 300, 100, (w, h) => { c.fillStyle = '#6a4630'; c.fillRect(0, 0, w, h); for (let i = 0; i < 5; i++) { c.fillStyle = 'rgba(255,255,255,.1)'; c.fillRect(0, i * 20, w, 8); c.fillStyle = 'rgba(0,0,0,.4)'; c.fillRect(0, i * 20 + 10, w, 10); } weather(0, 0, w, h, 2); });
+    const loco = (k, x, y, a, b, stripe, num) => box(k, x, y, 1000, 150, (w, h) => {
+      c.fillStyle = a; c.fillRect(0, 0, w, h); const gr = c.createLinearGradient(w * 0.45, 0, w * 0.72, 0); gr.addColorStop(0, b); gr.addColorStop(1, a); c.fillStyle = gr; c.fillRect(w * 0.5, 0, w * 0.5, h); c.fillStyle = stripe; c.fillRect(0, h - 26, w, 12);
+      for (let i = 0; i < 12; i++) { const px = 70 + i * 62; c.strokeStyle = 'rgba(0,0,0,.35)'; c.lineWidth = 2; c.strokeRect(px, 22, 56, h - 58); c.fillStyle = 'rgba(0,0,0,.4)'; c.fillRect(px + 22, 80, 10, 3); }
+      c.fillStyle = 'rgba(12,12,14,.8)'; for (let i = 0; i < 9; i++) c.fillRect(26, 24 + i * 8, 34, 5); for (let i = 0; i < 7; i++) c.fillRect(640, 28 + i * 9, 80, 5);
+      c.font = '800 44px Arial'; c.fillStyle = stripe; c.fillText(num, w * 0.8, 70); weather(0, 0, w, h, 0.8);
+    });
+    loco('locoA', 8, 400, '#7f8a92', '#35508c', '#d2b04a', '4821'); loco('locoB', 8, 560, '#c79a2c', '#d0a632', '#a8342a', '602');
+    box('roof', 1024, 400, 300, 100, (w, h) => { c.fillStyle = '#5c5f62'; c.fillRect(0, 0, w, h); weather(0, 0, w, h, 2); });
+    box('roofR', 1340, 400, 300, 100, (w, h) => { c.fillStyle = '#6d6252'; c.fillRect(0, 0, w, h); for (let i = 0; i < 12; i++) { c.fillStyle = 'rgba(0,0,0,.2)'; c.fillRect(i * 25, 0, 3, h); } weather(0, 0, w, h, 2.5); });
+    box('grill', 1660, 400, 200, 100, (w, h) => { c.fillStyle = '#16181a'; c.fillRect(0, 0, w, h); c.strokeStyle = '#4a4e50'; c.lineWidth = 3; for (let i = 0; i <= 20; i++) { c.beginPath(); c.moveTo(i * 10, 0); c.lineTo(i * 10, h); c.stroke(); } for (let i = 0; i <= 10; i++) { c.beginPath(); c.moveTo(0, i * 10); c.lineTo(w, i * 10); c.stroke(); } });
+    box('wood', 1024, 520, 300, 80, (w, h) => { c.fillStyle = '#4c3a28'; c.fillRect(0, 0, w, h); for (let i = 0; i < 40; i++) { c.fillStyle = `rgba(${Rn() < 0.5 ? '20,14,10' : '140,110,80'},.2)`; c.fillRect(0, Rn() * h, w, 1 + Rn() * 2); } });
+    const gl = W3.gl; gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); return this.t = W3.texFrom(cv, 0, 0, false);
+  },
+  // ---- track: ballast, timber sleepers, two steel rails
+  track(a, o) {
+    this.tex(); const S = W3Scene, x0 = o.x - 22, y = o.y;
+    for (let x = x0; x < x0 + 44; x += 4) { const z0 = W3.gz(x, y), z1 = W3.gz(x + 4, y), bal = [0.32, 0.3, 0.28]; S.quad(a, [[x, y - 1.9, z0 + 0.03], [x + 4, y - 1.9, z1 + 0.03], [x + 4, y + 1.9, z1 + 0.03], [x, y + 1.9, z0 + 0.03]], [0, 0, 1], bal, null, 4);
+      for (const q of [-0.76, 0.76]) { for (const [dy, c] of [[-0.04, [0.2, 0.17, 0.15]], [0.04, [0.2, 0.17, 0.15]]]) S.quad(a, [[x, y + q + dy, z0 + 0.17], [x + 4, y + q + dy, z1 + 0.17], [x + 4, y + q + dy, z1 + 0.32], [x, y + q + dy, z0 + 0.32]], [0, dy > 0 ? 1 : -1, 0], c); S.quad(a, [[x, y + q - 0.04, z0 + 0.32], [x + 4, y + q - 0.04, z1 + 0.32], [x + 4, y + q + 0.04, z1 + 0.32], [x, y + q + 0.04, z0 + 0.32]], [0, 0, 1], [0.62, 0.61, 0.58]); }
+    }
+    const Rn = mulberry32((x0 * 7 + y * 13) | 0); for (let x = x0 + 0.2; x < x0 + 44; x += 0.72) { const z = W3.gz(x, y), j = Rn() * 0.12 - 0.06, c = [0.24 + Rn() * 0.08, 0.18 + Rn() * 0.06, 0.13]; S.box(a, x, y + j, 0, 0.13, 1.32, z, z + 0.17, c, c); }
+  },
+  // ---- helpers in a car's own frame: x along, y across, z up
+  frame(w, zg) { const ca = Math.cos(w.a), sa = Math.sin(w.a); return (x, y, z) => [w.x + x * ca - y * sa, w.y + x * sa + y * ca, zg + z]; },
+  uv(k, u0, v0, u1, v1) { const r = this.R[k]; return [[r[0] + r[2] * u0, r[1] + r[3] * v1], [r[0] + r[2] * u1, r[1] + r[3] * v1], [r[0] + r[2] * u1, r[1] + r[3] * v0], [r[0] + r[2] * u0, r[1] + r[3] * v0]]; },
+  side(a, P, x0, x1, y, z0, z1, k, k2, br) { // a textured flat side (both faces)
+    for (const sg of [1, -1]) { const flip = (sg < 0) !== (P(1, 0, 0)[0] < P(0, 0, 0)[0]), u = flip ? this.uv(k, 1, 0, 0, 1) : this.uv(k, 0, 0, 1, 1), nA = P(1, sg, 0), n0 = P(0, 0, 0), n = [nA[0] - n0[0] - (P(1, 0, 0)[0] - n0[0]), nA[1] - n0[1] - (P(1, 0, 0)[1] - n0[1]), 0]; W3Scene.quad(a, [P(x0, sg * y, z0), P(x1, sg * y, z0), P(x1, sg * y, z1), P(x0, sg * y, z1)], V3.norm(n), br, u, 5); }
+  },
+  bx(a, P, w, x0, x1, y0, y1, z0, z1, c, ct, k) { // box in the car frame; k = textured with atlas region k
+    const q = (p, n) => { const b = P(0, 0, 0), r = [P(1, 0, 0)[0] - b[0], P(1, 0, 0)[1] - b[1]], s = [P(0, 1, 0)[0] - b[0], P(0, 1, 0)[1] - b[1]], N = [r[0] * n[0] + s[0] * n[1], r[1] * n[0] + s[1] * n[1], n[2]]; W3Scene.quad(a, p, N, c, k ? this.uv(k, 0, 0, 1, 1) : null, k ? 5 : 0); };
+    q([P(x1, y0, z0), P(x1, y1, z0), P(x1, y1, z1), P(x1, y0, z1)], [1, 0, 0]); q([P(x0, y1, z0), P(x0, y0, z0), P(x0, y0, z1), P(x0, y1, z1)], [-1, 0, 0]);
+    q([P(x0, y1, z0), P(x1, y1, z0), P(x1, y1, z1), P(x0, y1, z1)], [0, 1, 0]); q([P(x1, y0, z0), P(x0, y0, z0), P(x0, y0, z1), P(x1, y0, z1)], [0, -1, 0]);
+    const save = c; c = ct || c; q([P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1)], [0, 0, 1]); c = save;
+  },
+  wheel(a, P, x, y, r, c, ang) { const n = 12, ax = (t, q) => P(x + Math.cos(t) * r, y + q, r + Math.sin(t) * r), b = P(0, 0, 0), s = P(0, 1, 0), N = t => { const o = P(Math.cos(t), 0, 0); return [o[0] - b[0], o[1] - b[1], Math.sin(t)]; }, sn = [s[0] - b[0], s[1] - b[1], 0]; for (let i = 0; i < n; i++) { const t0 = i / n * TAU, t1 = (i + 1) / n * TAU; W3Scene.quad(a, [ax(t0, -0.08), ax(t1, -0.08), ax(t1, 0.08), ax(t0, 0.08)], N((t0 + t1) / 2), [0.5, 0.49, 0.47]); W3Scene.tri(a, [P(x, y + 0.08, r), ax(t0, 0.08), ax(t1, 0.08)], sn, c); W3Scene.tri(a, [P(x, y - 0.08, r), ax(t0, -0.08), ax(t1, -0.08)], V3.mul(sn, -1), c); } },
+  bogie(a, P, x, wide, br) {
+    const d = [0.09 * br, 0.085 * br, 0.08 * br], mid = [0.17 * br, 0.14 * br, 0.11 * br], g = 0.78, base = wide ? 3 : 2, sp = wide ? 1.75 : 1.85;
+    for (let i = 0; i < base; i++) { const ox = x + (i - (base - 1) / 2) * sp; for (const s of [-g, g]) this.wheel(a, P, ox, s, 0.46, mid); this.bx(a, P, 0, ox - 0.06, ox + 0.06, -g, g, 0.41, 0.51, d); }
+    for (const s of [-g - 0.2, g + 0.2]) { this.bx(a, P, 0, x - sp * base * 0.55, x + sp * base * 0.55, s - 0.1, s + 0.1, 0.42, 0.84, mid); this.bx(a, P, 0, x - 0.32, x + 0.32, s - 0.11, s + 0.11, 0.34, 1.0, d); for (const q of [-0.2, 0.2]) this.bx(a, P, 0, x + q - 0.05, x + q + 0.05, s - 0.13, s - 0.08, 0.74, 1.02, [0.32 * br, 0.17 * br, 0.09 * br]); }
+    this.bx(a, P, 0, x - 0.3, x + 0.3, -1.05, 1.05, 0.84, 1.08, d);
+  },
+  coupler(a, P, x, sg, br) { const d = [0.1 * br, 0.095 * br, 0.09 * br]; this.bx(a, P, 0, Math.min(x, x + sg * 0.62), Math.max(x, x + sg * 0.62), -0.13, 0.13, 1.12, 1.34, d); this.bx(a, P, 0, x + sg * 0.5 - 0.1, x + sg * 0.5 + 0.1, -0.26, 0.26, 1.08, 1.38, d); },
+  car(a, w) {
+    this.tex(); const zg = W3.gz(w.x, w.y) + 0.3, P = this.frame(w, zg), L = w.hx, br = w.burnt ? 0.34 : 1, k = w.car, hw = 1.46, bc = [br, br * (w.burnt ? 0.92 : 1), br * (w.burnt ? 0.86 : 1)], R0 = mulberry32(w.seed || 7), dk = [0.12 * br, 0.115 * br, 0.11 * br];
+    if (k === 'loco') return this.loco(a, w, P, L, br, bc, R0);
+    this.bogie(a, P, -L + 2.6, false, br); this.bogie(a, P, L - 2.6, false, br); this.coupler(a, P, L, 1, br); this.coupler(a, P, -L, -1, br);
+    if (k === 'box') {
+      const t = R0() < 0.5 ? 'boxR' : 'boxY', H = 4.1, Z = 1.32, side = (w.seed || 1) % 2 ? 1 : -1; this.bx(a, P, 0, -L, L, -hw, hw, 1.12, Z, dk);
+      this.side(a, P, -L, L, hw, Z, H, t, null, bc); for (let i = 0; i < 2; i++) for (const sg of [-1, 1]) { const x = sg * (L - 2.2 - i * 1.9); for (const q of [-1, 1]) this.bx(a, P, 0, x - 0.05, x + 0.05, q * hw - 0.04, q * hw + 0.04, Z, H, [0.16 * br, 0.1 * br, 0.08 * br]); }
+      for (const q of [-1, 1]) { this.bx(a, P, 0, -L * 0.28, L * 0.28, q * hw - 0.04, q * hw + 0.04, Z + 0.03, Z + 0.11, dk); }
+      const rt = this.uv('roofR', 0, 0, 1, 1); for (const s of [-1, 1]) { const p = [P(-L, s * hw, H), P(L, s * hw, H), P(L, 0, H + 0.34), P(-L, 0, H + 0.34)], n = W3Scene.nrm(p[0], p[1], p[2], [0, 0, 1]); W3Scene.quad(a, p, n, bc, rt, 5); }
+      for (const e of [-1, 1]) { const x = e * L; this.bx(a, P, 0, Math.min(x, x + e * 0.05), Math.max(x, x + e * 0.05), -hw, hw, Z, H + 0.05, [0.2 * br, 0.14 * br, 0.1 * br], null, 'ribs'); for (let i = 0; i < 4; i++) { const z = Z + 0.34 + i * 0.58; this.bx(a, P, 0, Math.min(x, x + e * 0.17), Math.max(x, x + e * 0.17), -hw + 0.06, hw - 0.06, z, z + 0.26, [0.34 * br, 0.2 * br, 0.14 * br]); } for (const q of [-1, 1]) for (let i = 0; i < 5; i++) { const z = Z + 0.2 + i * 0.42; this.bx(a, P, 0, x + e * 0.2 - 0.02, x + e * 0.2 + 0.02, q * 1.05 - 0.28, q * 1.05 + 0.28, z, z + 0.04, dk); } }
+      return;
+    }
+    // flatcar frame: green sill, steel deck, fishbelly centre
+    this.side(a, P, -L, L, hw, 1.12, 1.46, 'flat', null, bc); const dkU = this.uv('deck', 0, 0, 1, 1); W3Scene.quad(a, [P(-L, -hw, 1.46), P(L, -hw, 1.46), P(L, hw, 1.46), P(-L, hw, 1.46)], [0, 0, 1], bc, dkU, 5); for (const e of [-1, 1]) this.bx(a, P, 0, Math.min(e * L, e * L + e * 0.04), Math.max(e * L, e * L + e * 0.04), -hw, hw, 1.12, 1.46, dk); this.bx(a, P, 0, -L * 0.5, L * 0.5, -0.6, 0.6, 0.86, 1.12, dk);
+    if (k === 'tank') { const gap = 0.2, cl = (L * 2 - gap) / 2; for (const [cx, t] of [[-L + cl / 2, 'tankY'], [L - cl / 2, 'tankW']]) this.container(a, P, cx, cl / 2 - 0.08, t, br, bc); }
+    else if (k === 'gondola') {
+      const H = 2.75, c0 = [0.3 * br, 0.2 * br, 0.14 * br]; this.side(a, P, -L, L, hw, 1.46, H, 'ribs', null, bc); for (const e of [-1, 1]) this.bx(a, P, 0, Math.min(e * L, e * L + e * 0.07), Math.max(e * L, e * L + e * 0.07), -hw, hw, 1.46, H, c0, c0); for (let x = -L + 1; x < L; x += 2) for (const q of [-1, 1]) this.bx(a, P, 0, x - 0.05, x + 0.05, q * hw - 0.05, q * hw + 0.05, 1.46, H, dk);
+      const n = Math.round(L); for (let i = 0; i < n; i++) { const p = P(-L + 1 + i * 2 * (L - 1) / (n - 1 || 1), (R0() - 0.5) * 1.5, 2.1); W3Scene.lumpMesh(a, p[0], p[1], p[2], 1.2, 1.1, 0.75, R0() * 3, [0.2, 0.19, 0.18], i + 3); }
+    } else { for (let i = 0; i < 3; i++) { const cx = -L + 2.2 + i * (2 * L - 4.4) / 2; this.bx(a, P, 0, cx - 0.95, cx + 0.95, -1.05, 1.05, 1.46, 2.5 + R0() * 0.5, bc.map(v => v * 0.8), null, 'wood'); } }
+  },
+  container(a, P, cx, hl, t, br, bc) {
+    const r = 1.17, z = 2.78, n = 14, st = [0.1 * br, 0.095 * br, 0.09 * br], R = this.R[t], Q = (x, ang) => P(cx + x, Math.cos(ang) * r, z + Math.sin(ang) * r * 0.98), b = P(0, 0, 0), s = P(0, 1, 0), ex = P(1, 0, 0), Ny = [s[0] - b[0], s[1] - b[1]], Nx = [ex[0] - b[0], ex[1] - b[1]];
+    for (let i = 0; i < n; i++) { const t0 = i / n * TAU, t1 = (i + 1) / n * TAU, v0 = Math.abs(Math.sin(t0 / 2)), v1 = Math.abs(Math.sin(t1 / 2)), U = (u, v) => [R[0] + R[2] * u, R[1] + R[3] * v], mid = (t0 + t1) / 2, N = [Ny[0] * Math.cos(mid), Ny[1] * Math.cos(mid), Math.sin(mid)]; W3Scene.quad(a, [Q(-hl + 0.3, t0), Q(hl - 0.3, t0), Q(hl - 0.3, t1), Q(-hl + 0.3, t1)], N, bc, [U(0, v0), U(1, v0), U(1, v1), U(0, v1)], 5);
+      for (const e of [-1, 1]) { const C = P(cx + e * hl, 0, z), A = Q(e * (hl - 0.3), t0), B2 = Q(e * (hl - 0.3), t1); W3Scene.tri(a, [C, A, B2], [Nx[0] * e * 0.7 + N[0] * 0.4, Nx[1] * e * 0.7 + N[1] * 0.4, N[2] * 0.4], bc.map(v => v * 0.72)); } }
+    for (const ex2 of [-1, 1]) { const x = cx + ex2 * hl; for (const y of [-1.3, 1.3]) { this.bx(a, P, 0, x - 0.09, x + 0.09, y - 0.09, y + 0.09, 1.46, 4.1, st); this.bx(a, P, 0, cx + ex2 * (hl - 1.1) - 0.05, cx + ex2 * (hl - 1.1) + 0.05, y * 0.9 - 0.05, y * 0.9 + 0.05, 1.5, 2.1, st); } this.bx(a, P, 0, x - 0.08, x + 0.08, -1.3, 1.3, 1.5, 1.68, st); this.bx(a, P, 0, x - 0.08, x + 0.08, -1.3, 1.3, 3.92, 4.1, st); }
+    for (const y of [-1.3, 1.3]) { for (const z2 of [1.52, 2.0, 2.45, 4.0]) this.bx(a, P, 0, cx - hl, cx + hl, y - 0.07, y + 0.07, z2, z2 + 0.13, st); for (const q of [-1, 1]) { const m = q * hl * 0.6; this.bx(a, P, 0, cx + m - 0.05, cx + m + 0.05, y - 0.05, y + 0.05, 3.5, 4.0, st); } }
+  },
+  loco(a, w, P, L, br, bc, R0) {
+    const t = R0() < 0.5 ? 'locoA' : 'locoB', dk = [0.09 * br, 0.09 * br, 0.09 * br], gy = [0.32 * br, 0.33 * br, 0.34 * br], Hc = 4.15, Hh = 3.65, f = (w.seed || 1) % 2 ? 1 : -1, F = x => P(x * f, 0, 0), Pf = (x, y, z) => P(x * f, y, z);
+    const nose = t === 'locoA' ? [0.75 * br, 0.62 * br, 0.26 * br] : [0.76 * br, 0.58 * br, 0.16 * br], cab = t === 'locoA' ? [0.2 * br, 0.28 * br, 0.5 * br] : [0.76 * br, 0.58 * br, 0.16 * br], bx = (x0, x1, y0, y1, z0, z1, c, ct, k) => this.bx(a, Pf, 0, Math.min(x0, x1), Math.max(x0, x1), y0, y1, z0, z1, c, ct, k);
+    this.bogie(a, Pf, -L + 3.9, true, br); this.bogie(a, Pf, L - 3.9, true, br); this.coupler(a, Pf, L, 1, br); this.coupler(a, Pf, -L, -1, br);
+    bx(-L, L, -1.5, 1.5, 1.2, 1.56, [0.13 * br, 0.13 * br, 0.14 * br], gy); for (const q of [-1, 1]) bx(-L, L, q * 1.5 - 0.02, q * 1.5 + 0.02, 1.5, 1.62, t === 'locoA' ? [0.7 * br, 0.58 * br, 0.26 * br] : [0.6 * br, 0.17 * br, 0.13 * br]);
+    bx(-3.2, 3.2, -1.16, 1.16, 0.62, 1.2, [0.16 * br, 0.16 * br, 0.15 * br]); for (const q of [-1, 1]) { const p = [Pf(-2.6, q * 1.18, 0.82), Pf(2.6, q * 1.18, 0.82)]; bx(-2.6, 2.6, q * 1.17 - 0.02, q * 1.17 + 0.02, 0.76, 0.86, [0.3 * br, 0.3 * br, 0.28 * br]); }
+    // long hood with its panels, grilles, stack and radiator
+    this.side(a, Pf, -L + 0.5, L - 5.4, 1.2, 1.56, Hh, t, null, bc); const rf = this.uv('roof', 0, 0, 1, 1), g = this.uv('grill', 0, 0, 1, 1);
+    W3Scene.quad(a, [Pf(-L + 0.5, -1.2, Hh), Pf(L - 5.4, -1.2, Hh), Pf(L - 5.4, 1.2, Hh), Pf(-L + 0.5, 1.2, Hh)], [0, 0, 1], bc, rf, 5); bx(-L + 0.5, -L + 0.52, -1.2, 1.2, 1.56, Hh, gy, gy);
+    for (const c of [-L + 2.3, -L + 4.2]) { W3Scene.quad(a, [Pf(c - 0.85, -0.95, Hh + 0.04), Pf(c + 0.85, -0.95, Hh + 0.04), Pf(c + 0.85, 0.95, Hh + 0.04), Pf(c - 0.85, 0.95, Hh + 0.04)], [0, 0, 1], [1, 1, 1], g, 5); }
+    bx(-L + 0.2, -L + 5.6, -1.34, 1.34, Hh + 0.15, Hh + 0.42, gy, gy.map(v => v * 1.2)); bx(-L + 0.4, -L + 5.2, -1.36, 1.36, Hh - 0.45, Hh + 0.15, [0.05, 0.05, 0.055]); W3Scene.quad(a, [Pf(-L + 0.4, -1.36, Hh + 0.43), Pf(-L + 5.2, -1.36, Hh + 0.43), Pf(-L + 5.2, 1.36, Hh + 0.43), Pf(-L + 0.4, 1.36, Hh + 0.43)], [0, 0, 1], [1, 1, 1], g, 5);
+    bx(-3, -2.2, -0.34, 0.34, Hh, Hh + 0.36, dk); bx(1.2, 2.2, -0.5, 0.5, Hh, Hh + 0.2, gy);
+    // cab with real windows, then the short nose and plough
+    const cx0 = L - 5.4, cx1 = L - 3; bx(cx0, cx1, -1.42, 1.42, 1.56, Hc, cab, gy); bx(cx0 - 0.12, cx1 + 0.12, -1.5, 1.5, Hc, Hc + 0.14, gy, gy.map(v => v * 1.1));
+    const gl2 = [0.08, 0.11, 0.13]; for (const q of [-1, 1]) { bx(cx0 + 0.35, cx0 + 1.1, q * 1.42 - 0.01, q * 1.42 + 0.01, 2.85, 3.75, gl2); bx(cx0 + 1.3, cx1 - 0.25, q * 1.42 - 0.01, q * 1.42 + 0.01, 2.85, 3.75, gl2); bx(cx1 - 0.01, cx1 + 0.01, q * 0.72 - 0.56, q * 0.72 + 0.56, 2.95, 3.8, gl2); }
+    bx(cx1, L - 0.75, -1.08, 1.08, 1.56, 2.9, nose, nose.map(v => v * 0.92)); bx(L - 0.75, L - 0.68, -0.45, 0.45, 1.9, 2.7, dk); const hl = w.burnt ? [0.1, 0.1, 0.1] : [1.5, 1.45, 1.2]; for (const q of [-1, 1]) bx(L - 0.7, L - 0.66, q * 0.72 - 0.12, q * 0.72 + 0.12, 1.72, 1.96, hl); bx(cx1 + 0.01, cx1 + 0.05, -0.2, 0.2, 3.88, 4.05, hl);
+    { const p = [Pf(L + 0.05, -1.5, 0.46), Pf(L + 0.05, 1.5, 0.46), Pf(L - 0.25, 1.5, 1.22), Pf(L - 0.25, -1.5, 1.22)], n = W3Scene.nrm(p[0], p[1], p[2], [f, 0, 0.3]); W3Scene.quad(a, p, n, dk); const q = [Pf(L + 0.7, -0.5, 0.4), Pf(L + 0.7, 0.5, 0.4), Pf(L + 0.05, 1.5, 0.46), Pf(L + 0.05, -1.5, 0.46)]; W3Scene.quad(a, q, W3Scene.nrm(q[0], q[1], q[2], [f, 0, 0.3]), dk); }
+    // walkway handrails and steps
+    const rail = [0.34 * br, 0.34 * br, 0.32 * br]; for (const q of [-1, 1]) { bx(-L + 0.4, cx0, q * 1.43 - 0.02, q * 1.43 + 0.02, 2.6, 2.64, rail); for (let x = -L + 0.6; x < cx0; x += 2.4) bx(x - 0.02, x + 0.02, q * 1.43 - 0.02, q * 1.43 + 0.02, 1.56, 2.6, rail); bx(cx1 + 0.2, L - 0.8, q * 1.34 - 0.02, q * 1.34 + 0.02, 2.5, 2.54, rail); for (const e of [-L + 0.15, L - 0.15]) { bx(e - 0.3, e + 0.3, q * 1.42, q * 1.44, 1.56, 2.5, rail); for (let i = 0; i < 3; i++) bx(e - 0.3, e + 0.3, q * 1.45 - 0.07, q * 1.45 + 0.07, 0.72 + i * 0.26, 0.76 + i * 0.26, dk); } }
+  },
+};
 
 // =====================================================================
 //  3D SIMULATION — the armour, crew and module model of the first game now works on real geometry: shells have height
@@ -13138,6 +13284,20 @@ const S3 = {
     const hs = Math.hypot(G.dir[0], G.dir[1]) || 1, ux = G.dir[0] / hs, uy = G.dir[1] / hs, tan = G.dir[2] / hs, R = v.ctrl.aimDist - 6, n = Math.min(40, Math.ceil(R / 8));
     for (let i = 1; i < n; i++) { const s = R * i / n, t = s / sh.v, z = G.muz[2] + tan * s - 0.5 * GRAV * t * t; if (z < W3.gz(G.muz[0] + ux * s, G.muz[1] + uy * s) + 0.1) return false; }
     return true;
+  },
+  // every machine gun fires from its own barrel: the coax beside the main gun, a bow gun low on the glacis
+  mgPoint(v) {
+    const d = v.def, M = W3.WT.mesh(d);
+    if (v.mg.mount === 'hull' || !d.turret || !M.coax) { const b = M.bow || [d.L / 2 - 0.35, d.W * 0.22, hullHeight(d) * 0.62], m = this.mR(v); return [m[0] * b[0] + m[4] * b[1] + m[8] * b[2] + m[12], m[1] * b[0] + m[5] * b[1] + m[9] * b[2] + m[13], m[2] * b[0] + m[6] * b[1] + m[10] * b[2] + m[14]]; }
+    const G = this.gun(v), T = G.T, e = v.gunElev || 0, c = Math.cos(e), s = Math.sin(e), dx = M.coax[0] - M.gunX, dz = M.coax[2] - M.gunZ, x = M.gunX + dx * c - dz * s, z = M.gunZ + dx * s + dz * c, y = M.coax[1];
+    return [T[0] * x + T[4] * y + T[8] * z + T[12], T[1] * x + T[5] * y + T[9] * z + T[13], T[2] * x + T[6] * y + T[10] * z + T[14]];
+  },
+  mgAim(v, sh) {
+    const p = this.mgPoint(v), c = v.ctrl, t = v.ai && v.ai.target; let tx, ty, tz;
+    if (c.aim3 && !Aim.manual()) { tx = c.ax; ty = c.ay; tz = c.az; }
+    else if (c.aim3 || !(c.aimDist > 0)) { const G = this.gun(v), hs = Math.hypot(G.dir[0], G.dir[1]) || 1; return { p, tan: G.dir[2] / hs, a: Math.atan2(G.dir[1], G.dir[0]) }; }
+    else { tx = p[0] + Math.cos(c.aim) * c.aimDist; ty = p[1] + Math.sin(c.aim) * c.aimDist; tz = t && t.alive && t.z3 !== undefined ? t.z3 + hullHeight(t.def) * 0.6 : W3.gz(tx, ty) + 1; }
+    const w = this.solve(p, tx, ty, tz, sh.v); return { p, tan: w[2], a: Math.atan2(w[1], w[0]) };
   },
   shellOf(v) { const a = v.ammo && v.ammo[v.loaded >= 0 ? v.loaded : v.next || 0]; return a ? a.sh : null; },
   // ray against a box in a frame (m = column-major matrix); t is in units of the ray direction's length
@@ -13383,7 +13543,7 @@ const S3 = {
     const eh = gauss() * this.disp * 0.0005, ev = gauss() * this.disp * 0.0005, hs = Math.hypot(G.dir[0], G.dir[1]) || 1, a = Math.atan2(G.dir[1], G.dir[0]) + eh;
     if (B) { B.spawnProj(this, sh, G.muz[0], G.muz[1], a, this.ctrl.height, this.ctrl.aimDist || 0); const p = B.projs[B.projs.length - 1]; p.z = G.muz[2]; p.vz = (G.dir[2] / hs + ev) * sh.v; }
     this.loaded = -1; this.recoil = 0.45; this.revealT = 4; this.flashT = 3;
-    if (this._ph) { const kick = clamp(d.cal / 90, 0.3, 1.6) * clamp(32 / (d.mass || 32), 0.5, 1.6) * 0.32; this._ph.vp -= Math.cos(this.turretAng) * kick; this._ph.vr -= Math.sin(this.turretAng) * kick * 1.4; }
+    if (this._ph) { const kick = clamp(d.cal / 90, 0.3, 1.8) * clamp(32 / (d.mass || 32), 0.45, 1.7) * 0.42, ta = this.turretAng || 0; this._ph.vp += Math.cos(ta) * kick; this._ph.vr += Math.sin(ta) * kick * 1.5; } // the hull is thrown away from the gun, whichever way it points
     this.reloadMax = d.reload * this.reloadMult(); this.reloadT = this.reloadMax;
     this.disp = Math.max(this.disp, d.disp * 2.2);
     this.updateRacks();
@@ -13393,11 +13553,20 @@ const S3 = {
   Battle.prototype.spawnProj = function (owner, sh, x, y, a, height, aimDist) {
     sp0.call(this, owner, sh, x, y, a, height, aimDist);
     const p = this.projs[this.projs.length - 1]; p.range = p.T.atgm ? 4000 : 3400; p.vz = 0;
-    if (owner && owner.def.turret && owner.z3 !== undefined) { const G = S3.gun(owner), hs = Math.hypot(G.dir[0], G.dir[1]) || 1; p.z = owner.mg && sh === owner.mgSh && owner.mg.mount === 'hull' ? owner.z3 + hullHeight(owner.def) * 0.7 : G.piv[2]; p.vz = G.dir[2] / hs * sh.v; }
+    if (owner && owner.mgSh === sh && owner.z3 !== undefined) { const q = S3.mgAim(owner, sh); p.x = q.p[0]; p.y = q.p[1]; p.z = q.p[2]; const e = gauss() * 0.006, cx = Math.cos(a), sy = Math.sin(a); p.dx = cx; p.dy = sy; p.vz = (q.tan + e) * sh.v; }
+    else if (owner && owner.def.turret && owner.z3 !== undefined) { const G = S3.gun(owner), hs = Math.hypot(G.dir[0], G.dir[1]) || 1; p.z = owner.mg && sh === owner.mgSh && owner.mg.mount === 'hull' ? owner.z3 + hullHeight(owner.def) * 0.7 : G.piv[2]; p.vz = G.dir[2] / hs * sh.v; }
     else p.z = W3.gz(x, y) + 2;
   };
+  const mz0 = Vehicle.prototype.mgMuzzle;
+  Vehicle.prototype.mgMuzzle = function () { if (this.z3 === undefined) return mz0.call(this); const q = S3.mgAim(this, this.mgSh); this._mgZ = q.p[2]; return [q.p[0], q.p[1], q.a]; };
+  // your own smoke screen hides you from the enemy but not the enemy from you
+  Battle.prototype.smokesFor = function (team) { if (this._smT !== this.time) { this._smT = this.time; this._sm0 = this.smokes.filter(s => s.team !== 0); this._sm1 = this.smokes.filter(s => s.team !== 1); } return team === 0 ? this._sm0 : this._sm1; };
+  Battle.prototype.smokeCut = function (a, e, team) { const L = dist(a.x, a.y, e.x, e.y); if (L < 1) return false; const dx = (e.x - a.x) / L, dy = (e.y - a.y) / L; for (const s of this.smokesFor(team)) if (s.life >= 0.12 && segCircle(a.x, a.y, dx, dy, L, s.x, s.y, s.r * 0.8) >= 0) return true; return false; };
+  Battle.prototype.inSmokeFor = function (e, team) { return this.smokesFor(team).some(s => s.life >= 0.12 && dist(s.x, s.y, e.x, e.y) < s.r); };
+  const ds0 = Vehicle.prototype.deploySmoke;
+  Vehicle.prototype.deploySmoke = function () { if (!B) return ds0.call(this); B._smokeTeam = this.team; try { return ds0.call(this); } finally { B._smokeTeam = undefined; } };
   const dustFX = Battle.prototype.fxMuzzle;
-  Battle.prototype.fxMuzzle = function (v, x, y, a, sh) { if (W3.fxZ !== undefined || !v.z3) return dustFX.call(this, v, x, y, a, sh); W3.fxZ = v.z3 + hullHeight(v.def) + 0.4; try { dustFX.call(this, v, x, y, a, sh); } finally { W3.fxZ = undefined; } };
+  Battle.prototype.fxMuzzle = function (v, x, y, a, sh) { if (W3.fxZ !== undefined || !v.z3) return dustFX.call(this, v, x, y, a, sh); W3.fxZ = sh === v.mgSh && v._mgZ !== undefined ? v._mgZ : v.z3 + hullHeight(v.def) + 0.4; try { dustFX.call(this, v, x, y, a, sh); } finally { W3.fxZ = undefined; } };
   const hb0 = hitBuilding; hitBuilding = function (p, b, x, y) { if (p.sh.type === 'MG') { B.fxImpactDust(x, y, 0.3); p.alive = false; return; } hb0(p, b, x, y); };
   // machine-gun fire rattles off the hull: an occasional marker and no camera shake
   const hh0 = Battle.prototype.onHumanHit;
@@ -13613,7 +13782,8 @@ Render.frame = function (dt) {
   if (B.mode.drawHud3) B.mode.drawHud3(c);
   this.drawWeather(c, dt);
   if (!B.cam.sight) { c.globalAlpha = 0.5; c.fillStyle = this.washFor(B.map); c.fillRect(0, 0, this.W, this.H); c.globalAlpha = 0.7; c.drawImage(this.vign, 0, 0, this.W, this.H); c.globalAlpha = 1; }
-  if (!window.NO_HUD) HUD.draw(c, dt);
+  if (!window.NO_HUD) { HUD.draw(c, dt); Streak.draw(c, this.W, this.H); }
+  if (B.player && B.player.alive && !Sfx.engine && GSfx.has('drive') && App.state === 'battle') Sfx.startEngine();
   if (B.player && B.player.alive && !document.pointerLockElement && !UI.blocking && !App.paused) {
     if (Lock3.blocked) { HUD.text(c, 'Mouse lock is blocked in this preview. Push the cursor to a screen edge to turn.', this.W / 2, 96, '#ffb07a', 14, 'center', 700); HUD.text(c, 'For the full game, download index.html and open it in Chrome or Edge.', this.W / 2, 114, 'rgba(255,255,255,.75)', 12, 'center'); }
   }
@@ -13799,6 +13969,45 @@ previewInto = function (cv, d, opts = {}) {
   const od0 = Battle.prototype.onDestroyed;
   Battle.prototype.onDestroyed = function (v, killer, reason) { if (reason !== 'ammo' && reason !== 'crew' && v.def.turret && !v.turretOff && !v.def.soft) v.blowTurret('hull', null, false); od0.call(this, v, killer, reason); };
 }
+
+// recorded sounds only: the synthesised tones are gone, and events without their own file use the nearest recording
+{
+  Sfx.tone = () => { }; Sfx.noiseBurst = () => { };
+  const play0 = Sfx.play, boom = (x, y, k) => GSfx.cookoff(x, y, k);
+  Sfx.play = function (n, x, y, p = 1) {
+    if (n === 'explosion' || n === 'ammo' || n === 'building') { if (this.ctx && this.ctx.state === 'running' && !(B && B.silent)) boom(x, y, clamp(p, 0.3, 1)); return play0.call(this, n === 'ammo' ? 'tankdeath' : '__none', x, y, n === 'ammo' ? 1 : p); }
+    if (n === 'ground') { if (this.ctx && this.ctx.state === 'running' && !(B && B.silent)) boom(x, y, clamp(p * 0.28, 0.15, 0.4)); return; }
+    if (n === 'ricochet' || n === 'pen' || n === 'nonpen') return;
+    if (n === 'crush') { if (GSfx.oneShot) GSfx.oneShot('treefall', x, y, 0.28, 180); return; }
+    return play0.call(this, n, x, y, p);
+  };
+}
+// kill streak
+const Streak = {
+  WIN: 14, n: 0, t: -99, pop: -99, shown: 0, art: null,
+  kill() { const now = B.time; this.n = now - this.t <= this.WIN && this.bt === B ? this.n + 1 : 1; this.t = now; this.bt = B; if (this.n >= 2) { this.pop = now; this.shown = this.n; } },
+  skull() {
+    if (this.art) return this.art; const S = 220, cv = document.createElement('canvas'); cv.width = cv.height = S; const c = cv.getContext('2d');
+    const bone = '#f1ead8', ink = '#2a1a18', paint = () => {
+      c.save(); c.translate(S / 2, S * 0.54);
+      for (const sg of [-1, 1]) { c.save(); c.rotate(sg * 0.76); c.fillStyle = bone; c.strokeStyle = ink; c.lineWidth = 5; c.beginPath(); c.roundRect(-84, -8, 168, 16, 6); c.fill(); c.stroke(); for (const e of [-84, 84]) for (const o of [-10, 10]) { c.beginPath(); c.arc(e, o, 12, 0, TAU); c.fill(); c.stroke(); } c.fillRect(-90, -8, 180, 16); c.restore(); }
+      c.translate(0, -14); c.fillStyle = bone; c.strokeStyle = ink; c.lineWidth = 6; c.beginPath(); c.moveTo(-34, 30); c.bezierCurveTo(-70, 18, -66, -56, 0, -58); c.bezierCurveTo(66, -56, 70, 18, 34, 30); c.lineTo(30, 54); c.quadraticCurveTo(0, 64, -30, 54); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = ink; for (const sg of [-1, 1]) { c.save(); c.translate(sg * 25, -6); c.rotate(sg * 0.18); c.beginPath(); c.ellipse(0, 0, 17, 21, 0, 0, TAU); c.fill(); c.restore(); }
+      c.beginPath(); c.moveTo(0, 12); c.lineTo(-9, 28); c.lineTo(9, 28); c.closePath(); c.fill(); c.lineWidth = 4; for (const x of [-15, 0, 15]) { c.beginPath(); c.moveTo(x, 38); c.lineTo(x, 56); c.stroke(); }
+      c.restore();
+    };
+    c.shadowColor = '#ff2a1a'; c.shadowBlur = 16; paint(); paint(); c.shadowBlur = 0; paint();
+    return this.art = cv;
+  },
+  draw(c, W, H) {
+    if (this.bt !== B || !this.shown) return; const age = B.time - this.t, left = this.WIN - age; if (left <= 0) { this.n = 0; this.shown = 0; return; }
+    const a = clamp(left / 1.3, 0, 1), f = clamp((B.time - this.pop) / 0.28, 0, 1), k = 1 + 0.42 * (1 - f) * (1 - f), sz = 104 * k, cx = W / 2, cy = 142;
+    c.save(); c.globalAlpha = a; c.drawImage(this.skull(), cx - sz / 2, cy - sz / 2, sz, sz);
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `800 ${Math.round(23 * k)}px ${FONT}`; const t = `X${this.shown} KILLSTREAK`;
+    c.shadowColor = '#ff2a1a'; c.shadowBlur = 14; c.lineWidth = 4; c.strokeStyle = 'rgba(120,10,6,.9)'; c.strokeText(t, cx, cy + 66); c.fillStyle = '#fff1e6'; c.fillText(t, cx, cy + 66); c.shadowBlur = 0; c.fillText(t, cx, cy + 66); c.restore();
+  },
+};
+{ const od = Battle.prototype.onDestroyed; Battle.prototype.onDestroyed = function (v, killer, reason) { od.call(this, v, killer, reason); if (!this.demo && killer && killer === this.player && v.team !== killer.team) Streak.kill(); }; }
 
 window.addEventListener('load', () => { App.start(); Lock3.init(); });
 
@@ -14321,7 +14530,7 @@ function hostDetail(ctx) {
     fxBlowout: (v, m) => ['bo', v.id, v.mods.indexOf(m)],
     fxTrackBreak: (v, m) => ['tb', v.id, v.mods.indexOf(m)],
     fxSplinters: (x, y) => ['sl', r2(x), r2(y)],
-    addSmoke: (x, y, r, dur) => ['sm', r2(x), r2(y), r2(r), r2(dur)],
+    addSmoke: (x, y, r, dur) => ['sm', r2(x), r2(y), r2(r), r2(dur), B._smokeTeam],
     crushTree: (t, v) => t.alive ? ['ct', map().trees.indexOf(t), v ? v.id : -1, r3(treeFall(t, v))] : null,
     destroyBuilding: (b) => b.destroyed ? null : ['db', map().buildings.indexOf(b)],
     fxAmmo: (v) => ['am', v.id],
@@ -14471,7 +14680,7 @@ Object.assign(Battle.prototype, {
       case 'bo': { const v = V(e[1]); if (v && v.mods[e[2]]) this.fxBlowout(v, v.mods[e[2]]); break; }
       case 'tb': { const v = V(e[1]); if (v && v.mods[e[2]]) this.fxTrackBreak(v, v.mods[e[2]]); break; }
       case 'sl': this.fxSplinters(e[1], e[2]); break;
-      case 'sm': this.addSmoke(e[1], e[2], e[3], e[4]); break;
+      case 'sm': this._smokeTeam = e[5]; this.addSmoke(e[1], e[2], e[3], e[4]); this._smokeTeam = undefined; break;
       case 'ct': { const t = this.map.trees[e[1]]; if (t) this.crushTree(t, V(e[2]) || null, e[3]); break; }
       case 'db': { const b = this.map.buildings[e[1]]; if (b && !b.destroyed) this.destroyBuilding(b); break; }
       case 'am': { const v = V(e[1]); if (v) this.fxAmmo(v); break; }
