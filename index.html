@@ -59,7 +59,7 @@ button{font-family:var(--font)}
 
 .msel-wrap{position:absolute;inset:40px 0 28px;display:flex;flex-direction:column;gap:14px}
 .msel-t{text-align:center;letter-spacing:.5em;font-size:14px}
-.mapcards{padding:6px 56px}
+.mapcards{padding:6px 56px}.mapcards .title{font-size:21px!important;letter-spacing:0!important}
 .mapcards .mode{animation:mselIn .55s cubic-bezier(.2,.8,.2,1) backwards}.mapcards .mode:nth-child(2){animation-delay:.08s}.mapcards .mode:nth-child(3){animation-delay:.16s}
 @keyframes mselIn{from{opacity:0;transform:translateY(30px) scale(.97)}to{opacity:1;transform:none}}
 .mapcards .mode canvas{width:100%;height:100%;left:0;transform:none;object-fit:cover}.mapcards .mode:hover canvas{transform:scale(1.07)}
@@ -3594,14 +3594,9 @@ const MAP_THEMES = {
       // wrecked aircraft: raised fuselage (stops shells) and broken wings (low cover), all solid
       for (let i = 0, k = 0; i < 4 && k < 40; k++) {
         const x = m.runway.x + (R() - 0.5) * m.runway.hx * 1.6, y = m.runway.y + (R() < 0.5 ? -1 : 1) * (26 + R() * 16), a = R() * TAU;
-        if (m.collidesStatic(x, y, 9) || m.inClear(x, y, 8)) continue;
-        const pl = { x, y, a, seed: Math.floor(R() * 1e6), wingLost: R() < 0.5 ? 1 : -1, burnt: R() < 0.6 };
-        m.planes.push(pl);
-        m.walls.push({ kind: 'plane', x, y, a, hx: 6.2, hy: 0.85, hp: 9999, tall: true });
-        const [wx, wy] = toWorld(0.4, -pl.wingLost * 3.6, x, y, a);
-        m.walls.push({ kind: 'plane', x: wx, y: wy, a, hx: 1.1, hy: 3.4, hp: 9999 });
-        const [tx, ty] = toWorld(-5.8, 0, x, y, a);
-        m.walls.push({ kind: 'plane', x: tx, y: ty, a, hx: 0.6, hy: 2.2, hp: 9999 });
+        if (m.collidesStatic(x, y, 12) || m.inClear(x, y, 10)) continue;
+        const pl = { x, y, a, seed: Math.floor(R() * 1e6), wingLost: R() < 0.5 ? 1 : -1, burnt: R() < 0.4 };
+        m.planes.push(pl); W3Plane.walls(m, pl, i);
         i++;
       }
       for (let i = 0; i < 12; i++) { const x = 40 + R() * (W - 80), y = 40 + R() * (H - 80); if (m.collidesStatic(x, y, 10) || m.inClear(x, y, 10)) continue; m.rocks.push({ x, y, r: 1.8 + R() * 2.2, seed: Math.floor(R() * 1e6), tint: 'desert' }); }
@@ -6019,7 +6014,7 @@ function drawMark(c, m) {
 //  AI — crews with difficulty levels
 // =====================================================================
 const DIFF = {
-  recruit: { key: 'recruit', stopDist: 0, name: 'Recruit', react: 2.8, aimErr: 0.024, weak: 0.0, angle: false, settle: 0.35, skill: 1.45, spot: 0.7, lead: 0.15, stopToFire: 0.3, rp: 0.7, missChance: 0.35, desc: 'Slow reactions, poor gunnery, drives in the open.' },
+  recruit: { key: 'recruit', stopDist: 340, name: 'Recruit', react: 2.8, aimErr: 0.024, weak: 0.0, angle: false, settle: 0.35, skill: 1.45, spot: 0.7, lead: 0.15, stopToFire: 0.6, rp: 0.7, missChance: 0.35, desc: 'Slow reactions and poor gunnery, but they still use cover and spread out.' },
   regular: { key: 'regular', stopDist: 550, name: 'Regular', react: 1.4, aimErr: 0.0095, weak: 0.25, angle: false, settle: 0.75, skill: 1.12, spot: 0.95, lead: 0.65, stopToFire: 0.75, rp: 1.0, missChance: 0.12, desc: 'Competent crews. Stop to fire, use cover sometimes.' },
   veteran: { key: 'veteran', stopDist: 800, name: 'Veteran', react: 0.75, aimErr: 0.005, weak: 0.65, angle: true, settle: 0.95, skill: 0.97, spot: 1.1, lead: 0.9, stopToFire: 0.95, rp: 1.3, missChance: 0.03, desc: 'Angle their armor, aim for weak spots, repair under cover.' },
   ace: { key: 'ace', stopDist: 950, name: 'Ace', react: 0.32, aimErr: 0.0022, weak: 0.92, angle: true, settle: 1.0, skill: 0.86, spot: 1.2, lead: 1.0, stopToFire: 1.0, rp: 1.6, missChance: 0, desc: 'Lethal. Fast, precise, exploit every weakness. Expect to be one-shot.' },
@@ -6285,7 +6280,7 @@ class AI {
     const hit = B.time - this.hitT < 2.5, reloading = v.loaded < 0 && v.reloadT > 2.5, outgunned = this.cantPen && dist(v.x, v.y, t.x, t.y) < 700, hurt = v.crewAlive() < v.crew.length || !v.tracksOK();
     if (!(hit || (reloading && Math.random() < 0.5) || outgunned || hurt)) return;
     if (this.coverFrom(t.x, t.y)) return; // already covered from it
-    const willing = { recruit: 0.3, regular: 0.55, veteran: 0.8, ace: 0.92 }[D.key] || 0.5;
+    const willing = { recruit: 0.55, regular: 0.7, veteran: 0.8, ace: 0.92 }[D.key] || 0.5;
     this.coverCD = B.time + 4 + Math.random() * 4;
     if (Math.random() > willing) return;
     const spot = this.findCover(t);
@@ -7238,7 +7233,7 @@ class TeamMode {
   onDestroyed(v, killer) {
     if (v.convoy) { this.tickets[0]++; return; }
     if (v.cvEscort) return; // column escorts are not replaced // convoy vehicles score for the raiders and never respawn
-    if (this.gm === 'tdm') { const k = killer || (B.time - v.lastHitT < 30 ? v.lastHitBy : null); this.tickets[k && k.team !== v.team ? k.team : 1 - v.team]++; }
+    if (this.gm === 'tdm') { const k = killer || (B.time - v.lastHitT < 30 ? v.lastHitBy : null); if (!k || k.team !== v.team) this.tickets[k ? k.team : 1 - v.team]++; }
     if (this.gm === 'jugg') {
       if (v.def.jugg) { const left = B.vehicles.filter(o => o.def.jugg && o.alive).length; for (const t of [0, 1]) B.teamMsg(t, left ? `A Ratte has been destroyed — ${left} left` : 'The last Ratte is down!', t === 0 ? '#9fd18a' : '#ff6b6b', t === 0 ? 'capture' : 'lost'); return; }
     }
@@ -11536,7 +11531,7 @@ const UI = {
   // three battlefields at a time, rotating through all five
   openMapSelect(onPick, backTo) {
     this.mapBackTo = backTo || null;
-    const rot = Save.data.mapRot || 0, keys = [0, 1, 2].map(i => MAP_LIST[(rot + i) % MAP_LIST.length]);
+    const rot = Save.data.mapRot || 0, keys = MAP_LIST.slice();
     const box = $('mapCards'); box.innerHTML = '';
     const accents = { farm: ['#8fd17a', 'rgba(143,209,122,.55)'], city: ['#7fa8e0', 'rgba(127,168,224,.55)'], desert: ['#f2b33d', 'rgba(242,179,61,.55)'], alpine: ['#9fd8ff', 'rgba(159,216,255,.55)'], trench: ['#d08a5a', 'rgba(208,138,90,.55)'], leningrad: ['#e0a848', 'rgba(224,168,72,.55)'] };
     const acc = k => accents[k] || ['#cfc6a8', 'rgba(207,198,168,.5)'];
@@ -11549,7 +11544,7 @@ const UI = {
       box.appendChild(el);
       drawMapArt(el.querySelector('canvas'), k);
     });
-    $('mapRotNote').textContent = `Showing 3 of ${MAP_LIST.length} battlefields — the selection rotates every round`;
+    $('mapRotNote').textContent = '';
     this.show('mapSel');
   },
   // campaign: five chapters side by side (scrolls sideways), each opening its five missions in the setup screen
@@ -11601,8 +11596,8 @@ const UI = {
   },
   // offline team battle: mode choice → map select → setup; every Back steps one screen back along that path
   teamFlow(back) {
-    back = back || (() => this.show('mpChoice'));
-    this.openMapSelect(k => this.openSetup('team', k, () => this.teamFlow(back)), back);
+    const list = MAP_LIST.filter(k => k !== this.lastRandomMap), k = list[Math.floor(Math.random() * list.length)]; this.lastRandomMap = k;
+    this.openSetup('team', k, back || (() => this.showMenu()));
   },
   openSetup(mode, map, backTo) {
     this.setupBackTo = backTo !== undefined ? backTo : mode === 'team' ? () => this.teamFlow() : mode === 'mission' ? () => this.openCampaign() : null;
@@ -12254,11 +12249,12 @@ const W3 = {
     // ---------------------------------------------------- static objects: buildings, walls, rocks, far land
     const OVS = `layout(location=0) in vec3 aP; layout(location=1) in vec3 aN; layout(location=2) in vec3 aC; layout(location=3) in vec2 aU; layout(location=4) in float aM; uniform mat4 uVP; out vec3 vW, vN, vC; out vec2 vU; flat out float vM;
       void main(){ vW = aP; vN = aN; vC = aC; vU = aU; vM = aM; gl_Position = uVP * vec4(aP, 1.0); }`;
-    this.P.obj = this.prog(OVS, `in vec3 vW, vN, vC; in vec2 vU; flat in float vM; out vec4 o; uniform sampler2D uRoof, uDA, uRail; ${SH_COMMON}
+    this.P.obj = this.prog(OVS, `in vec3 vW, vN, vC; in vec2 vU; flat in float vM; out vec4 o; uniform sampler2D uRoof, uDA, uRail, uSkin; ${SH_COMMON}
       float h(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
       void main(){
         vec3 n = normalize(vN), c = vC; float m = vM, s2 = 0.0;
         if (m > 0.5 && m < 1.5) { c = texture(uRoof, vU).rgb; }
+        else if (m > 6.5) { c = texture(uSkin, vU).rgb * vC; s2 = 0.12; }
         else if (m > 4.5) { c = texture(uRail, vU).rgb * vC; s2 = m > 5.5 ? 0.3 : 0.0; }
         else if (m > 1.5 && m < 3.5) { // walls with rows of windows; uv in metres
           float fl = floor(vU.y / 3.3), fy = fract(vU.y / 3.3), gx = vU.x / 2.9, wx = fract(gx), idx = floor(gx);
@@ -12450,7 +12446,7 @@ const W3 = {
   makeGrids() {
     const gl = this.gl; this.LOD = [];
     for (const step of [1, 2, 4, 8, 16]) {
-      const n = this.CH / step, pts = [], idx = [], at = (x, y, sk) => pts.push(x * step, y * step, sk);
+      const n = this.CH / step, pts = [], idx = [], at = (x, y, sk) => pts.push(x, y, sk); // grid cells; the vertex shader applies uStep
       for (let y = 0; y <= n; y++) for (let x = 0; x <= n; x++) at(x, y, 0);
       const V = (x, y) => y * (n + 1) + x;
       for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) idx.push(V(x, y), V(x + 1, y), V(x + 1, y + 1), V(x, y), V(x + 1, y + 1), V(x, y + 1));
@@ -12471,8 +12467,8 @@ const W3 = {
     if (map.g3) return map.g3;
     const W = Math.ceil(map.W) + 1, H = Math.ceil(map.H) + 1, d = new Float32Array(W * H), hasPits = map.depthShapes && map.depthShapes.length;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) d[y * W + x] = map.heightAt(x, y) - (hasPits ? map.depthAt(Math.min(x, map.W - 0.5), Math.min(y, map.H - 0.5)) : 0);
-    if (hasPits) { const o = d.slice(); for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; d[i] = (o[i] * 4 + (o[i - 1] + o[i + 1] + o[i - W] + o[i + W]) * 2 + o[i - W - 1] + o[i - W + 1] + o[i + W - 1] + o[i + W + 1]) / 16; } } // softens the stair-steps along diagonal trench lips
-    return map.g3 = { W, H, d };
+    if (hasPits) for (let pass = 0; pass < 2; pass++) { const o = d.slice(); for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; d[i] = (o[i] * 4 + (o[i - 1] + o[i + 1] + o[i - W] + o[i + W]) * 2 + o[i - W - 1] + o[i - W + 1] + o[i + W - 1] + o[i + W + 1]) / 16; } } // softens the stair-steps along diagonal trench lips
+    map.g3 = { W, H, d }; if (map.planes) W3Plane.ground(map, map.g3); return map.g3;
   },
   // ---------------------------------------------------------------- one-time upload of a map
   load(map) {
@@ -12497,7 +12493,7 @@ const W3 = {
       let lo = 1e9, hi = -1e9; const ox = x * this.CH, oy = y * this.CH;
       for (let j = 0; j <= this.CH; j += 4) for (let i = 0; i <= this.CH; i += 4) { const z = G.d[Math.min(oy + j, G.H - 1) * G.W + Math.min(ox + i, G.W - 1)]; if (z < lo) lo = z; if (z > hi) hi = z; }
       const err = [0, 0, 0, 0, 0], Gd = G.d, Gw = G.W, at = (q, r) => Gd[Math.min(r, G.H - 1) * Gw + Math.min(q, Gw - 1)];
-      [2, 4, 8, 16].forEach((st, li) => { let m = 0; for (let j = 0; j < this.CH; j += st) for (let i = 0; i < this.CH; i += st) { const a = at(ox + i, oy + j), b = at(ox + i + st, oy + j), cc = at(ox + i, oy + j + st), dd = at(ox + i + st, oy + j + st); for (let v = 0; v <= st; v++) for (let u = 0; u <= st; u++) { const fu = u / st, fv = v / st, h = fu + fv <= 1 ? a + (b - a) * fu + (cc - a) * fv : dd + (cc - dd) * (1 - fu) + (b - dd) * (1 - fv), q = Math.abs(h - at(ox + i + u, oy + j + v)); if (q > m) m = q; } } err[li + 1] = m; });
+      [2, 4, 8, 16].forEach((st, li) => { let m = 0; for (let j = 0; j < this.CH; j += st) for (let i = 0; i < this.CH; i += st) { const a = at(ox + i, oy + j), b = at(ox + i + st, oy + j), cc = at(ox + i, oy + j + st), dd = at(ox + i + st, oy + j + st); for (let v = 0; v <= st; v++) for (let u = 0; u <= st; u++) { const fu = u / st, fv = v / st, h = fu >= fv ? a + (b - a) * fu + (dd - b) * fv : a + (cc - a) * fv + (dd - cc) * fu, q = Math.abs(h - at(ox + i + u, oy + j + v)); if (q > m) m = q; } } err[li + 1] = m; });
       this.chunkList.push({ ox, oy, cx: ox + 32, cy: oy + 32, cz: (lo + hi) / 2, r: Math.hypot(46, 46, (hi - lo) / 2 + 6), err });
     }
     W3Scene.build(map);
@@ -12797,7 +12793,7 @@ const W3Scene = {
       case 'craneleg': box([0.5, 0.36, 0.14]); return;
       case 'jersey': box([0.66, 0.65, 0.62]); return;
       case 'cube': box([0.55, 0.54, 0.5]); return;
-      case 'plane': box([0.32, 0.33, 0.3]); return;
+      case 'plane': if (w.pl) W3Plane.build(a, w.pl); return;
       case 'mudwall': box([0.68, 0.56, 0.4], [0.72, 0.6, 0.44], 3); return;
       case 'ruin': { const n = Math.max(2, Math.round(w.hx / 1.3)), col = w.brick ? [0.46, 0.27, 0.21] : [0.5, 0.48, 0.45]; for (let i = 0; i < n; i++) { const lx = -w.hx + (i + 0.5) * (w.hx * 2 / n), [x, y] = toWorld(lx, 0, w.x, w.y, w.a); this.box(a, x, y, w.a, w.hx / n, w.hy, zg - 1, zg + H * (0.3 + sd() * 0.7), col, col.map(v => v * 0.8), 3); } return; }
       default: box(w.brick ? [0.46, 0.27, 0.21] : [0.5, 0.47, 0.42], [0.4, 0.38, 0.34], 3);
@@ -12913,7 +12909,7 @@ const W3Scene = {
     const gl = W3.gl, P = shadow ? W3.P.sObj : W3.P.obj, U = P.U;
     gl.useProgram(P.p);
     if (shadow) gl.uniformMatrix4fv(U.uVP, false, W3.shVP);
-    else { W3.common(P); W3.bindT(0, this.atlas, U.uRoof); if (U.uRail) W3.bindT(9, W3Train.tex(), U.uRail); }
+    else { W3.common(P); W3.bindT(0, this.atlas, U.uRoof); if (U.uRail) W3.bindT(9, W3Train.tex(), U.uRail); if (U.uSkin) W3.bindT(10, W3Plane.tex(), U.uSkin); }
     let built = 0;
     for (const c of this.cells.values()) {
       if (shadow ? Math.hypot(c.cx - focus[0], c.cy - focus[1]) > rad + 170 : !W3.inFrustum(c.cx, c.cy, W3.gz(c.cx, c.cy), 190)) continue;
@@ -13260,6 +13256,278 @@ const W3Train = {
     { const p = [Pf(L + 0.05, -1.5, 0.46), Pf(L + 0.05, 1.5, 0.46), Pf(L - 0.25, 1.5, 1.22), Pf(L - 0.25, -1.5, 1.22)], n = W3Scene.nrm(p[0], p[1], p[2], [f, 0, 0.3]); W3Scene.quad(a, p, n, dk); const q = [Pf(L + 0.7, -0.5, 0.4), Pf(L + 0.7, 0.5, 0.4), Pf(L + 0.05, 1.5, 0.46), Pf(L + 0.05, -1.5, 0.46)]; W3Scene.quad(a, q, W3Scene.nrm(q[0], q[1], q[2], [f, 0, 0.3]), dk); }
     // walkway handrails and steps
     const rail = [0.34 * br, 0.34 * br, 0.32 * br]; for (const q of [-1, 1]) { bx(-L + 0.4, cx0, q * 1.43 - 0.02, q * 1.43 + 0.02, 2.6, 2.64, rail); for (let x = -L + 0.6; x < cx0; x += 2.4) bx(x - 0.02, x + 0.02, q * 1.43 - 0.02, q * 1.43 + 0.02, 1.56, 2.6, rail); bx(cx1 + 0.2, L - 0.8, q * 1.34 - 0.02, q * 1.34 + 0.02, 2.5, 2.54, rail); for (const e of [-L + 0.15, L - 0.15]) { bx(e - 0.3, e + 0.3, q * 1.42, q * 1.44, 1.56, 2.5, rail); for (let i = 0; i < 3; i++) bx(e - 0.3, e + 0.3, q * 1.45 - 0.07, q * 1.45 + 0.07, 0.72 + i * 0.26, 0.76 + i * 0.26, dk); } }
+  },
+};
+
+// =====================================================================
+//  WRECKED AIRCRAFT — four crash shapes built from real parts: skinned fuselages with frames and stringers showing
+//  through the tears, airfoil wings with ribs and spars, radial engines, curled propellers, landing gear and debris.
+// =====================================================================
+const W3Plane = {
+  t: null,
+  // the skins: faded paint schemes and bare rusted metal, one row each in a shared texture
+  tex() {
+    if (this.t) return this.t;
+    const S = 1024, RW = S / 4, cv = document.createElement('canvas'); cv.width = cv.height = S; const c = cv.getContext('2d'), R = mulberry32(90125);
+    const blot = (x, y, r, col, al) => { const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(${col},${al})`); g.addColorStop(1, `rgba(${col},0)`); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); };
+    const chip = (x, y, r, col) => { c.fillStyle = col; c.beginPath(); const n = 9 + (R() * 7 | 0); for (let i = 0; i < n; i++) { const a = i / n * TAU, q = r * (0.45 + R() * 0.8), px = x + Math.cos(a) * q * 1.4, py = y + Math.sin(a) * q; i ? c.lineTo(px, py) : c.moveTo(px, py); } c.closePath(); c.fill(); };
+    [['#4f5a33', 0.42, 0], ['#8b8468', 0.5, 1], ['#3d4a3c', 0.6, 2], ['#5d3a2a', 1.6, 3]].forEach(([base, rust, r]) => {
+      const y0 = r * RW; c.save(); c.beginPath(); c.rect(0, y0, S, RW); c.clip();
+      c.fillStyle = base; c.fillRect(0, y0, S, RW);
+      for (let i = 0; i < 90; i++) blot(R() * S, y0 + R() * RW, 20 + R() * 80, R() < 0.5 ? '198,178,132' : '18,16,12', 0.1 + R() * 0.17); // sun bleaching and grime
+      for (let i = 0; i < 260 * rust; i++) { const x = R() * S, y = y0 + R() * RW, q = 2 + R() * R() * 26; chip(x + 1, y + 1, q * 1.15, 'rgba(38,22,14,.65)'); chip(x, y, q, R() < 0.55 ? '#7a4524' : R() < 0.6 ? '#94582a' : '#59301c'); }
+      for (let i = 0; i < 120 * rust; i++) { const x = R() * S, y = y0 + R() * RW, L = 12 + R() * 70, g = c.createLinearGradient(0, y, 0, y + L); g.addColorStop(0, 'rgba(112,60,26,.5)'); g.addColorStop(1, 'rgba(112,60,26,0)'); c.fillStyle = g; c.fillRect(x, y, 1 + R() * 4, L); }
+      for (let i = 0; i < 44; i++) blot(R() * S, y0 + R() * RW, 12 + R() * 42, '206,184,136', 0.2 + R() * 0.3); // blown sand caught on the metal
+      for (let i = 0; i < 7000; i++) { c.fillStyle = R() < 0.6 ? `rgba(14,10,8,${0.12 + R() * 0.3})` : `rgba(220,190,140,${0.05 + R() * 0.16})`; c.fillRect(R() * S, y0 + R() * RW, 1 + R() * 2, 1 + R() * 2); } // pitting
+      c.strokeStyle = 'rgba(10,8,6,.62)'; c.lineWidth = 2; for (let x = 0; x < S; x += 64) { c.beginPath(); c.moveTo(x + 0.5, y0); c.lineTo(x + 0.5, y0 + RW); c.stroke(); } for (let y = 0; y < RW; y += 42) { c.beginPath(); c.moveTo(0, y0 + y); c.lineTo(S, y0 + y); c.stroke(); }
+      c.strokeStyle = 'rgba(230,215,180,.14)'; c.lineWidth = 1; for (let x = 2; x < S; x += 64) { c.beginPath(); c.moveTo(x + 0.5, y0); c.lineTo(x + 0.5, y0 + RW); c.stroke(); }
+      for (let x = 7; x < S; x += 64) for (let y = 0; y < RW; y += 8) { c.fillStyle = 'rgba(8,6,5,.5)'; c.fillRect(x, y0 + y, 2, 2); c.fillRect(x + 50, y0 + y, 2, 2); }
+      if (r === 0 || r === 2) { const cx = r ? 170 : 830, cy = y0 + RW / 2, q = 62; c.globalAlpha = 0.46; c.fillStyle = r ? '#7c2a20' : '#c9c2a4'; c.beginPath(); if (r) c.arc(cx, cy, q, 0, TAU); else for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, d = i % 2 ? q * 0.38 : q; i ? c.lineTo(cx + Math.cos(a) * d, cy + Math.sin(a) * d) : c.moveTo(cx + Math.cos(a) * d, cy + Math.sin(a) * d); } c.closePath(); c.fill(); c.globalAlpha = 1; for (let i = 0; i < 30; i++) chip(cx + (R() - 0.5) * q * 2.3, cy + (R() - 0.5) * q * 2.2, 3 + R() * 9, R() < 0.5 ? '#7a4524' : base); } // a faded national marking
+      for (let i = 0; i < 26; i++) { const x = R() * S, y = y0 + R() * RW, q = 2 + R() * 3.5; c.fillStyle = 'rgba(100,54,24,.8)'; c.beginPath(); c.arc(x, y, q + 2, 0, TAU); c.fill(); c.fillStyle = '#080605'; c.beginPath(); c.arc(x, y, q, 0, TAU); c.fill(); } // bullet holes
+      c.restore();
+    });
+    const gl = W3.gl, t = gl.createTexture(); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv); gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (W3.aniso) gl.texParameterf(gl.TEXTURE_2D, W3.aniso.TEXTURE_MAX_ANISOTROPY_EXT, 8);
+    return this.t = t;
+  },
+  // solid parts of each crash, in the plane's own axes: [x, y, heading, half length, half width, height, stops shells]
+  HIT: [
+    [[1.4, 0, 0, 2.6, 0.8, 1.6, 1], [-4.6, 1.1, 0.24, 2.9, 0.62, 1.5, 1], [-7.2, 1.8, 0.24, 0.5, 1.9, 1.4, 0], [1.3, 3.5, 0, 1.0, 2.7, 0.7, 0], [1.3, -3.1, 0, 1.0, 2.3, 0.7, 0]],
+    [[0.2, 0, 0, 1.9, 0.9, 1.5, 1], [-3.6, 0.8, 0.26, 2.5, 0.55, 2.2, 1], [0.1, 3.6, 0, 1.15, 3.0, 0.65, 0], [0.1, -3.6, 0, 1.15, 3.0, 0.65, 0], [3.1, 0, 0, 0.8, 0.8, 1.2, 1]],
+    [[0.3, 0, 0, 1.3, 0.8, 1.1, 1], [-5.0, 0.5, 0.1, 3.0, 0.55, 1.1, 1], [0.1, 3.7, 0, 1.15, 3.1, 0.65, 0], [0.1, -3.7, 0, 1.15, 3.1, 0.65, 0], [2.8, 0, 0, 1.3, 0.7, 1.0, 1]],
+    [[-0.4, 0, 0, 4.5, 0.75, 1.65, 1], [-5.7, 0, 0, 0.45, 1.6, 1.4, 0], [0.6, 3.4, 0, 1.05, 2.7, 0.6, 0], [0.6, -3.4, 0, 1.05, 2.7, 0.6, 0]],
+  ],
+  walls(m, pl, i) {
+    pl.v = i % 4; this.HIT[pl.v].forEach((h, j) => { const [x, y] = toWorld(h[0], h[1], pl.x, pl.y, pl.a), w = { kind: 'plane', x, y, a: pl.a + h[2], hx: h[3], hy: h[4], h3: h[5], hp: 9999, tall: !!h[6] }; if (!j) w.pl = pl; m.walls.push(w); });
+  },
+  rowV(r, v) { return (r + 0.03 + clamp(v, 0, 1) * 0.94) / 4; },
+  nz(a, b) { return hash01(a * 7.13 + 11.7, b * 3.37 + 2.9); },
+  // places a part: yaw about z, then pitch (positive drops the nose), then roll
+  rot(yaw, pit, rol) {
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pit), sp = Math.sin(pit), cr = Math.cos(rol), sr = Math.sin(rol);
+    return p => { const y1 = p[1] * cr - p[2] * sr, z1 = p[1] * sr + p[2] * cr, x2 = p[0] * cp + z1 * sp, z2 = -p[0] * sp + z1 * cp; return [x2 * cy - y1 * sy, x2 * sy + y1 * cy, z2]; };
+  },
+  part(G, ox, oy, oz, yaw = 0, pit = 0, rol = 0) {
+    const rot = this.rot(yaw, pit, rol);
+    return { P: p => { const q = rot(p); return G.root(q[0] + ox, q[1] + oy, q[2] + oz); }, N: n => { const q = rot(n); return [q[0] * G.ca - q[1] * G.sa, q[0] * G.sa + q[1] * G.ca, q[2]]; } };
+  },
+  // a part mounted on another part
+  sub(f, ox, oy, oz, yaw = 0, pit = 0, rol = 0) {
+    const rot = this.rot(yaw, pit, rol);
+    return { P: p => { const q = rot(p); return f.P([q[0] + ox, q[1] + oy, q[2] + oz]); }, N: n => f.N(rot(n)) };
+  },
+  vert(a, p, n, c, u, v, m) { a.push(p[0], p[1], p[2], n[0], n[1], n[2], c[0], c[1], c[2], u, v, m); },
+  // a bent sheet or closed skin from a grid of points; `keep` tears holes, `inner` adds the dark inside face
+  surf(G, f, nu, nv, pos, o = {}) {
+    const a = G.a, pts = [], wrap = !!o.wrap, nV = nv + 1, col = o.col || [1, 1, 1], m = o.m === undefined ? 7 : o.m;
+    for (let i = 0; i <= nu; i++) for (let j = 0; j <= nv; j++) pts.push(pos(i, j));
+    const at = (i, j) => { i = clamp(i, 0, nu); j = wrap ? ((j % nv) + nv) % nv : clamp(j, 0, nv); return pts[i * nV + j]; };
+    const nor = []; for (let i = 0; i <= nu; i++) for (let j = 0; j <= nv; j++) { const A = at(i + 1, j), B = at(i - 1, j), C = at(i, j + 1), D = at(i, j - 1), n = V3.norm(V3.cross(V3.sub(A, B), V3.sub(C, D))), ct = o.out ? o.out(i, j) : null, p = pts[i * nV + j]; if (ct ? (n[0] * (p[0] - ct[0]) + n[1] * (p[1] - ct[1]) + n[2] * (p[2] - ct[2]) < 0) : o.flip) { n[0] *= -1; n[1] *= -1; n[2] *= -1; } nor.push(n); }
+    const uvOf = o.uv || ((i, j) => [i / nu, j / nv]), wP = pts.map(f.P), wN = nor.map(f.N), inn = o.inner ? pts.map((p, q) => f.P(V3.sub(p, V3.mul(nor[q], o.inner)))) : null, ic = o.ic || [0.13, 0.085, 0.06];
+    for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) {
+      if (o.keep && !o.keep(i, j)) continue;
+      const q = [i * nV + j, (i + 1) * nV + j, (i + 1) * nV + j + 1, i * nV + j + 1], uv = [uvOf(i, j), uvOf(i + 1, j), uvOf(i + 1, j + 1), uvOf(i, j + 1)];
+      for (const k of [0, 1, 2, 0, 2, 3]) this.vert(a, wP[q[k]], wN[q[k]], col, uv[k][0], uv[k][1], m);
+      if (inn) for (const k of [0, 2, 1, 0, 3, 2]) { const n = wN[q[k]]; this.vert(a, inn[q[k]], [-n[0], -n[1], -n[2]], ic, 0, 0, 4); }
+    }
+  },
+  // pipes, struts, stringers
+  tube(G, f, path, r, c, sides = 5) {
+    const a = G.a, n = path.length; let up = [0.13, 0.28, 0.95];
+    for (let s = 0; s < n - 1; s++) {
+      const p0 = path[s], p1 = path[s + 1], d = V3.norm(V3.sub(p1, p0)), e1 = V3.norm(V3.cross(d, up)), e2 = V3.cross(d, e1), r0 = p0[3] || r, r1 = p1[3] || r;
+      for (let k = 0; k < sides; k++) {
+        const t0 = k / sides * TAU, t1 = (k + 1) / sides * TAU, dir = t => V3.add(V3.mul(e1, Math.cos(t)), V3.mul(e2, Math.sin(t))), A = dir(t0), B = dir(t1), P = [V3.add(p0, V3.mul(A, r0)), V3.add(p1, V3.mul(A, r1)), V3.add(p1, V3.mul(B, r1)), V3.add(p0, V3.mul(B, r0))].map(f.P), N = [A, A, B, B].map(f.N);
+        for (const q of [0, 1, 2, 0, 2, 3]) this.vert(a, P[q], N[q], c, 0, 0, 4);
+      }
+    }
+  },
+  // a solid of revolution about the x axis; `prof` lists [x, radius]
+  lathe(G, f, prof, c, n = 12, m = 4, row = 3) {
+    this.surf(G, f, prof.length - 1, n, (i, j) => { const t = j / n * TAU, r = prof[i][1]; return [prof[i][0], Math.cos(t) * r, Math.sin(t) * r]; }, { wrap: true, col: c, m, out: i => [prof[i][0], 0, 0], uv: (i, j) => [i / 6, this.rowV(row, j / n)] });
+  },
+  // fuselage shell between two stations, torn at both ends, with frames and stringers inside
+  fuse(G, f, o) {
+    const nu = o.nu || 26, nv = 22, x0 = o.x0, x1 = o.x1, seed = o.seed, R0 = o.prof, row = o.row, fr = o.frames === undefined ? 0.62 : o.frames, Hs = o.holes || [], jagB = o.jagBack || 0, jagF = o.jagFront || 0;
+    const xAt = (i, j) => lerp(x0, x1, i / nu) + (i === 0 ? (this.nz(j, seed) - 0.5) * jagB * 0.7 : i === nu ? (this.nz(j, seed + 1) - 0.5) * jagF * 0.7 : 0);
+    const ring = (x, t, k = 1) => { const r = R0(x), d = 1 - 0.07 * this.nz(Math.round(x * 2), Math.round(t * 3) + seed) * (o.dent === undefined ? 1 : o.dent); return [x, Math.cos(t) * r[0] * d * k, (r[2] || 0) + Math.sin(t) * r[1] * d * k]; };
+    const keep = (i, j) => {
+      const u = i / nu, v = j / nv, b = this.nz(j, seed + 5) * jagB / (x1 - x0), e = this.nz(j, seed + 6) * jagF / (x1 - x0); if (u < b || 1 - u < e) return false;
+      for (const h of Hs) { const dv = Math.min(Math.abs(v - h[1]), 1 - Math.abs(v - h[1])), q = Math.hypot((u - h[0]) * (x1 - x0) / (h[3] || 1), dv * 5.4) / h[2] + (this.nz(i + h[0] * 9, j + seed) - 0.5) * 0.55; if (q < 1) return false; }
+      return true;
+    };
+    this.surf(G, f, nu, nv, (i, j) => ring(xAt(i, j), j / nv * TAU), { wrap: true, col: o.col || G.c, keep, inner: 0.03, out: i => { const x = lerp(x0, x1, i / nu); return [x, 0, R0(x)[2] || 0]; }, uv: (i, j) => [i / nu * (x1 - x0) / 7, this.rowV(row, j / nv)] });
+    if (fr) {
+      const dark = [0.2 * G.dk, 0.13 * G.dk, 0.09 * G.dk], mid = [0.34 * G.dk, 0.2 * G.dk, 0.12 * G.dk];
+      for (let x = x0 + 0.25; x < x1 - 0.1; x += fr) { const p = []; for (let k = 0; k <= 16; k++) p.push(ring(x, k / 16 * TAU, 0.94)); this.tube(G, f, p, 0.03, mid, 4); }
+      for (let k = 0; k < 8; k++) { const t = (k + 0.5) / 8 * TAU, p = []; for (let s = 0; s <= 8; s++) p.push(ring(lerp(x0 + 0.15, x1 - 0.15, s / 8), t, 0.92)); this.tube(G, f, p, 0.016, dark, 3); }
+    }
+  },
+  wing(G, f, o) {
+    const nu = o.nu || 26, nc = 9, nv = nc * 2, sg = o.sg, span = o.span, seed = o.seed, end = o.end || 1, row = o.row, Hs = o.holes || [];
+    const foil = c => 0.2969 * Math.sqrt(c) - 0.126 * c - 0.3516 * c * c + 0.2843 * c ** 3 - 0.1015 * c ** 4;
+    const P = (t, c, s) => { const tp = t > 0.84 && end >= 1 ? Math.sqrt(Math.max(0.03, 1 - ((t - 0.84) / 0.165) ** 2)) : 1, ch = lerp(o.root, o.tip, t) * tp, le = (o.le || 0) - (o.sweep || 0) * t, ail = c > 0.7 && t > 0.5 && t < 0.92 ? (c - 0.7) * (o.ail || 0) : 0; return [le - c * ch, sg * span * t, (o.dih || 0) * span * t + (o.droop || 0) * t * t + s * 1.1 * (o.th || 0.15) * ch * foil(c) * (1 - 0.5 * t) + ail + Math.sin(t * 31 + seed) * Math.sin(c * 9 + seed) * (o.rip === undefined ? 0.022 : o.rip) * (1 + t)]; };
+    const lim = j => end + (this.nz(j, seed) - 0.5) * (end < 1 ? 0.16 : 0);
+    const cOf = j => { const c = j <= nc ? 1 - j / nc : (j - nc) / nc; return c * c * (0.35 + 0.65 * c) * 0 + c; }, sOf = j => j <= nc ? 1 : -1;
+    const keep = (i, j) => {
+      const t = (i + 0.5) / nu * (end < 1 ? end + 0.1 : 1), c = (cOf(j) + cOf(j + 1)) / 2; if (t > lim(j)) return false;
+      if (o.slit && c > 0.68 && c < 0.74 && t > 0.5 && t < 0.92) return false;
+      for (const h of Hs) { const q = Math.hypot((t - h[0]) * span / lerp(o.root, o.tip, h[0]), c - h[1]) / h[2] + (this.nz(i + h[0] * 7, j + seed) - 0.5) * (h[3] === undefined ? 0.5 : h[3]); if (q < 1 && (h[4] === undefined || sOf(j) === h[4])) return false; }
+      return true;
+    };
+    const tf = i => i / nu * (end < 1 ? end + 0.1 : 1);
+    this.surf(G, f, nu, nv, (i, j) => P(tf(i), cOf(j), sOf(j)), { wrap: true, col: o.col || G.c, keep, inner: 0.02, flip: sg > 0, uv: (i, j) => [0.5 + sg * 0.5 * (i / nu), this.rowV(row, j / nv)] });
+    const fc = [0.3 * G.dk, 0.18 * G.dk, 0.11 * G.dk];
+    if (o.ribs !== false) {
+      // ribs and spars live inside the skin, so they only show through the tears
+      for (let q = 1; q < 13; q++) {
+        const t = q / 13 * Math.min(1, end); if (!(end < 1 && t > end - 0.2) && !Hs.some(h => Math.abs(t - h[0]) * span < h[2] * lerp(o.root, o.tip, h[0]) + 0.55)) continue;
+        const p = []; for (let k = 0; k <= 10; k++) p.push(P(t, k / 10, 0.62)); for (let k = 10; k >= 0; k--) p.push(P(t, k / 10, -0.62)); this.tube(G, f, p, 0.014, fc, 3);
+      }
+      for (const c of [0.24, 0.58]) { const p = [], e = Math.min(end, 0.96); for (let s = 0; s <= 8; s++) { const t = e * s / 8, q = P(t, c, 0), up = P(t, c, 1); q.push(Math.max(0.012, Math.min(0.05, (up[2] - q[2]) * 0.5))); p.push(q); } this.tube(G, f, p, 0.03, fc, 4); }
+    }
+  },
+  blade(G, f, ang, L, curl, side, row) {
+    const n = 12, seed = ang * 9;
+    this.surf(G, f, n, 8, (i, j) => {
+      const t = i / n, q = j / 8 * TAU, w = (0.09 + 0.17 * Math.sin(Math.min(1, t * 1.25 + 0.14) * Math.PI) ** 0.8) * (t > 0.92 ? Math.sqrt(Math.max(0.05, (1 - t) / 0.08)) : 1), th = 0.022 + 0.05 * (1 - t), lx = Math.cos(q) * w, lz = Math.sin(q) * th, tw = 0.7 * (1 - t) + curl * side * t * t * 0.9, r = 0.22 + t * L;
+      // the blade bends back and twists where it dug in
+      return [-curl * 0.9 * t * t * t * L * 0.72 - 0.04 + lz * Math.cos(tw) + lx * Math.sin(tw) * 0.6, Math.cos(ang) * r - Math.sin(ang) * (lx * Math.cos(tw) + side * curl * 0.32 * t * t * L), Math.sin(ang) * r + Math.cos(ang) * (lx * Math.cos(tw) + side * curl * 0.32 * t * t * L)];
+    }, { wrap: true, col: G.c.map(v => v * 0.9), uv: (i, j) => [i / 12 * 0.5 + seed, this.rowV(row, j / 8)] });
+  },
+  // a radial engine facing +x from `x`: finned cylinders, pushrods, exhaust ring, gear nose, propeller
+  radial(G, f, x, o) {
+    const n = o.cyl || 9, R = 0.53, fin = [0.2 * G.dk, 0.15 * G.dk, 0.115 * G.dk], cast = [0.25 * G.dk, 0.17 * G.dk, 0.12 * G.dk], lt = [0.33 * G.dk, 0.2 * G.dk, 0.12 * G.dk];
+    this.lathe(G, f, [[x - 0.42, 0.02], [x - 0.42, 0.32], [x - 0.3, 0.37], [x - 0.08, 0.36], [x + 0.08, 0.33], [x + 0.24, 0.22], [x + 0.36, 0.15], [x + 0.42, 0.02]], cast, 12);
+    for (const [row, dx] of (o.twin ? [[0, 0], [1, -0.27]] : [[0, 0]])) for (let i = 0; i < n; i++) {
+      if (o.miss && this.nz(i + row * 20, G.seed) < o.miss) continue;
+      const a = (i + row * 0.5) / n * TAU + 0.1, ca = Math.cos(a), sa = Math.sin(a), rad = (r, xx) => [x + dx + xx, ca * r, sa * r];
+      for (let q = 0; q < 6; q++) {
+        const r0 = 0.27 + q * 0.043, w = 0.115 - q * 0.002, S = (rr, wd) => { const pts = []; for (let k = 0; k < 8; k++) { const t = k / 8 * TAU; pts.push([x + dx + Math.cos(t) * wd, ca * rr - sa * Math.sin(t) * wd, sa * rr + ca * Math.sin(t) * wd]); } return pts; }, A = S(r0, w), B = S(r0 + 0.022, w), N0 = f.N([0, ca, sa]);
+        for (let k = 0; k < 8; k++) { const l = (k + 1) % 8, t = (k + 0.5) / 8 * TAU, Nr = f.N([Math.cos(t), -sa * Math.sin(t), ca * Math.sin(t)]), q0 = [A[k], B[k], B[l], A[l]].map(f.P), q1 = [B[0], B[k], B[l]].map(f.P); for (const v of [0, 1, 2, 0, 2, 3]) this.vert(G.a, q0[v], Nr, fin, 0, 0, 4); for (const v of [0, 1, 2]) this.vert(G.a, q1[v], N0, fin, 0, 0, 4); }
+        this.tube(G, f, [rad(r0 + 0.012, 0).concat(0.078), rad(r0 + 0.034, 0).concat(0.074)], 0.07, cast, 7);
+      }
+      this.tube(G, f, [rad(R - 0.02, 0).concat(0.1), rad(R + 0.07, 0).concat(0.095), rad(R + 0.12, 0).concat(0.03)], 0.1, lt, 7);
+      this.tube(G, f, [rad(0.26, 0.11), rad(R + 0.06, 0.1)], 0.012, cast, 3); this.tube(G, f, [rad(0.26, -0.11), rad(R + 0.06, -0.1)], 0.012, cast, 3);
+      this.tube(G, f, [rad(R + 0.02, -0.14), rad(R + 0.04, -0.32), [x - 0.42, ca * 0.64, sa * 0.64]], 0.032, fin, 4); // exhaust stack to the collector
+    }
+    const col = []; for (let k = 0; k <= 22; k++) { const t = k / 22 * TAU; if (o.ringGap && k > 15) break; col.push([x - 0.44, Math.cos(t) * 0.65, Math.sin(t) * 0.65]); } this.tube(G, f, col, 0.05, fin, 5);
+    if (o.prop !== false) {
+      this.lathe(G, f, [[x + 0.42, 0.02], [x + 0.42, 0.15], [x + 0.56, 0.17], [x + 0.72, 0.12], [x + 0.8, 0.02]], lt, 10);
+      const pf = this.sub(f, x + 0.56, 0, 0), B = o.blades || [[0, 0.1, 1], [TAU / 3, 0.9, -1], [TAU * 2 / 3, 0.75, 1]]; B.forEach(([a, c, s]) => this.blade(G, pf, a + (o.spin || 0), o.L || 1.42, c, s, o.row === undefined ? 3 : o.row));
+    }
+  },
+  gear(G, f, x, y, z, o = {}) {
+    const dk = G.dk, st = [0.24 * dk, 0.2 * dk, 0.16 * dk], up = o.up === undefined ? 1 : o.up, L = o.L || 1.15, tilt = o.tilt || 0, yEnd = y + tilt, zEnd = z + up * L;
+    this.tube(G, f, [[x, y, z], [x + 0.02, lerp(y, yEnd, 0.62), lerp(z, zEnd, 0.62), 0.05], [x + 0.03, yEnd, zEnd, 0.036]], 0.06, st, 6);
+    this.tube(G, f, [[x - 0.34, y, z], [x + 0.02, lerp(y, yEnd, 0.5), lerp(z, zEnd, 0.5)]], 0.02, st, 4); this.tube(G, f, [[x + 0.3, y + 0.1, z], [x + 0.02, lerp(y, yEnd, 0.42), lerp(z, zEnd, 0.42)]], 0.018, st, 4);
+    const w = this.sub(f, x + 0.03, yEnd + (o.out || 0.1), zEnd, Math.PI / 2 + (o.yaw || 0)), tyre = [0.14 * dk, 0.16 * dk, 0.18 * dk], hub = [0.26 * dk, 0.18 * dk, 0.12 * dk];
+    this.lathe(G, w, [[-0.13, 0.01], [-0.13, 0.16], [-0.14, 0.2], [-0.11, 0.33], [-0.05, 0.4], [0.05, 0.4], [0.11, 0.33], [0.14, 0.2], [0.13, 0.16], [0.13, 0.01]], tyre, 16);
+    this.lathe(G, w, [[0.135, 0.01], [0.135, 0.18], [0.16, 0.19]], hub, 12); this.lathe(G, w, [[-0.135, 0.01], [-0.135, 0.18], [-0.16, 0.19]], hub, 12);
+  },
+  // tail: fin and tailplanes on a station of the aft fuselage
+  tail(G, f, x, z, row, seed, o = {}) {
+    if (!o.noFin) this.wing(G, this.sub(f, x, 0, z, 0, 0, o.finRoll === undefined ? Math.PI / 2 * 1 : o.finRoll), { sg: -1, span: 1.35, root: 1.25, tip: 0.5, le: 0.7, sweep: 0.42, th: 0.09, row, seed, nu: 10, end: o.finEnd || 1, ribs: true, rip: 0.012, flipSide: 1 });
+    for (const sg of [1, -1]) { if (o.lose === sg) continue; this.wing(G, this.sub(f, x, 0, z), { sg, span: 1.75, root: 1.1, tip: 0.5, le: 0.55, sweep: 0.3, th: 0.09, dih: 0.03, droop: (o.droop || 0) * (sg === 1 ? 1 : 0.4), row, seed: seed + sg * 3, nu: 11, end: o.tEnd && sg === 1 ? o.tEnd : 1, rip: 0.012 }); }
+  },
+  // wisps of control cable and torn wiring between broken sections
+  wires(G, f, A, B, n, seed) { for (let i = 0; i < n; i++) { const p = []; for (let k = 0; k <= 5; k++) { const t = k / 5, w = Math.sin(t * Math.PI); p.push([lerp(A[0], B[0], t) + (this.nz(i, k + seed) - 0.5) * 0.3 * w, lerp(A[1], B[1], t) + (this.nz(i + 9, k + seed) - 0.5) * 0.6 * w + (i - n / 2) * 0.1, lerp(A[2], B[2], t) - w * 0.2 * this.nz(i, seed)]); } this.tube(G, f, p, 0.012, [0.17 * G.dk, 0.12 * G.dk, 0.09 * G.dk], 3); } },
+  // loose scrap lying around the crash
+  debris(G, n, r0, r1, row) {
+    const R = G.R, f0 = this.part(G, 0, 0, 0);
+    for (let i = 0; i < n; i++) {
+      const a = R() * TAU, d = r0 + R() * (r1 - r0), x = Math.cos(a) * d * 1.3, y = Math.sin(a) * d, f = this.part(G, x, y, 0.05 + R() * 0.12, R() * TAU, (R() - 0.5) * 0.3, (R() - 0.5) * 0.4), k = R();
+      if (k < 0.6) { const L = 0.3 + R() * 0.8, W = 0.2 + R() * 0.45, c1 = R() * 6, b = (R() - 0.3) * 0.5, sd = i * 3 + 1; this.surf(G, f, 5, 4, (p, q) => { const u = p / 5 - 0.5, v = q / 4 - 0.5; return [u * L, v * W, b * u * u + 0.05 * Math.sin(u * 7 + c1) * Math.cos(v * 6)]; }, { col: G.c, inner: 0.012, keep: (p, q) => this.nz(p + sd, q) > 0.2, uv: (p, q) => [p / 16 + x * 0.1, this.rowV(row, q / 12 + (i % 8) / 10)] }); }
+      else if (k < 0.85) { const p = [], L = 0.5 + R() * 1.1; for (let s = 0; s <= 4; s++) p.push([s / 4 * L, Math.sin(s * 1.3 + i) * 0.12, Math.abs(Math.sin(s * 0.9 + i)) * 0.08]); this.tube(G, f, p, 0.022, [0.28 * G.dk, 0.17 * G.dk, 0.11 * G.dk], 4); }
+      else this.lathe(G, f, [[-0.32, 0.02], [-0.32, 0.1], [-0.1, 0.13], [0.2, 0.12], [0.32, 0.06], [0.33, 0.02]], [0.24 * G.dk, 0.16 * G.dk, 0.11 * G.dk], 7); // a dented oil tank or gun barrel housing
+    }
+  },
+  // sand banked up against each wreck: real ground, so it matches perfectly: [x, y, half length, half width, height, heading]
+  DRIFT: [
+    [[2.2, 1.7, 2.3, 0.9, 0.26, 0.1], [2.1, -1.7, 2.2, 0.8, 0.22, -0.1], [0.9, 0.9, 2.2, 0.55, 0.3, 0.05], [0.9, -0.9, 2.2, 0.55, 0.28, 0], [3.9, 0.3, 1.2, 1, 0.26, 0.4], [-4.4, 0.4, 2.4, 0.8, 0.22, 0.24]],
+    [[0.9, 2.2, 2.4, 1, 0.22, 0.05], [0.9, -2.3, 2.5, 1, 0.24, 0], [1.1, 4.9, 1.9, 1.1, 0.2, 0.1], [1, -4.9, 1.9, 1.1, 0.2, 0], [3.2, 0.2, 1.3, 1.2, 0.34, 0.5], [-0.8, 0, 1.5, 1.3, 0.25, 0.5]],
+    [[-3.5, 0.8, 2.6, 0.7, 0.2, 0.1], [1, 2.8, 2.6, 1.2, 0.14, 0], [1, -2.8, 2.5, 1.2, 0.14, 0], [3.5, 0, 1.3, 1, 0.26, 0.3]],
+    [[0.8, 2.4, 2.8, 1.1, 0.2, 0], [0.8, -2.4, 2.8, 1.1, 0.2, 0], [1.6, 0.9, 2, 0.6, 0.3, 0.05], [1.6, -0.9, 2, 0.6, 0.3, 0], [-3.2, 0, 2.6, 0.75, 0.17, 0], [4.7, 2, 1.1, 1, 0.28, 0.8]],
+  ],
+  ground(map, G) {
+    for (const pl of map.planes || []) {
+      pl.zg = G.d[Math.round(pl.y) * G.W + Math.round(pl.x)];
+      for (const [lx, ly, rx, ry, h, an] of this.DRIFT[pl.v || 0]) {
+        const [cx, cy] = toWorld(lx, ly, pl.x, pl.y, pl.a), A = pl.a + an, R = Math.ceil(Math.max(rx, ry) * 1.7);
+        for (let y = Math.max(0, (cy - R) | 0); y <= Math.min(G.H - 1, (cy + R) | 0); y++) for (let x = Math.max(0, (cx - R) | 0); x <= Math.min(G.W - 1, (cx + R) | 0); x++) {
+          const [u, v] = toLocal(x, y, cx, cy, A), q = (u / (rx * 1.6)) ** 2 + (v / (ry * 1.6)) ** 2; if (q < 1) { const k = 1 - q; G.d[y * G.W + x] += h * 0.68 * k * k * (3 - 2 * k); }
+        }
+      }
+    }
+  },
+  build(a, pl) {
+    const zg = pl.zg === undefined ? W3.gz(pl.x, pl.y) : pl.zg, ca = Math.cos(pl.a), sa = Math.sin(pl.a), R = mulberry32(pl.seed | 0), dk = pl.burnt ? 0.72 : 1;
+    const G = { a, R, ca, sa, pa: pl.a, dk, seed: pl.seed % 97, c: [dk, dk, dk], root: (x, y, z) => [pl.x + x * ca - y * sa, pl.y + x * sa + y * ca, zg + z] };
+    this['v' + (pl.v || 0)](G, pl);
+  },
+  // fighter profile: [half width, half height, centre height] along x, nose toward +x
+  fprof(x) { const t = clamp((x + 7) / 10.5, 0, 1), k = 0.16 + 0.68 * Math.sin(Math.min(1, t * 1.28) * Math.PI / 2) ** 0.9; return [k, k * 1.06, 0]; },
+  // belly-landed fighter, back broken behind the cockpit, tail twisted off: propeller curled, one wing folding
+  v0(G, pl) {
+    const s = G.seed, row = 0, lost = pl.wingLost || 1, F = this.part(G, 0.9, 0, 0.5, 0, 0.055, 0.06);
+    this.fuse(G, F, { x0: -1.5, x1: 2.75, row, seed: s, prof: x => { const q = this.fprof(x + 0.7); return [q[0] * 1.02, q[1] * 1.02, 0]; }, jagBack: 1.1, holes: [[0.58, 0.72, 0.42, 1.1], [0.2, 0.3, 0.26], [0.46, 0.2, 0.2]] });
+    this.radial(G, F, 3.2, { cyl: 9, row: 3, L: 1.42, spin: 0.35, blades: [[0, 0.72, 1], [TAU / 3, 0.2, -1], [TAU * 2 / 3, 1.05, 1]], miss: 0.1 });
+    this.lathe(G, F, [[2.55, 0.72], [2.82, 0.76], [2.96, 0.72], [2.96, 0.68], [2.7, 0.68]], [0.3 * G.dk, 0.2 * G.dk, 0.13 * G.dk], 18, 7, 3);
+    const cf = [0.2 * G.dk, 0.17 * G.dk, 0.13 * G.dk]; for (const x of [-0.45, 0.05, 0.55, 1.0]) { const p = []; for (let k = 0; k <= 8; k++) { const t = k / 8 * Math.PI, h = x > 0.8 ? 0.26 : 0.5 - Math.abs(x) * 0.16; p.push([x, Math.cos(t) * 0.5, 0.56 + Math.sin(t) * h]); } this.tube(G, F, p, 0.022, cf, 4); }
+    for (const y of [-0.5, 0.5]) this.tube(G, F, [[-0.5, y, 0.57], [1.05, y, 0.58]], 0.024, cf, 4);
+    const W = this.part(G, 2.2, 0, 0.42, 0, 0.03, 0.02), base = { root: 2.05, tip: 0.95, sweep: 0.42, dih: 0.04, th: 0.15, row, seed: s + 2, slit: 1, ail: 0.22 };
+    this.wing(G, W, Object.assign({}, base, { sg: lost, span: 6.1, holes: [[0.42, 0.42, 0.13], [0.7, 0.28, 0.08]] }));
+    this.wing(G, W, Object.assign({}, base, { sg: -lost, span: 6.1, end: 0.62, droop: -0.22, seed: s + 5, holes: [[0.33, 0.56, 0.16]] }));
+    const fw = this.part(G, 1.15, -lost * 5.6, 0.17, -lost * 0.42, 0.04, lost * 0.1); this.wing(G, fw, Object.assign({}, base, { sg: -lost, span: 2.4, root: 1.2, tip: 0.8, sweep: 0.1, dih: 0, end: 0.86, seed: s + 7 }));
+    const A = this.part(G, -1.75, 0.5, 0.36, 0.24, -0.015, 0.2);
+    this.fuse(G, A, { x0: -5.6, x1: -0.15, row, seed: s + 9, prof: x => { const q = this.fprof(x - 0.85); return q; }, jagFront: 1.2, holes: [[0.66, 0.45, 0.2], [0.3, 0.8, 0.13]] }); this.tail(G, A, -4.9, 0.1, row, s + 11, { tEnd: 0.72, droop: -0.14 });
+    this.wires(G, F, [-1.4, 0.2, 0.2], [-2.5, 0.65, 0.15], 6, s);
+    this.debris(G, 26, 4, 11, row);
+  },
+  // flipped on its back: wings on the sand, undercarriage in the air, the rear fuselage snapped and rearing up
+  v1(G, pl) {
+    const s = G.seed, row = 1, W = this.part(G, 1.15, 0, 0.5, 0, 0, Math.PI * 0.008), base = { sg: 1, span: 6.3, root: 2.2, tip: 1.0, sweep: 0.42, dih: 0, droop: -0.06, th: 0.13, row, seed: s, slit: 1, ail: -0.12 };
+    this.wing(G, W, Object.assign({}, base, { holes: [[0.14, 0.5, 0.09, 0.4, 1], [0.62, 0.3, 0.1], [0.8, 0.55, 0.05]] })); this.wing(G, W, Object.assign({}, base, { sg: -1, seed: s + 1, holes: [[0.14, 0.5, 0.09, 0.4, 1], [0.48, 0.7, 0.1]] }));
+    const c = this.part(G, 0, 0, 0.54, 0, 0, Math.PI);
+    this.fuse(G, c, { x0: -1.5, x1: 2.1, row, seed: s + 2, prof: x => { const q = this.fprof(x + 0.9); return [q[0], q[1] * 0.92, 0]; }, jagBack: 1, jagFront: 0.6, holes: [[0.5, 0.25, 0.5, 1.1], [0.6, 0.75, 0.42, 1.1], [0.18, 0.5, 0.26]] });
+    const E = this.part(G, 2.3, 0.1, 0.72, 0.1, 0.12, 2.3); this.radial(G, E, 0.45, { cyl: 14, twin: true, row: 3, L: 1.5, spin: 0.4, blades: [[0.2, 0.08, 1], [0.2 + TAU / 3, 0.62, -1], [0.2 + TAU * 2 / 3, 0.7, 1]], miss: 0.06 });
+    this.gear(G, W, 0.62, 2.0, 0.08, { L: 1.28, tilt: -0.1, out: 0.16 }); this.gear(G, W, 0.62, -2.0, 0.08, { L: 1.28, tilt: 0.1, out: -0.16 });
+    for (const sg of [1, -1]) this.surf(G, this.part(G, 0.95, sg * 2.55, 0.42, 0, 0, sg * 0.4), 4, 4, (i, j) => [(i - 2) * 0.3, 0.1 * Math.sin(i), j / 4 * 0.86], { col: G.c, inner: 0.012, uv: (i, j) => [i / 10, this.rowV(row, j / 8)] }); // gear doors
+    const A = this.part(G, -1.5, 0.3, 0.6, 0.26, 0.42, Math.PI + 0.15);
+    this.fuse(G, A, { x0: -4.6, x1: -0.1, row, seed: s + 4, prof: x => this.fprof(x - 1.4), jagFront: 1.1, holes: [[0.55, 0.3, 0.24], [0.76, 0.7, 0.22], [0.35, 0.55, 0.12], [0.2, 0.2, 0.1]], dent: 1.3 }); this.tail(G, A, -3.85, 0, row, s + 6, { finEnd: 0.8, droop: 0.05, lose: -1 });
+    this.wires(G, c, [-1.45, 0, 0.1], [-2.1, -0.2, -0.15], 7, s + 2);
+    this.debris(G, 24, 4.5, 11, row);
+  },
+  // a rust skeleton: the skin eaten away around the centre section, ribs and engine bearers bare, tail lying apart
+  v2(G, pl) {
+    const s = G.seed, row = 3, W = this.part(G, 1.2, 0, 0.5, 0, 0.012, 0), base = { sg: 1, span: 6.5, root: 2.2, tip: 1.05, sweep: 0.45, dih: 0.025, th: 0.13, row, seed: s, slit: 1, ail: 0.2 };
+    this.wing(G, W, Object.assign({}, base, { holes: [[0.34, 0.5, 0.3, 0.25], [0.08, 0.36, 0.15], [0.68, 0.34, 0.09], [0.86, 0.5, 0.08], [0.12, 0.84, 0.13]] }));
+    this.wing(G, W, Object.assign({}, base, { sg: -1, seed: s + 3, end: 0.86, holes: [[0.34, 0.5, 0.3, 0.25], [0.08, 0.36, 0.15], [0.62, 0.4, 0.1], [0.12, 0.84, 0.13]] }));
+    const c = this.part(G, 0, 0, 0.62);
+    this.fuse(G, c, { x0: -1.3, x1: 1.5, nu: 14, row, seed: s + 1, prof: x => [0.68 - Math.abs(x) * 0.03, 0.62, 0], jagBack: 1.2, jagFront: 1.1, holes: [[0.5, 0.25, 1.1, 1.1], [0.52, 0.66, 0.42, 0.9]] });
+    const E = this.part(G, 2.55, 0, 0.55, 0.05, 0.16, 0.2); this.radial(G, E, 0.5, { cyl: 9, row: 3, L: 1.0, blades: [[0.5, 1.1, 1], [0.5 + TAU / 3, 0.9, -1], [0.5 + TAU * 2 / 3, 1.2, 1]], ringGap: 1, miss: 0.3 });
+    const dk = G.dk, bar = [0.36 * dk, 0.21 * dk, 0.12 * dk]; for (const [y, z] of [[0.55, 0.45], [-0.55, 0.45], [0.5, -0.35], [-0.5, -0.35]]) { this.tube(G, E, [[-1.2, y, z], [0.1, y * 0.5, z * 0.5]], 0.045, bar, 4); this.tube(G, E, [[-1.2, y * 0.2, z], [0.1, y * 0.5, z * 0.5]], 0.035, bar, 4); }
+    for (const sg of [1, -1]) { this.tube(G, W, [[0.1, sg * 1.75, 0.05], [0.05, sg * 1.8, 0.8, 0.05], [0.0, sg * 1.75, 1.35, 0.075]], 0.07, bar, 6); this.tube(G, W, [[-0.3, sg * 2.2, 0.05], [0.05, sg * 1.8, 0.8]], 0.025, bar, 4); this.tube(G, W, [[0.5, sg * 2.05, 0.05], [0.05, sg * 1.82, 0.65]], 0.025, bar, 4); } // gear legs with the wheels long gone
+    for (let i = 0; i < 18; i++) { const x = -1 + i * 0.13, p = [[x, 0.5 - i * 0.05, -0.1], [x + 0.2, 0.2 - i * 0.02, 0.28], [x - 0.1, -0.1 + i * 0.03, -0.05]]; this.tube(G, c, p, 0.018, [0.22 * dk, 0.14 * dk, 0.1 * dk], 3); } // crushed innards
+    const A = this.part(G, -2.1, 0.42, 0.44, 0.1, -0.02, -0.14);
+    this.fuse(G, A, { x0: -5.8, x1: -0.1, row, seed: s + 4, prof: x => { const q = this.fprof(x + 0.8); return [q[0] * 0.98, q[1] * 0.96, 0]; }, jagFront: 1.2, jagBack: 0.15, holes: [[0.72, 0.28, 0.22], [0.5, 0.2, 0.13], [0.34, 0.72, 0.12], [0.62, 0.62, 0.1]], dent: 1.2 }); this.tail(G, A, -5.05, 0.08, row, s + 5, { droop: -0.06, finRoll: Math.PI / 2 + 0.1 });
+    this.debris(G, 32, 3.5, 10, row);
+  },
+  // a two-seater sitting in the sand with its long glazed canopy frame intact and its engine torn away
+  v3(G, pl) {
+    const s = G.seed, row = 2, F = this.part(G, 0, 0, 0.62, 0, -0.018, 0.05), prof = x => { const t = clamp((x + 6) / 9.6, 0, 1), k = 0.17 + 0.62 * Math.sin(Math.min(1, t * 1.25) * Math.PI / 2) ** 0.85; return [k, k * 1.08, 0]; };
+    this.fuse(G, F, { x0: -5.6, x1: 3.5, nu: 38, row, seed: s, prof, jagFront: 0.9, holes: [[0.62, 0.25, 0.92, 2.2], [0.3, 0.32, 0.12], [0.45, 0.75, 0.13]] });
+    const cf = [0.3 * G.dk, 0.24 * G.dk, 0.17 * G.dk], tp = 0.74, st = [-1.9, -1.35, -0.8, -0.25, 0.3, 0.85, 1.4, 1.95, 2.5];
+    for (const x of st) { const r = prof(x), h = 0.3 + 0.2 * Math.sin(clamp((x + 2) / 4.6, 0, 1) * Math.PI), p = []; for (let k = 0; k <= 10; k++) { const t = k / 10 * Math.PI; p.push([x, Math.cos(t) * r[0] * 0.8, r[1] * tp + Math.sin(t) * h]); } this.tube(G, F, p, 0.026, cf, 4); }
+    for (const q of [0.34, 0.6, 0.86]) for (const sg of [1, -1]) { const p = st.map(x => { const r = prof(x), h = 0.3 + 0.2 * Math.sin(clamp((x + 2) / 4.6, 0, 1) * Math.PI), t = Math.PI / 2 - sg * Math.acos(q) * 0.95; return [x, Math.cos(t) * r[0] * 0.8, r[1] * tp + Math.sin(t) * h]; }); this.tube(G, F, p, 0.016, cf, 3); }
+    for (let x = -1.6; x < 2.4; x += 1.3) { this.tube(G, F, [[x, -0.34, -0.05], [x, -0.34, 0.26], [x + 0.2, 0.3, 0.3], [x + 0.2, 0.3, -0.05]], 0.03, [0.12 * G.dk, 0.09 * G.dk, 0.07 * G.dk], 4); this.tube(G, F, [[x + 0.1, 0.05, -0.1], [x + 0.25, 0, 0.34]], 0.02, [0.2 * G.dk, 0.14 * G.dk, 0.1 * G.dk], 4); } // seat frames and the stick
+    const W = this.part(G, 2.1, 0, 0.44, 0, 0.012, 0.03), base = { span: 6.0, root: 2.1, tip: 0.95, sweep: 0.42, dih: 0.015, th: 0.14, row, seed: s + 2, slit: 1, ail: 0.16 };
+    this.wing(G, W, Object.assign({}, base, { sg: 1, holes: [[0.5, 0.26, 0.08], [0.76, 0.5, 0.1]] })); this.wing(G, W, Object.assign({}, base, { sg: -1, seed: s + 4, end: 0.8, droop: -0.1, holes: [[0.22, 0.32, 0.1], [0.56, 0.5, 0.1]] }));
+    this.tail(G, this.part(G, 0, 0, 0.62, 0, -0.018, 0.05), -4.9, 0.08, row, s + 6, {});
+    for (let i = 0; i < 14; i++) { const a = i / 14 * TAU, r = 0.66 + this.nz(i, s) * 0.2; this.tube(G, F, [[3.25, Math.cos(a) * 0.55, Math.sin(a) * 0.55], [3.6 + this.nz(i, s + 1) * 0.5, Math.cos(a) * r, Math.sin(a) * r]], 0.02, [0.28 * G.dk, 0.17 * G.dk, 0.11 * G.dk], 3); } // pipes and control rods torn out of the firewall
+    this.radial(G, this.part(G, 5.5, 2.1, 0.55, 0.8, 0.5, 0.2), 0, { cyl: 9, prop: false, miss: 0.15 });
+    this.debris(G, 26, 5, 11, row);
   },
 };
 
@@ -13987,27 +14255,167 @@ const Streak = {
   WIN: 14, n: 0, t: -99, pop: -99, shown: 0, art: null,
   kill() { const now = B.time; this.n = now - this.t <= this.WIN && this.bt === B ? this.n + 1 : 1; this.t = now; this.bt = B; if (this.n >= 2) { this.pop = now; this.shown = this.n; } },
   skull() {
-    if (this.art) return this.art; const S = 220, cv = document.createElement('canvas'); cv.width = cv.height = S; const c = cv.getContext('2d');
-    const bone = '#f1ead8', ink = '#2a1a18', paint = () => {
-      c.save(); c.translate(S / 2, S * 0.54);
-      for (const sg of [-1, 1]) { c.save(); c.rotate(sg * 0.76); c.fillStyle = bone; c.strokeStyle = ink; c.lineWidth = 5; c.beginPath(); c.roundRect(-84, -8, 168, 16, 6); c.fill(); c.stroke(); for (const e of [-84, 84]) for (const o of [-10, 10]) { c.beginPath(); c.arc(e, o, 12, 0, TAU); c.fill(); c.stroke(); } c.fillRect(-90, -8, 180, 16); c.restore(); }
-      c.translate(0, -14); c.fillStyle = bone; c.strokeStyle = ink; c.lineWidth = 6; c.beginPath(); c.moveTo(-34, 30); c.bezierCurveTo(-70, 18, -66, -56, 0, -58); c.bezierCurveTo(66, -56, 70, 18, 34, 30); c.lineTo(30, 54); c.quadraticCurveTo(0, 64, -30, 54); c.closePath(); c.fill(); c.stroke();
-      c.fillStyle = ink; for (const sg of [-1, 1]) { c.save(); c.translate(sg * 25, -6); c.rotate(sg * 0.18); c.beginPath(); c.ellipse(0, 0, 17, 21, 0, 0, TAU); c.fill(); c.restore(); }
-      c.beginPath(); c.moveTo(0, 12); c.lineTo(-9, 28); c.lineTo(9, 28); c.closePath(); c.fill(); c.lineWidth = 4; for (const x of [-15, 0, 15]) { c.beginPath(); c.moveTo(x, 38); c.lineTo(x, 56); c.stroke(); }
-      c.restore();
+    if (this.art) return this.art; const S = 240, cv = document.createElement('canvas'); cv.width = cv.height = S; const c = cv.getContext('2d');
+    const shade = (x0, y0, x1, y1) => { const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, '#d9d2bf'); g.addColorStop(0.5, '#b8ae98'); g.addColorStop(1, '#6f6656'); return g; };
+    const bone = () => { // a femur: narrow shaft, knuckled ends
+      c.fillStyle = shade(0, -14, 0, 14); c.beginPath(); c.moveTo(-88, -6); c.bezierCurveTo(-40, -4, 40, -4, 88, -6); c.lineTo(88, 6); c.bezierCurveTo(40, 4, -40, 4, -88, 6); c.closePath(); c.fill();
+      for (const e of [-1, 1]) { c.beginPath(); c.ellipse(e * 97, -9, 11, 10, e * 0.5, 0, TAU); c.ellipse(e * 95, 9, 10, 9, -e * 0.5, 0, TAU); c.fill(); c.beginPath(); c.moveTo(e * 80, -7); c.quadraticCurveTo(e * 90, -3, e * 92, -14); c.lineTo(e * 92, 14); c.quadraticCurveTo(e * 90, 3, e * 80, 7); c.closePath(); c.fill(); }
     };
-    c.shadowColor = '#ff2a1a'; c.shadowBlur = 16; paint(); paint(); c.shadowBlur = 0; paint();
+    const skull = () => {
+      // cranium and upper jaw in one outline, with temples and cheekbones
+      const g = c.createRadialGradient(-16, -44, 8, 0, -8, 96); g.addColorStop(0, '#e2dcca'); g.addColorStop(0.55, '#bdb39c'); g.addColorStop(1, '#6a6152'); c.fillStyle = g;
+      c.beginPath(); c.moveTo(-23, 46); c.lineTo(-29, 26); c.quadraticCurveTo(-45, 22, -49, 7); c.bezierCurveTo(-53, -8, -60, -18, -59, -36); c.bezierCurveTo(-57, -72, -26, -86, 2, -86); c.bezierCurveTo(30, -86, 58, -70, 59, -36); c.bezierCurveTo(60, -18, 53, -8, 49, 7); c.quadraticCurveTo(45, 22, 29, 26); c.lineTo(23, 46); c.quadraticCurveTo(0, 52, -23, 46); c.closePath(); c.fill();
+      // temple hollows and the shadow under the brow
+      c.fillStyle = 'rgba(60,52,42,.34)'; for (const e of [-1, 1]) { c.beginPath(); c.ellipse(e * 52, -17, 8, 17, e * 0.15, 0, TAU); c.fill(); } const br = c.createLinearGradient(0, -36, 0, -18); br.addColorStop(0, 'rgba(50,42,34,0)'); br.addColorStop(1, 'rgba(50,42,34,.32)'); c.fillStyle = br; c.fillRect(-46, -36, 92, 18);
+      // sockets, slanted and squared off a little, darkest at the back
+      for (const e of [-1, 1]) { c.save(); c.translate(e * 24, -7); c.rotate(e * 0.16); const q = c.createRadialGradient(e * -3, 3, 2, 0, 0, 22); q.addColorStop(0, '#050403'); q.addColorStop(0.72, '#120e0b'); q.addColorStop(1, '#3a3026'); c.fillStyle = q; c.beginPath(); c.moveTo(-18, -11); c.quadraticCurveTo(0, -20, 18, -10); c.quadraticCurveTo(22, 6, 12, 15); c.quadraticCurveTo(0, 19, -13, 14); c.quadraticCurveTo(-22, 4, -18, -11); c.closePath(); c.fill(); c.restore(); }
+      // nasal opening
+      c.fillStyle = '#0b0807'; c.beginPath(); c.moveTo(0, 7); c.quadraticCurveTo(-3, 13, -10, 23); c.quadraticCurveTo(-11, 29, -4, 28); c.lineTo(0, 24); c.lineTo(4, 28); c.quadraticCurveTo(11, 29, 10, 23); c.quadraticCurveTo(3, 13, 0, 7); c.closePath(); c.fill();
+      // teeth, upper and lower, and the jaw beneath them
+      const jw = c.createLinearGradient(0, 44, 0, 84); jw.addColorStop(0, '#a79d87'); jw.addColorStop(1, '#5d5547'); c.fillStyle = jw; c.beginPath(); c.moveTo(-31, 46); c.quadraticCurveTo(-34, 72, -17, 80); c.quadraticCurveTo(0, 86, 17, 80); c.quadraticCurveTo(34, 72, 31, 46); c.lineTo(23, 53); c.lineTo(-23, 53); c.closePath(); c.fill();
+      c.fillStyle = '#0d0a08'; c.fillRect(-24, 41, 48, 15);
+      const n = 8; for (let i = 0; i < n; i++) { const x = -22 + i * 44 / n, up = 13 - Math.abs(i - 3.5) * 0.6; c.fillStyle = '#cfc7b1'; c.beginPath(); c.roundRect(x + 0.6, 39, 4.3, up, 1.4); c.fill(); c.fillStyle = '#ada38c'; c.beginPath(); c.roundRect(x + 0.8, 54, 4, 8, 1.2); c.fill(); }
+      // sutures and hairline cracks
+      c.strokeStyle = 'rgba(50,42,34,.5)'; c.lineWidth = 1; c.beginPath(); c.moveTo(14, -84); c.lineTo(10, -70); c.lineTo(17, -60); c.lineTo(12, -48); c.stroke(); c.beginPath(); c.moveTo(-50, -48); c.lineTo(-32, -52); c.lineTo(-22, -46); c.stroke();
+    };
+    const paint = () => { c.save(); c.translate(S / 2, S * 0.56); for (const sg of [-1, 1]) { c.save(); c.translate(0, 26); c.rotate(sg * 0.6); bone(); c.restore(); } c.translate(0, -16); c.scale(0.92, 0.92); skull(); c.restore(); };
+    c.shadowColor = 'rgba(255,34,20,.95)'; c.shadowBlur = 11; paint(); c.shadowBlur = 0; paint();
     return this.art = cv;
   },
   draw(c, W, H) {
     if (this.bt !== B || !this.shown) return; const age = B.time - this.t, left = this.WIN - age; if (left <= 0) { this.n = 0; this.shown = 0; return; }
-    const a = clamp(left / 1.3, 0, 1), f = clamp((B.time - this.pop) / 0.28, 0, 1), k = 1 + 0.42 * (1 - f) * (1 - f), sz = 104 * k, cx = W / 2, cy = 142;
+    const a = clamp(left / 1.3, 0, 1), f = clamp((B.time - this.pop) / 0.28, 0, 1), k = 1 + 0.26 * (1 - f) * (1 - f), sz = 62 * k, cx = W / 2, cy = 128;
     c.save(); c.globalAlpha = a; c.drawImage(this.skull(), cx - sz / 2, cy - sz / 2, sz, sz);
-    c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `800 ${Math.round(23 * k)}px ${FONT}`; const t = `X${this.shown} KILLSTREAK`;
-    c.shadowColor = '#ff2a1a'; c.shadowBlur = 14; c.lineWidth = 4; c.strokeStyle = 'rgba(120,10,6,.9)'; c.strokeText(t, cx, cy + 66); c.fillStyle = '#fff1e6'; c.fillText(t, cx, cy + 66); c.shadowBlur = 0; c.fillText(t, cx, cy + 66); c.restore();
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `700 ${Math.round(14 * k)}px ${FONT}`; const t = `X${this.shown} KILLSTREAK`;
+    c.shadowColor = '#ff2a1a'; c.shadowBlur = 8; c.lineWidth = 2.5; c.strokeStyle = 'rgba(120,10,6,.9)'; c.strokeText(t, cx, cy + 45); c.fillStyle = "#f1e8dc"; c.fillText(t, cx, cy + 45); c.shadowBlur = 0; c.fillText(t, cx, cy + 45); c.restore();
   },
 };
 { const od = Battle.prototype.onDestroyed; Battle.prototype.onDestroyed = function (v, killer, reason) { od.call(this, v, killer, reason); if (!this.demo && killer && killer === this.player && v.team !== killer.team) Streak.kill(); }; }
+
+// =====================================================================
+//  TEAM TACTICS — each side splits its tanks between the objectives. One or two crews take a point while the rest
+//  hold covered firing positions around it, facing the threat, with a flanker working round the side. Crews change
+//  position every so often, and every difficulty does this: skill changes how well they shoot and how well they
+//  choose, never whether they think.
+// =====================================================================
+const Tac = {
+  // every usable spot on the map and which directions have something solid close by
+  nodes(map) {
+    if (map._tac) return map._tac;
+    const N = [], st = 24, tw = [], tb = [], tk = [];
+    for (let y = 30; y < map.H - 30; y += st) for (let x = 30; x < map.W - 30; x += st) {
+      if (!map.navFree(x, y) || map.collidesStatic(x, y, 3.6)) continue;
+      let mask = 0; const mark = (ox, oy) => { mask |= 1 << (Math.floor(((Math.atan2(oy - y, ox - x) + TAU) % TAU) / TAU * 8 + 0.5) % 8); };
+      const near = o => { const [lx, ly] = toLocal(x, y, o.x, o.y, o.a || 0), [px, py] = toWorld(clamp(lx, -o.hx, o.hx), clamp(ly, -o.hy, o.hy), o.x, o.y, o.a || 0); if (dist(x, y, px, py) < 15) mark(px, py); };
+      for (const w of map.query(x - 40, y - 40, x + 40, y + 40, 'w', tw)) if (w.kind !== 'log' && wallH(w) >= 1.2) near(w);
+      for (const b of map.query(x - 40, y - 40, x + 40, y + 40, 'b', tb)) if (!b.destroyed) near(b);
+      for (const k of map.query(x - 16, y - 16, x + 16, y + 16, 'k', tk)) if (k.r >= 1.6 && dist(x, y, k.x, k.y) < 15) mark(k.x, k.y);
+      N.push({ x, y, mask, hd: map.hullDown(x, y), wd: map.heavyWoods(x, y) });
+    }
+    return map._tac = N;
+  },
+  sector: a => Math.floor(((a + TAU * 2) % TAU) / TAU * 8 + 0.5) % 8,
+  // the best spot near (ax,ay): solid cover toward the threat, a view of what it is watching, and elbow room
+  spot(ai, ax, ay, rMin, rMax, th, taken, lookX, lookY, avoid) {
+    const m = B.map, sc = this.sector(th), noise = ai.D.key === 'recruit' ? 34 : ai.D.key === 'regular' ? 20 : 10, top = [];
+    for (const n of this.nodes(m)) {
+      const d = dist(n.x, n.y, ax, ay); if (d > rMax || d < rMin) continue;
+      let s = 34 * (1 - d / rMax) + Math.random() * noise;
+      if (n.mask & (1 << sc)) s += 40; else if (n.mask & ((1 << ((sc + 1) % 8)) | (1 << ((sc + 7) % 8)))) s += 22;
+      if (n.hd) s += 30; if (n.wd) s += 14;
+      for (const q of taken) { const dd = dist(n.x, n.y, q[0], q[1]); if (dd < 40) s -= 90 * (1 - dd / 40); }
+      if (avoid && dist(n.x, n.y, avoid.x, avoid.y) < 240) s -= 70;
+      if (top.length < 6 || s > top[top.length - 1].s) { top.push({ n, s }); top.sort((a, b) => b.s - a.s); top.length = Math.min(top.length, 6); }
+    }
+    for (const q of top) if (m.los(q.n.x, q.n.y, lookX, lookY, null, true) >= 0.3) q.s += 26;
+    top.sort((a, b) => b.s - a.s);
+    return top.length ? [top[0].n.x, top[0].n.y] : [clamp(ax, 25, m.W - 25), clamp(ay, 25, m.H - 25)];
+  },
+  known(team) { return B.vehicles.filter(e => e.alive && e.team !== team && !e.hidden && e.lastSeen && B.time - (e.lastSeen[team] || -99) < 25); },
+  // where trouble is coming from, as seen from (x,y)
+  threatAt(team, x, y, E, es, r = 420) {
+    let sx = 0, sy = 0, n = 0; for (const e of E) if (dist(e.x, e.y, x, y) < r) { sx += e.x; sy += e.y; n++; }
+    return n ? Math.atan2(sy / n - y, sx / n - x) : Math.atan2(es.y - y, es.x - x);
+  },
+  crews(team) { return B.vehicles.filter(v => v.alive && v.team === team && v.ai && v.ai.role === 'attack' && !v.def.soft && !v.def.jugg); },
+  plan(M, team) {
+    const S = M._tac || (M._tac = [{ t: -99, sig: '', adv: 0 }, { t: -99, sig: '', adv: 0 }]), P = S[team], sig = (B.map.points || []).map(p => `${p.owner}${p.contested ? 'c' : ''}`).join(), A = this.crews(team), fresh = A.some(v => !v.ai.tac);
+    if (B.time < P.t + 14 && sig === P.sig && !fresh) return; P.t = B.time; P.sig = sig;
+    if (M.gm === 'cap') this.planCap(M, team, A); else this.planTdm(M, team, A, P);
+  },
+  // keep a crew's orders unless they changed; shift position once in a while so nobody sits in one place all game
+  give(ai, o) {
+    const q = ai.tac, same = q && q.job === o.job && q.p === o.p && q.key === o.key;
+    if (same && B.time < q.until) { q.th = o.th; return q; }
+    return null;
+  },
+  planCap(M, team, A) {
+    const pts = B.map.points, es = M.spawn[1 - team], E = this.known(team), n = A.length; if (!n) return;
+    const w = pts.map(p => p.contested ? 1.8 : p.owner === team ? 0.5 : p.owner < 0 ? 1.25 : 1.45), q = pts.map(() => 0), cap = Math.max(2, Math.ceil(n * 0.5));
+    const order = pts.map((p, i) => i).sort((a, b) => w[b] - w[a]);
+    // a human on this team counts as a crew at the point they are near
+    const hum = B.vehicles.find(v => v.alive && v.team === team && v.isPlayer); let hp = -1; if (hum) { let bd = 170; pts.forEach((p, i) => { const d = dist(hum.x, hum.y, p.x, p.y); if (d < bd) { bd = d; hp = i; } }); }
+    let left = n; for (const i of order) { if (!left) break; if (i === hp && w[i] < 1 && n < pts.length + 1) continue; q[i]++; left--; }
+    while (left > 0) { let b = -1, bs = -1; for (let i = 0; i < pts.length; i++) { const s = q[i] >= cap ? -1 : w[i] / (q[i] + 1 + (i === hp ? 0.6 : 0)); if (s > bs) { bs = s; b = i; } } if (b < 0) b = order[0]; q[b]++; left--; }
+    const free = A.slice(), taken = [];
+    for (const i of order) {
+      const p = pts[i], G = [];
+      for (let k = 0; k < q[i] && free.length; k++) { free.sort((a, b) => (dist(a.x, a.y, p.x, p.y) - (a.ai.tac && a.ai.tac.p === p ? 260 : 0)) - (dist(b.x, b.y, p.x, p.y) - (b.ai.tac && b.ai.tac.p === p ? 260 : 0))); G.push(free.shift()); }
+      const th = this.threatAt(team, p.x, p.y, E, es), quiet = p.owner === team && !p.contested && !E.some(e => dist(e.x, e.y, p.x, p.y) < 320), needCap = p.owner !== team || p.contested;
+      G.forEach((v, gi) => {
+        const ai = v.ai, job = needCap && gi === 0 ? 'cap' : gi >= 2 && gi === G.length - 1 ? 'flank' : 'watch', side = ai.side || (ai.side = Math.random() < 0.5 ? 1 : -1), sd = job === 'cap' ? 0 : gi % 2 ? side : -side, key = `${job}${sd}`;
+        const keep = this.give(ai, { job, p, key, th }); if (keep) { taken.push([keep.x, keep.y]); return; }
+        let ang, r, rMax;
+        if (job === 'cap') { ang = th + Math.random() * 2 - 1; r = p.r * 0.35; rMax = Math.max(14, p.r * 0.7); }
+        else if (job === 'flank') { ang = th + sd * 1.25; r = p.r + 130; rMax = 75; }
+        else { ang = th + sd * (quiet ? 0.6 + Math.random() * 0.5 : 1.25 + Math.random() * 0.55); r = p.r + (quiet ? 110 : 58); rMax = 60; } // beside the point, covering it, not out in front of it
+        const ax = p.x + Math.cos(ang) * r, ay = p.y + Math.sin(ang) * r, [x, y] = this.spot(ai, ax, ay, 0, rMax, th, taken, p.x, p.y, es);
+        taken.push([x, y]); ai.tac = { job, p, key, th, x, y, until: B.time + rnd(26, 44) }; ai.lane = job === 'flank' ? sd * 1.5 : sd * (0.55 + Math.random() * 0.35); ai.path = null; ai.pt = job === 'cap' ? p : null;
+      });
+    }
+  },
+  // no points on the map: three loose groups on a broad front, closing on wherever the enemy was last seen
+  planTdm(M, team, A, P) {
+    const n = A.length; if (!n) return; const me = M.spawn[team], es = M.spawn[1 - team], L = dist(me.x, me.y, es.x, es.y), ax = (es.x - me.x) / L, ay = (es.y - me.y) / L, nx = -ay, ny = ax, E = this.known(team), W = Math.min(B.map.W, B.map.H), gp = n >= 5 ? 3 : n >= 2 ? 2 : 1, off = gp === 3 ? [-0.27, 0, 0.27] : gp === 2 ? [-0.2, 0.2] : [0];
+    if (E.length) { let s = 0; for (const e of E) s += (e.x - me.x) * ax + (e.y - me.y) * ay; P.adv = clamp(s / E.length / L - 0.2, 0.25, 0.8); P.quiet = B.time; }
+    else if (B.time - (P.quiet || 0) > 12) { P.adv = clamp(Math.max(P.adv || 0, 0.3) + 0.09, 0.3, 0.86); P.quiet = B.time; }
+    // nobody has died for a while: both lines creep forward until they find each other
+    const sum = M.tickets[0] + M.tickets[1]; if (sum !== P.sum) { P.sum = sum; P.sumT = B.time; }
+    P.push = B.time - (P.sumT || 0) > 35 ? Math.min(0.95, (P.push || 0.3) + 0.07) : Math.max(0.3, (P.push || 0.3) - 0.03); P.adv = Math.max(P.adv, P.push);
+    const taken = [];
+    A.slice().sort((a, b) => (a.x - me.x) * nx + (a.y - me.y) * ny - ((b.x - me.x) * nx + (b.y - me.y) * ny)).forEach((v, i) => {
+      const ai = v.ai, g = Math.min(gp - 1, Math.floor(i * gp / n)), f = P.adv + (g !== 1 && gp === 3 ? 0.05 : 0), key = `${g}:${Math.round(f * 12)}`, cx = me.x + ax * L * f + nx * off[g] * W, cy = me.y + ay * L * f + ny * off[g] * W, th = this.threatAt(team, v.x, v.y, E, es, 700);
+      const keep = this.give(ai, { job: 'line', p: null, key, th }); if (keep) { taken.push([keep.x, keep.y]); return; }
+      const [x, y] = this.spot(ai, cx, cy, 0, 105, th, taken, cx + Math.cos(th) * 120, cy + Math.sin(th) * 120, es);
+      taken.push([x, y]); ai.tac = { job: 'line', p: null, key, th, x, y, until: B.time + rnd(24, 40) }; ai.lane = off[g] === 0 ? 0 : Math.sign(off[g]) * 1.4; ai.path = null; ai.pt = null;
+    });
+  },
+};
+{
+  const og = TeamMode.prototype.attackGoal;
+  TeamMode.prototype.attackGoal = function (v) {
+    if (this.gm !== 'cap' && this.gm !== 'tdm') return og.call(this, v);
+    Tac.plan(this, v.team); const ai = v.ai, q = ai.tac; if (!q) return og.call(this, v);
+    if ((ai.wdN || 0) >= 2) { q.until = 0; ai.wdN = 0; } // can't get there: choose somewhere else next round
+    return [q.x, q.y, q.job === 'cap' ? 8 : 6, 1];
+  };
+  const os = AI.prototype.spreadGoal; AI.prototype.spreadGoal = function (g) { return g[3] ? [g[0], g[1]] : os.call(this, g); };
+  // the crew sent to take a point keeps rolling and shoots on the move unless someone is really close
+  const od = AI.prototype.drive; AI.prototype.drive = function (dt, e, engaging) {
+    const v = this.v, q = this.tac;
+    if (q && q.job === 'cap' && this.role === 'attack' && this.goal && !(this.backT > 0) && v.repairT <= 0 && !this.cover && !this.detour && !(this.startDelay && B.time - v.spawnT < this.startDelay) && !(Orders.steer && this.order) && (!e || dist(v.x, v.y, e.x, e.y) > 170) && dist(v.x, v.y, this.goal[0], this.goal[1]) > this.goalR) { v.ctrl.throttle = 0; v.ctrl.steer = 0; this.followPath(dt, 1); return; }
+    od.call(this, dt, e, engaging);
+  };
+  // in position with nothing to shoot at: hull angled and gun laid toward where the enemy should appear
+  const ou = AI.prototype.update; AI.prototype.update = function (dt) {
+    if (this.tac && this.tac.job === 'cap' && B.time - this.hitT > 3) this.coverCD = Math.max(this.coverCD || 0, B.time + 1);
+    ou.call(this, dt);
+    const v = this.v, q = this.tac; if (!v.alive || !q || this.role !== 'attack' || this.target || this.cover || this.detour || !this.goal) return;
+    if (dist(v.x, v.y, this.goal[0], this.goal[1]) > this.goalR + 2) return;
+    const c = v.ctrl; if (v.def.turret) { c.aim = q.th + Math.sin(B.time * 0.25 + v.id) * 0.38; c.aimDist = 0; }
+    if (Math.abs(v.vel) < 1.5) { const da = angDiff(v.ang, q.th + (this.angleSide || 1) * 0.45); if (Math.abs(da) > 0.1) { c.throttle = 0; c.steer = clamp(da * 3, -1, 1); } }
+  };
+}
 
 window.addEventListener('load', () => { App.start(); Lock3.init(); });
 
