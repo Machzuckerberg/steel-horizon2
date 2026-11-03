@@ -452,7 +452,10 @@ body.nolock canvas#game,body.gate canvas#game{cursor:crosshair}
     <h4>Spawning</h4>
     <p>Team battles: respawn with <b>Warbonds</b> at home base or any point your team fully holds (not contested). Other modes: only safe zones far from all enemies. Kills, assists and captures earn Warbonds. Research points (RP) come from campaign missions and Wave Survival — team battles are just for fun and don't award RP. Pause → Respawn takes your tank back to the tank list with a full refund.</p>
     <p><kbd>Tab</kbd> scoreboard · <kbd>Esc</kbd> pause.</p>
-      </div></div>
+    <h4>Multiplayer</h4>
+    <p>Team Battles → Multiplayer opens a room for up to 12 players and gives you an invite link. Anyone who opens the link on a computer joins your lobby, picks a name and one of <i>their own</i> researched tanks. As host you place players in any slot on either team, choose whether empty slots are filled with AI, the AI difficulty and the highest era allowed, then start the battle.</p>
+    <p>Your browser runs the battle, so keep the game tab open while you play (it keeps running in the background if you switch apps). Research points earned go to each player's own save. The game can't be paused in multiplayer.</p>
+  </div></div>
   <div class="foot"><button class="btn primary" id="howClose" data-snd="exit">Close</button></div>
 </div></div>
 
@@ -1624,6 +1627,123 @@ T2({ id: 'ariete_amv', name: 'Ariete AMV', nation: 'it', era: 4, tier: 4, role: 
   shells: [S('DM63it', 'DM63A1 APFSDS', 'APFSDS', [620, 600], 1720, 22), S('DM11it', 'DM11 programmable HE', 'HE', 40, 1100, 10, 3000), S('DM12A1it', 'DM12A1 HEAT-MP', 'HEATFS', 480, 1140, 8)],
   sp: 390, rp: 17500, desc: 'Ariete modernised: 1,500 hp engine, new suspension and fire control, DM63 sabot.' });
 
+// ---------------------------------------------------------------- South Korea
+NATIONS.kr = { name: 'South Korea', color: '#003478', accent: '#c60c30' };
+NATIONS.se = { name: 'Sweden', color: '#005293', accent: '#ffcd00' };
+T2({ id: 'kr_m4a3e8', name: 'M4A3E8 (ROK)', nation: 'kr', era: 2, tier: 2, role: 'Medium', year: 1950, crewN: 5,
+  L: 6.27, W: 2.67, tx: 0.25, tl: 1.12, tw: 0.95, gunL: 4.2, cal: 76, mantlet: 25, mantletW: 0.8, cupolaArmor: 51,
+  armor: { hull: { front: [63, 47], side: [38, 0], rear: [38, 20] }, turret: { front: [64, 0], side: [64, 13], rear: [64, 0] } },
+  speed: 42, rev: 8, hpt: 14.4, mass: 33.6, hullTurn: 30, traverse: 24, reload: 6.5, disp: 0.6, stab: 1, aimTime: 2.2,
+  engine: 'petrol', layout: 'frontTrans', camo: 'kr_od', turretShape: 't23', hullShape: 'sherman',
+  shells: [S('M62k', 'M62 shot', 'APHEBC', [127, 109], 792, 45, 63), S('M93k', 'M93 HVAP', 'APCR', [208, 150], 1036, 6), S('M42k', 'M42A1 shell', 'HE', 11, 800, 20, 390)],
+  sp: 150, rp: 1500, desc: 'The Easy Eights of the Korean War: the first real tanks in South Korean hands.' });
+T2({ id: 'kr_m36', name: 'M36 Jackson (ROK)', nation: 'kr', era: 2, tier: 2, role: 'Destroyer', year: 1950, crewN: 5,
+  L: 6.15, W: 3.05, tx: 0.1, tl: 1.1, tw: 1.08, gunL: 5.0, cal: 90, mantlet: 76, mantletW: 0.7, cupolaArmor: 25,
+  armor: { hull: { front: [38, 55], side: [19, 38], rear: [19, 38] }, turret: { front: [76, 0], side: [32, 25], rear: [32, 0] } },
+  speed: 48, rev: 9, hpt: 17.1, mass: 29, hullTurn: 32, traverse: 14, reload: 6.5, disp: 0.55, stab: 0, aimTime: 2.3,
+  engine: 'petrol', layout: 'frontTrans', camo: 'kr_od', turretShape: 'm26', hullShape: 'sherman',
+  shells: [S('M82k', 'M82 APC', 'APCBC', [165, 140], 853, 30), S('M304k', 'M304 HVAP', 'APCR', [259, 180], 1020, 6), S('M71k', 'M71 HE', 'HE', 15, 823, 18, 950)],
+  sp: 175, rp: 2100, desc: 'A hard-hitting 90 mm on thin armour. Fast tank killer: strike first, then move.' });
+T2({ id: 'kr_m47', name: 'M47 Patton (ROK)', nation: 'kr', era: 3, tier: 3, role: 'Medium', year: 1959, crewN: 5,
+  L: 6.36, W: 3.2, tx: 0.1, tl: 1.5, tw: 1.18, gunL: 5.0, cal: 90, mantlet: 100, mantletW: 0.72, cupolaArmor: 80,
+  armor: { hull: { front: [102, 60], side: [51, 0], rear: [25, 30] }, turret: { front: [115, 40], side: [64, 0], rear: [51, 0] } },
+  speed: 48, rev: 10, hpt: 17.6, mass: 46, hullTurn: 32, traverse: 24, reload: 7.8, disp: 0.46, stab: 1, aimTime: 2.1,
+  engine: 'petrol', layout: 'rearTrans', camo: 'kr_od', turretShape: 'm47', hullShape: 'm48', driverY: 0,
+  shells: [S('M318k', 'M318 APCBC', 'APCBC', [210, 185], 914, 28), S('M348k', 'M348 HEAT', 'HEATFS', 320, 853, 18), S('M71l', 'M71 HE', 'HE', 15, 823, 18, 950)],
+  sp: 225, rp: 3800, desc: 'American aid that rebuilt the ROK armoured force after the war.' });
+T2({ id: 'kr_m48a3k', name: 'M48A3K', nation: 'kr', era: 3, tier: 3, role: 'MBT', year: 1978, crewN: 4,
+  L: 6.87, W: 3.63, tx: 0.15, tl: 1.7, tw: 1.23, gunL: 5.3, cal: 90, mantlet: 100, mantletW: 0.75, cupolaArmor: 110, cupolaAt: { x: -0.45, y: 0.6, r: 0.46 }, cupolaH: 0.36,
+  armor: { hull: { front: [110, 60], side: [76, 0], rear: [25, 30] }, turret: { front: [178, 0], side: [76, 0], rear: [50, 0] } },
+  speed: 48, rev: 12, hpt: 15.9, mass: 47.2, hullTurn: 34, traverse: 24, reload: 7.2, disp: 0.42, stab: 1, aimTime: 1.9,
+  engine: 'diesel', layout: 'rearTrans', camo: 'kr_camo', turretShape: 'm48', hullShape: 'm48', driverY: 0, smoke: 2,
+  shells: [S('M318m', 'M318 APCBC', 'APCBC', [210, 185], 914, 26), S('M431', 'M431 HEAT-T', 'HEATFS', 340, 1200, 20), S('M71m', 'M71 HE', 'HE', 15, 823, 16, 950)],
+  sp: 245, rp: 4700, desc: 'A Korean diesel rebuild of the Patton: far less likely to burn, and better range.' });
+T2({ id: 'kr_m48a5k', name: 'M48A5K', nation: 'kr', era: 3, tier: 3, role: 'MBT', year: 1985, crewN: 4,
+  L: 6.87, W: 3.63, tx: 0.15, tl: 1.7, tw: 1.23, gunL: 5.6, cal: 105, mantlet: 100, mantletW: 0.75, cupolaArmor: 110, cupolaAt: { x: -0.45, y: 0.6, r: 0.42 }, cupolaH: 0.24,
+  armor: { hull: { front: [110, 60], side: [76, 0], rear: [25, 30] }, turret: { front: [178, 0], side: [76, 0], rear: [50, 0] } },
+  speed: 48, rev: 14, hpt: 15.3, mass: 48.9, hullTurn: 34, traverse: 26, reload: 7.0, disp: 0.34, stab: 2, aimTime: 1.7,
+  engine: 'diesel', layout: 'rearTrans', camo: 'kr_camo', turretShape: 'm48', hullShape: 'm48', driverY: 0, smoke: 2,
+  shells: [S('M735k', 'M735 APFSDS', 'APFSDS', [320, 300], 1501, 30), S('M456k', 'M456 HEAT', 'HEATFS', 400, 1174, 18), S('M393k', 'M393 HEP', 'HESH', 120, 732, 6, 2700)],
+  sp: 265, rp: 6100, desc: 'The L7-family 105 mm in a Patton, with a laser rangefinder. Backbone of the ROK Army through the 1980s.' });
+T2({ id: 'kr_k1', name: 'K1', nation: 'kr', era: 4, tier: 4, role: 'MBT', year: 1987, crewN: 4,
+  L: 7.47, W: 3.59, tx: 0.2, tl: 1.9, tw: 1.3, gunL: 5.6, cal: 105, cupolaArmor: 100, cupolaAt: { x: -0.35, y: 0.6, r: 0.34 }, driverY: 0,
+  armor: { hull: { front: [450, 0, 1.4], side: [80, 0, 1.6], rear: [40, 0] }, turret: { front: [550, 0, 1.4], side: [140, 0, 1.4], rear: [60, 0] } },
+  speed: 65, rev: 30, hpt: 23.5, mass: 51.1, hullTurn: 38, traverse: 40, reload: 6.5, disp: 0.24, stab: 2, aimTime: 1.4,
+  engine: 'diesel', layout: 'bustle', camo: 'kr_camo', turretShape: 'k1', hullShape: 'abrams', smoke: 2,
+  shells: [S('KM833', 'KM833 APFSDS', 'APFSDS', [430, 410], 1494, 30), S('KM456', 'KM456 HEAT', 'HEATFS', 400, 1174, 17)],
+  sp: 345, rp: 12500, desc: 'Korea\'s first home-built tank: low, fast, and able to kneel on hydropneumatic suspension to shoot over ridges.' });
+T2({ id: 'kr_k1a2', name: 'K1A2', nation: 'kr', era: 4, tier: 4, role: 'MBT', year: 2014, crewN: 4,
+  L: 7.47, W: 3.59, tx: 0.2, tl: 1.9, tw: 1.3, gunL: 5.7, cal: 120, cupolaArmor: 100, cupolaAt: { x: -0.35, y: 0.6, r: 0.34 }, driverY: 0,
+  armor: { hull: { front: [520, 0, 1.5], side: [80, 0, 1.7], rear: [40, 0] }, turret: { front: [700, 0, 1.5], side: [150, 0, 1.5], rear: [60, 0] } },
+  speed: 65, rev: 30, hpt: 22, mass: 54.5, hullTurn: 38, traverse: 40, reload: 6.0, disp: 0.21, stab: 2, aimTime: 1.2,
+  engine: 'diesel', layout: 'bustle', camo: 'kr_camo', turretShape: 'k1', hullShape: 'abrams', smoke: 2,
+  shells: [S('K276', 'K276 APFSDS', 'APFSDS', [600, 580], 1700, 26), S('K277', 'K277 HEAT-MP', 'HEATFS', 480, 1140, 13)],
+  sp: 375, rp: 15500, desc: 'The K1 line brought up to date with a 120 mm gun and a digital battle-management system.' });
+T2({ id: 'kr_k2', name: 'K2 Black Panther', nation: 'kr', era: 4, tier: 4, role: 'MBT', year: 2014, crewN: 3, autoloader: true, crewRoles: ['driver', 'gunner', 'commander'],
+  L: 7.5, W: 3.6, tx: 0.15, tl: 2.0, tw: 1.3, gunL: 6.6, cal: 120, cupolaArmor: 100, cupolaAt: { x: -0.5, y: 0.6, r: 0.3 }, driverY: 0,
+  armor: { hull: { front: [600, 0, 1.6], side: [100, 0, 1.8], rear: [40, 0] }, turret: { front: [850, 0, 1.6], side: [180, 0, 1.5], rear: [60, 0] } },
+  speed: 70, rev: 40, hpt: 27.3, mass: 55, hullTurn: 44, traverse: 45, reload: 4.5, disp: 0.18, stab: 2, aimTime: 1.0,
+  engine: 'diesel', layout: 'bustle', camo: 'kr_camo', turretShape: 'k2', hullShape: 'leo2', smoke: 2,
+  shells: [S('K279', 'K279 APFSDS', 'APFSDS', [700, 680], 1760, 28), S('K280', 'K280 HEAT-MP', 'HEATFS', 500, 1140, 12)],
+  sp: 395, rp: 17000, desc: 'A long 55-calibre gun, an autoloader and adaptive suspension. Among the most advanced tanks in service.' });
+// ---------------------------------------------------------------- Sweden
+T2({ id: 'se_m42', name: 'Strv m/42', nation: 'se', era: 1, tier: 1, role: 'Medium', year: 1943, crewN: 4,
+  L: 4.9, W: 2.34, tx: 0.2, tl: 1.0, tw: 0.86, gunL: 2.4, cal: 75, mantlet: 30, mantletW: 0.55, cupolaArmor: 30, cupolaAt: { x: -0.55, y: 0.2, r: 0.28 }, cupolaH: 0.22,
+  armor: { hull: { front: [55, 15], side: [30, 0], rear: [20, 10] }, turret: { front: [55, 10], side: [30, 15], rear: [20, 0] } },
+  speed: 42, rev: 8, hpt: 14.2, mass: 22.5, hullTurn: 28, traverse: 18, reload: 5.2, disp: 0.75, aimTime: 2.3,
+  engine: 'petrol', layout: 'rearTrans', camo: 'se_od', turretShape: 'pz3', hullShape: 'pz3', driverY: -0.5,
+  shells: [S('Pprj41', '7.5 cm pansarprojektil', 'APHEBC', [78, 62], 605, 40, 15), S('Spgr41', '7.5 cm spränggranat', 'HE', 8, 500, 18, 450)],
+  sp: 105, rp: 320, desc: 'Neutral Sweden\'s home-built wartime medium: well made, modestly armed, never fired in anger.' });
+T2({ id: 'se_74', name: 'Strv 74', nation: 'se', era: 2, tier: 2, role: 'Medium', year: 1958, crewN: 4,
+  L: 5.0, W: 2.43, tx: 0.2, tl: 1.25, tw: 0.98, gunL: 4.6, cal: 75, mantlet: 40, mantletW: 0.62, cupolaArmor: 30, cupolaAt: { x: -0.7, y: 0.32, r: 0.28 }, cupolaH: 0.2,
+  armor: { hull: { front: [55, 15], side: [30, 0], rear: [20, 10] }, turret: { front: [80, 20], side: [40, 15], rear: [25, 0] } },
+  speed: 45, rev: 9, hpt: 13.3, mass: 25.5, hullTurn: 30, traverse: 22, reload: 4.6, disp: 0.55, stab: 0, aimTime: 2.0,
+  engine: 'petrol', layout: 'rearTrans', camo: 'se_od', turretShape: 'pz3', hullShape: 'pz3', driverY: -0.5,
+  shells: [S('Pprj74', '7.5 cm pansarprojektil', 'APCBC', [142, 118], 900, 30), S('Spgr74', '7.5 cm spränggranat', 'HE', 10, 750, 18, 650)],
+  sp: 150, rp: 1400, desc: 'A rebuilt m/42 with a huge new turret and a long naval-derived 75. Light, but the gun bites.' });
+T2({ id: 'se_81', name: 'Strv 81', nation: 'se', era: 3, tier: 3, role: 'MBT', year: 1953, crewN: 4,
+  L: 7.6, W: 3.39, tx: 0.3, tl: 1.35, tw: 1.1, gunL: 5.1, cal: 84, mantlet: 40, cupolaArmor: 60,
+  armor: { hull: { front: [76, 57], side: [38, 0], rear: [38, 0] }, turret: { front: [152, 0], side: [89, 0], rear: [76, 0] } },
+  speed: 34, rev: 8, hpt: 13, mass: 49.7, hullTurn: 26, traverse: 24, reload: 7.0, disp: 0.4, stab: 1, aimTime: 2.0,
+  engine: 'petrol', layout: 'rearTrans', camo: 'se_od', turretShape: 'cast', hullShape: 'm60', driverY: 0.45, smoke: 2,
+  shells: [S('SlP84', '20-pdr APDS', 'APDS', [300, 280], 1465, 30), S('Pprj84', '20-pdr APC', 'APCBC', [175, 150], 1020, 16), S('Spgr84', '20-pdr HE', 'HE', 12, 790, 19, 800)],
+  sp: 235, rp: 4100, desc: 'Sweden\'s Centurion Mk.3, bought in the early Cold War with the excellent 20-pounder.' });
+T2({ id: 'se_ikv91', name: 'Ikv 91', nation: 'se', era: 3, tier: 3, role: 'Light', year: 1975, crewN: 4,
+  L: 6.41, W: 3.0, tx: -0.2, tl: 1.15, tw: 0.98, gunL: 4.0, cal: 90, mantlet: 16, cupolaArmor: 16,
+  armor: { hull: { front: [16, 60], side: [8, 0], rear: [8, 0] }, turret: { front: [16, 45], side: [8, 15], rear: [8, 0] } },
+  speed: 65, rev: 20, hpt: 20.2, mass: 16.3, hullTurn: 42, traverse: 40, reload: 4.8, disp: 0.42, stab: 1, aimTime: 1.7,
+  engine: 'diesel', layout: 'rearTrans', camo: 'se_splint', turretShape: 'leo1a5', hullShape: 'leo1', driverY: 0.4, smoke: 2,
+  shells: [S('Slpsgr62', 'Slpsgr m/62 HEAT', 'HEATFS', 320, 825, 40), S('Spgr62', 'Spgr m/62 HE', 'HE', 14, 700, 19, 950)],
+  sp: 225, rp: 4700, desc: 'An amphibious tank destroyer for northern Sweden. Paper armour, a big low-pressure gun and great speed in snow.' });
+T2({ id: 'se_101', name: 'Strv 101', nation: 'se', era: 3, tier: 3, role: 'MBT', year: 1960, crewN: 4,
+  L: 7.8, W: 3.39, tx: 0.3, tl: 1.35, tw: 1.1, gunL: 5.6, cal: 105, mantlet: 40, cupolaArmor: 60,
+  armor: { hull: { front: [76, 57], side: [51, 0], rear: [38, 0] }, turret: { front: [152, 0], side: [89, 0], rear: [76, 0] } },
+  speed: 35, rev: 8, hpt: 12.8, mass: 51.8, hullTurn: 26, traverse: 24, reload: 7.2, disp: 0.36, stab: 2, aimTime: 1.8,
+  engine: 'petrol', layout: 'rearTrans', camo: 'se_od', turretShape: 'cast', hullShape: 'm60', driverY: 0.45, smoke: 2,
+  shells: [S('Slpprj101', 'Slpprj m/60 APDS', 'APDS', [330, 310], 1478, 30), S('Spgr101', 'Spgr m/60 HESH', 'HESH', 120, 731, 34, 2700)],
+  sp: 255, rp: 5300, desc: 'Centurion Mk.10 in Swedish service: the L7 gun with heavier armour and new Swedish sights.' });
+T2({ id: 'se_103', name: 'Strv 103B', nation: 'se', era: 3, tier: 3, role: 'Destroyer', year: 1971, crewN: 3, autoloader: true, crewRoles: ['driver', 'gunner', 'commander'],
+  L: 7.04, W: 3.63, tx: 1.15, tl: 0.32, tw: 0.32, gunL: 5.0, gunStart: 0.4, cal: 105, mantlet: 0, cupolaArmor: 40, cupolaAt: { x: -2.3, y: 0.5, r: 0.34 }, cupolaH: 0.2,
+  armor: { hull: { front: [40, 78], side: [25, 0], rear: [20, 0] }, turret: { front: [40, 78], side: [25, 0], rear: [20, 0] } },
+  speed: 50, rev: 50, hpt: 18.4, mass: 39.7, hullTurn: 48, traverse: 40, reload: 4.0, disp: 0.26, stab: 1, aimTime: 1.3,
+  engine: 'turbine', layout: 'frontTrans', camo: 'se_splint', turretShape: 'mount', hullShape: 'strv103', driverY: 0.4, smoke: 2,
+  arcs: [[0, 0.035]], mountZ: -0.18,
+  shells: [S('Slpprj66', 'Slpprj m/66 APDS', 'APDS', [320, 300], 1480, 30), S('Spgr61', 'Spgr m/61 HEAT', 'HEATFS', 400, 1174, 10), S('Sgr103', 'Sgr m/61 HE', 'HE', 20, 900, 10, 1800)],
+  sp: 270, rp: 6200, desc: 'The S-tank. No turret: the gun is fixed in the hull, so you aim with your tracks. Barely two metres tall, and as fast backwards as forwards.' });
+T2({ id: 'se_104', name: 'Strv 104', nation: 'se', era: 3, tier: 3, role: 'MBT', year: 1983, crewN: 4,
+  L: 7.8, W: 3.39, tx: 0.3, tl: 1.35, tw: 1.1, gunL: 5.6, cal: 105, mantlet: 40, cupolaArmor: 60,
+  armor: { hull: { front: [76, 57, 2.1], side: [51, 0], rear: [38, 0] }, turret: { front: [152, 0, 1.9], side: [89, 0, 1.3], rear: [76, 0] } },
+  speed: 46, rev: 12, hpt: 14.5, mass: 53, hullTurn: 30, traverse: 26, reload: 6.8, disp: 0.28, stab: 2, aimTime: 1.5,
+  engine: 'diesel', layout: 'rearTrans', camo: 'se_splint', turretShape: 'cast', hullShape: 'm60', driverY: 0.45, smoke: 2,
+  shells: [S('Slpprj104', 'Slpprj m/85 APFSDS', 'APFSDS', [400, 380], 1490, 30), S('Spgr104', 'Spgr m/60 HESH', 'HESH', 120, 731, 30, 2700)],
+  sp: 285, rp: 7000, desc: 'The last Swedish Centurion: new engine, new fire control and reactive armour against shaped charges.' });
+T2({ id: 'se_122', name: 'Strv 122', nation: 'se', era: 4, tier: 4, role: 'MBT', year: 1996, crewN: 4,
+  L: 7.7, W: 3.75, tx: 0.25, tl: 1.6, tw: 1.25, gunL: 5.6, cal: 120, cupolaArmor: 100, driverY: 0.45,
+  armor: { hull: { front: [620, 0, 1.5], side: [90, 0, 1.8], rear: [40, 0] }, turret: { front: [860, 0, 1.5], side: [170, 0, 1.5], rear: [60, 0] } },
+  speed: 68, rev: 31, hpt: 24, mass: 62.5, hullTurn: 38, traverse: 40, reload: 5.8, disp: 0.2, stab: 2, aimTime: 1.2,
+  engine: 'diesel', layout: 'leo2', camo: 'se_splint', turretShape: 'wedge', hullShape: 'leo2', smoke: 2,
+  shells: [S('Slpprj95', 'Slpprj m/95 APFSDS', 'APFSDS', [590, 570], 1680, 27), S('Sgr95', 'Sgr m/95 HEAT', 'HEATFS', 480, 1140, 15)],
+  sp: 385, rp: 16500, desc: 'A Leopard 2A5 built to Swedish demands: extra roof and hull armour against top attack, and the French-style command system.' });
 for (const id of MORE_TANKS) TREE_ORDER[TANKS[id].era - 1].push(id);
 
 // =====================================================================
@@ -1788,6 +1908,8 @@ function turretPoly(d) {
     case 'arieteamv': return mirror([[a * 0.8, -b * 0.3], [a, -b * 0.62], [a * 0.6, -b], [-a * 0.92, -b], [-a, -b * 0.9]]);
     case 'chiha': return mirror([[a, -b * 0.55], [a * 0.55, -b], [-a * 0.55, -b * 0.92], [-a, -b * 0.45]]);
     case 'mount': return mirror([[a, -b * 0.7], [-a, -b * 0.7]]);
+    case 'k1': return mirror([[a * 0.94, -b * 0.34], [a * 0.72, -b], [-a * 0.82, -b], [-a, -b * 0.82]]);
+    case 'k2': return mirror([[a, -b * 0.42], [a * 0.66, -b * 0.96], [-a * 0.5, -b], [-a, -b * 0.88], [-a, -b * 0.55]]);
     case 'ft': return mirror([[a * 0.98, -b * 0.42], [a * 0.42, -b], [-a * 0.42, -b], [-a * 0.98, -b * 0.42]]);
     case 'box': return mirror([[a * 0.97, -b * 0.88], [a * 0.9, -b], [-a * 0.92, -b], [-a, -b * 0.9]]);
   }
@@ -4312,8 +4434,8 @@ function addCarWreck(m, x, y, a, burning, R) {
   const type = pick2(R, ['sedan', 'sedan', 'sedan', 'hatch', 'hatch', 'beetle', 'van', 'pickup']);
   const L = { sedan: 4.5, hatch: 3.9, beetle: 4.0, van: 4.9, pickup: 4.9 }[type], W = { sedan: 1.75, hatch: 1.65, beetle: 1.6, van: 1.9, pickup: 1.85 }[type];
   const state = burning ? 'burning' : R() < 0.45 ? 'burnt' : 'wreck'; // still on fire / burnt-out shell / shot-up but intact
-  m.decor.push({ car: true, x, y, a, L, W, type, state, fire: state === 'burning', seed: Math.floor(R() * 1e6), paint: pick2(R, ['#8a2a22', '#2a4a7a', '#6a6a62', '#d8d0b8', '#3a5a3a', '#a08a3a', '#2a2a2c', '#5a7a8a', '#7a5a3a', '#b8b8b0']) });
-  m.walls.push({ kind: 'wreck', x, y, a, hx: L / 2, hy: W / 2, hp: 9999, tall: true });
+  const dc = { car: true, x, y, a, L, W, type, state, fire: state === 'burning', seed: Math.floor(R() * 1e6), paint: pick2(R, ['#8a2a22', '#2a4a7a', '#6a6a62', '#d8d0b8', '#3a5a3a', '#a08a3a', '#2a2a2c', '#5a7a8a', '#7a5a3a', '#b8b8b0']) }; m.decor.push(dc);
+  dc.w = { kind: 'carw', x, y, a, hx: L / 2, hy: W / 2, hp: 9999, h3: 1.3, soft: true, car: dc }; m.walls.push(dc.w);
   return true;
 }
 function drawPlaneWreck(c, p, R) {
@@ -5952,7 +6074,7 @@ function makeMark(v, part, h, kind, p, sh) {
   const cal = sh.type === 'MG' ? 8 : (sh.cal || (p.owner && p.owner.def && p.owner.def.cal) || 75);
   const m = { part, lx: h.lx, ly: h.ly, pen: kind === 'pen' || kind === 'heat', kind, a: r2(markDir(v, part, p)), s: clamp(cal / 1000, 0.008, 0.16), seed: Math.floor(Math.random() * 1e6), t: B.time, _h: h, ex: sh.ex };
   addMark(v, m);
-  if (B.net === 'host') NET.rec(['mk', v.id, part === 'hull' ? 0 : 1, r2(m.lx), r2(m.ly), kind, m.a, r3(m.s), m.seed]);
+  if (B.net === 'host') { NET.rec(['mk', v.id, part === 'hull' ? 0 : 1, r2(m.lx), r2(m.ly), kind, m.a, r3(m.s), m.seed]); if (m.l3) NET.rec(['ml', v.id, m.l3.map(r3), m.n3.map(r3), m.t3.map(r3), r3(m.r3), r3(m.e3), m.k3]); }
   return m;
 }
 function addMark(v, m) {
@@ -10515,7 +10637,8 @@ const Tank3D = {
     const bow = this._bow; this._bow = null;
     const M = { coax, bow, H: U && d.tx >= ux0 + (U.rs || 0) && d.tx <= ux1 - (U.fs || 0) ? Htop : H, buf: {}, tur, col: hcol, tcol };
     for (const [k, arr] of Object.entries(groups)) { if (!arr.length) continue; const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr), gl.STATIC_DRAW); M.buf[k] = { b, n: arr.length / this.STRIDE }; }
-    { let gx = 1e9, zs = 0, n = 0; const tt = groups.tur; for (let i = 0; i < tt.length; i += 13) if (tt[i + 12] > 1.5) { gx = Math.min(gx, tt[i]); zs += tt[i + 2]; n++; } M.gunX = n ? gx : 0; M.gunZ = n ? zs / n : 0.4; }
+    { let gx = 1e9, zs = 0, n = 0; const tt = groups.tur; for (let i = 0; i < tt.length; i += 13) if (tt[i + 12] > 1.5) { gx = Math.min(gx, tt[i]); zs += tt[i + 2]; n++; } M.gunX = n ? gx : 0; M.gunZ = n ? zs / n : 0.4; let xe = -1e9; for (let i = 0; i < tt.length; i += 13) if (tt[i + 12] > 1.5) xe = Math.max(xe, tt[i]); M.gunXE = xe; const x0 = gx + (xe - gx) * 0.45, pts = []; let sy = 0, sz = 0; for (let i = 0; i < tt.length; i += 13) if (tt[i + 12] > 1.5 && tt[i] > x0) { pts.push(tt[i + 1], tt[i + 2]); sy += tt[i + 1]; sz += tt[i + 2]; } const c = pts.length / 2; if (c) { sy /= c; sz /= c; const rr = []; for (let i = 0; i < pts.length; i += 2) rr.push(Math.hypot(pts[i] - sy, pts[i + 1] - sz)); rr.sort((a, b) => a - b); M.gunR = rr[Math.floor(c * 0.3)]; M.gunY = sy; M.gunZ2 = sz; } }
+    { let tz = 0; const gt = groups.track; for (let i = 2; i < gt.length; i += 13) tz = Math.max(tz, gt[i]); M.trkZ = tz; }
     { const thin = (t, i) => { const e = [0, 3, 6].map(o => [t[i + o], t[i + o + 1], t[i + o + 2]]), L = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]); return Math.min(L(e[0], e[1]), L(e[1], e[2]), L(e[2], e[0])) < 0.012; }, ext = (A, skipGun, out) => { for (let i = 0; i + 39 <= A.length; i += 39) { if (skipGun && A[i + 12] > 1.5) continue; const t = [A[i], A[i + 1], A[i + 2], A[i + 13], A[i + 14], A[i + 15], A[i + 26], A[i + 27], A[i + 28]]; if (!thin(t, 0)) out.push(...t); } }, h = [], u = []; ext(groups.track, false, h); const nT = h.length / 9; ext(groups.hull, false, h); ext(groups.tur, true, u); M.geo = { hull: new Float32Array(h), tur: new Float32Array(u), nTrack: nT }; }
     M.P4 = P4; M.mid = ((half ? -Li : -Li + 0.05) + (half ? Li * 0.15 : Li - 0.05)) / 2;
     this.meshes[d.id] = M; return M;
@@ -11147,7 +11270,7 @@ const HUD = {
     }
     // view rect
     const cam = B.cam, vw = Render.W / cam.zoom, vh = Render.H / cam.zoom;
-    if (cam.yaw !== undefined) { const px = x + cam.x * s, py = y + cam.y * s, L = 34; c.fillStyle = 'rgba(255,255,255,0.13)'; c.beginPath(); c.moveTo(px, py); c.lineTo(px + Math.cos(cam.yaw - 0.55) * L, py + Math.sin(cam.yaw - 0.55) * L); c.lineTo(px + Math.cos(cam.yaw + 0.55) * L, py + Math.sin(cam.yaw + 0.55) * L); c.closePath(); c.fill(); }
+    if (B.map && typeof Border !== 'undefined') { const e = Border.inset(B.map); c.strokeStyle = 'rgba(255,90,60,.55)'; c.lineWidth = 1; c.strokeRect(x + e * s, y + e * s, (B.map.W - 2 * e) * s, (B.map.H - 2 * e) * s); } if (cam.yaw !== undefined) { const px = x + cam.x * s, py = y + cam.y * s, L = 34; c.fillStyle = 'rgba(255,255,255,0.13)'; c.beginPath(); c.moveTo(px, py); c.lineTo(px + Math.cos(cam.yaw - 0.55) * L, py + Math.sin(cam.yaw - 0.55) * L); c.lineTo(px + Math.cos(cam.yaw + 0.55) * L, py + Math.sin(cam.yaw + 0.55) * L); c.closePath(); c.fill(); }
     c.strokeStyle = 'rgba(170,205,230,0.35)'; c.strokeRect(x, y, w, h);
   },
   killFeed(c, x, y) {
@@ -11327,6 +11450,8 @@ function flagSVG(n, w = 21, h = 14) {
   else if (n === 'uk') b = `<rect width="30" height="20" fill="#012169"/><path d="M0 0L30 20M30 0L0 20" stroke="#fff" stroke-width="4"/><path d="M0 0L30 20M30 0L0 20" stroke="#c8102e" stroke-width="1.4"/><path d="M15 0V20M0 10H30" stroke="#fff" stroke-width="6"/><path d="M15 0V20M0 10H30" stroke="#c8102e" stroke-width="3.4"/>`;
   else if (n === 'fr') b = `<rect width="10" height="20" fill="#0055a4"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#ef4135"/>`;
   else if (n === 'it') b = `<rect width="10" height="20" fill="#009246"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#ce2b37"/>`;
+  else if (n === 'se') b = `<rect width="30" height="20" fill="#005293"/><rect x="9" width="4" height="20" fill="#ffcd00"/><rect y="8" width="30" height="4" fill="#ffcd00"/>`;
+  else if (n === 'kr') { const bars = 'M-6-25H6M-6-22H6M-6-19H6M-6 19H6M-6 22H6M-6 25H6'; b = `<rect width="30" height="20" fill="#fff"/><g transform="translate(15 10) scale(.416667)"><g transform="rotate(-56.3099325)"><path d="${bars}" stroke="#000" stroke-width="2"/><path d="M0 17v10" stroke="#fff"/><circle r="12" fill="#cd2e3a"/><path d="M0-12A6 6 0 0 0 0 0A6 6 0 0 1 0 12A12 12 0 0 1 0-12Z" fill="#0047a0"/></g><g transform="rotate(-123.6900675)"><path d="${bars}" stroke="#000" stroke-width="2"/><path d="M0-23.5v3M0 17v3.5M0 24.5v3" stroke="#fff"/></g></g>`; }
   else if (n === 'jp') b = `<rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/>`;
   else if (n === 'cn') { b = `<rect width="30" height="20" fill="#ee1c25"/>${star(5, 5, 3)}`; for (const [x, y] of [[10, 2], [12, 4], [12, 7], [10, 9]]) b += star(x, y, 1, -90 + Math.atan2(5 - y, 5 - x) * 180 / Math.PI + 90); }
   return `<svg class="flag" width="${w}" height="${h}" viewBox="0 0 30 20" preserveAspectRatio="none">${b}</svg>`;
@@ -11435,7 +11560,7 @@ const UI = {
     }, true);
     document.querySelectorAll('.mode').forEach(el => {
       el.addEventListener('mouseenter', () => { Sfx.init(); });
-      el.addEventListener('click', () => { if (el.dataset.mode === 'soon') { this.toast('The campaign is being rebuilt for 3D and will arrive in a later update.'); return; } if (el.dataset.mode === 'team') this.teamFlow(); else if (el.dataset.mode === 'mission') this.openCampaign(); else this.openSetup(el.dataset.mode); });
+      el.addEventListener('click', () => { if (el.dataset.mode === 'soon') { this.toast('The campaign is being rebuilt for 3D and will arrive in a later update.'); return; } if (el.dataset.mode === 'team') this.show('mpChoice'); else if (el.dataset.mode === 'mission') this.openCampaign(); else this.openSetup(el.dataset.mode); });
     });
     $('bTree').onclick = () => { Sfx.init(); this.openTree(); };
     $('bHow').onclick = () => { Sfx.init(); this.show('howto'); };
@@ -11597,7 +11722,7 @@ const UI = {
   // offline team battle: mode choice → map select → setup; every Back steps one screen back along that path
   teamFlow(back) {
     const list = MAP_LIST.filter(k => k !== this.lastRandomMap), k = list[Math.floor(Math.random() * list.length)]; this.lastRandomMap = k;
-    this.openSetup('team', k, back || (() => this.showMenu()));
+    this.openSetup('team', k, back || (() => this.show('mpChoice')));
   },
   openSetup(mode, map, backTo) {
     this.setupBackTo = backTo !== undefined ? backTo : mode === 'team' ? () => this.teamFlow() : mode === 'mission' ? () => this.openCampaign() : null;
@@ -11697,7 +11822,7 @@ const UI = {
     $('treeRP').textContent = `${Math.round(Save.data.rp).toLocaleString()} RP available`;
     const wrap = $('eras'); keepScroll(wrap, wrap.parentElement); wrap.innerHTML = '';
     // nation tabs: every nation's line through the eras (USSR and modern Russia share one line)
-    const NT = [['all', 'All nations'], ['us', 'USA'], ['ussr', 'USSR / Russia'], ['de', 'Germany'], ['uk', 'Britain'], ['fr', 'France'], ['jp', 'Japan'], ['cn', 'China'], ['it', 'Italy']];
+    const NT = [['all', 'All nations'], ['us', 'USA'], ['ussr', 'USSR / Russia'], ['de', 'Germany'], ['uk', 'Britain'], ['fr', 'France'], ['jp', 'Japan'], ['cn', 'China'], ['it', 'Italy'], ['kr', 'South Korea'], ['se', 'Sweden']];
     const nat = this.treeNat || 'all', inNat = id => nat === 'all' || TANKS[id].nation === nat || (nat === 'ussr' && TANKS[id].nation === 'ru');
     $('treeNat').innerHTML = NT.map(([k, n]) => `<div class="nt ${k === nat ? 'sel' : ''}" data-k="${k}">${k === 'ussr' ? flagSVG('ussr') + flagSVG('ru') : k !== 'all' ? flagSVG(k) : ''}${n}</div>`).join('');
     $('treeNat').querySelectorAll('.nt').forEach(el => el.onclick = () => { uiSnd('click'); this.treeNat = el.dataset.k; this.renderTree(); });
@@ -12282,9 +12407,10 @@ const W3 = {
         vL = aPos; vLN = aN; vec4 w = uM * vec4(a, 1.0); vW = w.xyz; vN = mat3(uM) * n; vUV = aUV; vCol = aCol; vSide = aSide; vX = aPos.x; vMZ = aPos.z;
         if (aSide < -0.5) vUV.x += uTrk.x; else if (aSide > 0.5 && aSide < 1.5) vUV.x += uTrk.y;
         gl_Position = uVP * w; }`,
-      `in vec2 vUV; in vec3 vW, vN, vL, vLN; in vec4 vCol; in float vSide, vX, vMZ; out vec4 o; uniform sampler2D uTex; uniform float uDim, uMid, uFlash; uniform vec2 uBroken, uSprS; uniform vec3 uAvg; uniform float uWreck; uniform int uMkC; uniform vec4 uMkP[12], uMkN[12], uMkT[12]; uniform sampler2D uDA; ${SH_COMMON}
+      `in vec2 vUV; in vec3 vW, vN, vL, vLN; in vec4 vCol; in float vSide, vX, vMZ; out vec4 o; uniform sampler2D uTex; uniform float uDim, uMid, uFlash, uCut; uniform vec2 uBroken, uSprS; uniform vec3 uAvg; uniform float uWreck; uniform int uMkC; uniform vec4 uMkP[12], uMkN[12], uMkT[12]; uniform sampler2D uDA; ${SH_COMMON}
       void main(){
-        if ((vSide < -0.5 && uBroken.x > 0.5) || (vSide > 0.5 && vSide < 1.5 && uBroken.y > 0.5)) { if (vX > uMid - 1.1 && vX < uMid - 0.1) discard; }
+        if (vSide > 1.5 && vSide < 2.2 && vX > uCut) discard;
+        if ((vSide < -0.5 && uBroken.x > 0.5) || (vSide > 0.5 && vSide < 1.5 && uBroken.y > 0.5)) discard;
         vec3 n = normalize(vN);
         vec4 t = texture(uTex, vUV); float f = vCol.a;
         vec3 c = vCol.rgb * (1.0 - t.a * f) + t.rgb * f;
@@ -12386,8 +12512,8 @@ const W3 = {
        void main(){ float s = shade(vW, 0.0016); vec3 c = vC * (0.62 + 0.62 * vH) * (uAmb * 0.8 + uSunC * 0.72 * s); o = vec4(fogged(c, vW), 1.0); }`, ['aP', 'iA', 'iC']);
     // ---------------------------------------------------- shadow casters (depth only)
     this.P.sObj = this.prog(`layout(location=0) in vec3 aP; uniform mat4 uVP; void main(){ gl_Position = uVP * vec4(aP, 1.0); }`, `void main(){}`, ['aP']);
-    this.P.sTank = this.prog(`layout(location=0) in vec3 aPos; layout(location=4) in float aSide; uniform mat4 uVP, uM; uniform float uElev; uniform vec2 uPiv;
-      void main(){ vec3 a = aPos; if (aSide > 1.5) { float c = cos(uElev), s = sin(uElev), dx = a.x - uPiv.x, dz = a.z - uPiv.y; a.x = uPiv.x + dx * c - dz * s; a.z = uPiv.y + dx * s + dz * c; } gl_Position = uVP * uM * vec4(a, 1.0); }`, `void main(){}`, ['aPos', '', '', '', 'aSide'].map((x, i) => x || '_u' + i));
+    this.P.sTank = this.prog(`layout(location=0) in vec3 aPos; layout(location=4) in float aSide; uniform mat4 uVP, uM; uniform float uElev, uCut; uniform vec2 uPiv;
+      void main(){ vec3 a = aPos; if (aSide > 1.5) { if (aSide < 2.2) a.x = min(a.x, uCut); float c = cos(uElev), s = sin(uElev), dx = a.x - uPiv.x, dz = a.z - uPiv.y; a.x = uPiv.x + dx * c - dz * s; a.z = uPiv.y + dx * s + dz * c; } gl_Position = uVP * uM * vec4(a, 1.0); }`, `void main(){}`, ['aPos', '', '', '', 'aSide'].map((x, i) => x || '_u' + i));
     this.P.sTree = this.prog(`layout(location=0) in vec3 aP; layout(location=3) in vec4 iA; layout(location=4) in vec4 iB; layout(location=5) in vec4 iC; uniform mat4 uVP;
       void main(){ float c = cos(iB.y), s = sin(iB.y); vec3 p = aP * vec3(iA.w, iA.w, iB.x), q = vec3(p.x * c - p.y * s, p.x * s + p.y * c, p.z);
         if (iC.y > 0.0005) { vec2 d = vec2(cos(iC.z), sin(iC.z)); float ct = cos(iC.y), st = sin(iC.y), a = dot(q.xy, d); q = vec3(q.xy + d * (a * ct + q.z * st - a), -a * st + q.z * ct); }
@@ -12496,7 +12622,7 @@ const W3 = {
       [2, 4, 8, 16].forEach((st, li) => { let m = 0; for (let j = 0; j < this.CH; j += st) for (let i = 0; i < this.CH; i += st) { const a = at(ox + i, oy + j), b = at(ox + i + st, oy + j), cc = at(ox + i, oy + j + st), dd = at(ox + i + st, oy + j + st); for (let v = 0; v <= st; v++) for (let u = 0; u <= st; u++) { const fu = u / st, fv = v / st, h = fu >= fv ? a + (b - a) * fu + (dd - b) * fv : a + (cc - a) * fv + (dd - cc) * fu, q = Math.abs(h - at(ox + i + u, oy + j + v)); if (q > m) m = q; } } err[li + 1] = m; });
       this.chunkList.push({ ox, oy, cx: ox + 32, cy: oy + 32, cz: (lo + hi) / 2, r: Math.hypot(46, 46, (hi - lo) / 2 + 6), err });
     }
-    W3Scene.build(map);
+    W3Scene.build(map); W3Mark.reset();
     this.loadedFor = map;
   },
   upTile(map, i) {
@@ -12586,7 +12712,7 @@ const W3 = {
     const gl = this.gl, WT = this.WT, P = shadow ? this.P.sTank : this.P.tank, U = P.U;
     gl.useProgram(P.p); gl.uniformMatrix4fv(U.uVP, false, shadow ? this.shVP : this.view.VP);
     if (!shadow) { this.common(P); gl.activeTexture(gl.TEXTURE0); gl.uniform1i(U.uTex, 0); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true); }
-    const bodyFn = () => { }, NOM = [], put = (v, part) => {
+    const near = q => Math.hypot(q.x - this.view.eye[0], q.y - this.view.eye[1]) < 170, bodyFn = () => { }, NOM = [], put = (v, part) => {
       const L = v.marks.filter(m => m.part === part && m.l3); if (L.length > 12) { const big = L.filter(m => m.k3 !== 6), mg = L.filter(m => m.k3 === 6); L.length = 0; L.push(...big.slice(-12), ...mg.slice(-Math.max(0, 12 - big.length))); }
       const P = W3.mkP, N = W3.mkN, T = W3.mkT; let i = 0;
       for (const m of L) { P.set([m.l3[0], m.l3[1], m.l3[2], m.r3], i * 4); const hot = clamp(1 - (B.time - m.t) / 3.5, 0, 0.95); N.set([m.n3[0], m.n3[1], m.n3[2], m.k3 + (m.pen ? hot : 0)], i * 4); T.set([m.t3[0], m.t3[1], m.t3[2], m.e3], i * 4); i++; }
@@ -12595,12 +12721,13 @@ const W3 = {
     for (const v of list) {
       const d = v.def, M = WT.mesh(d), mk0 = v.marks; let tex = null; if (!shadow) { v.marks = NOM; tex = WT.texFor(v, M, bodyFn); v.marks = mk0; gl.uniform1i(U.uMkC, 0); }
       if (v.z3 === undefined) v.z3 = this.gz(v.x, v.y);
-      const dead = !v.alive;
-      if (!shadow) { gl.uniform1f(U.uDim, dead ? 0.85 : 1); gl.uniform1f(U.uWreck, dead ? clamp((v.deadT === undefined ? 9 : v.deadT) * 1.4 + 0.25, 0, 0.97) : 0); gl.uniform2f(U.uTrk, -(v.trackL || 0) / M.P4, -(v.trackR || 0) / M.P4); gl.uniform2f(U.uBroken, dead || v.mod('trackL').hp <= 0 ? 1 : 0, dead || v.mod('trackR').hp <= 0 ? 1 : 0); gl.uniform1f(U.uMid, M.mid); gl.uniform1f(U.uRecoil, 0); gl.uniform1f(U.uFlash, 0); gl.uniform3f(U.uAvg, -1, 0, 0); }
-      gl.uniform1f(U.uElev, 0); gl.uniform2f(U.uPiv, 0, 0);
+      const dead = !v.alive, soft3 = d.soft || d.hullShape === 'truck', brL = !soft3 && v.mod('trackL') && v.mod('trackL').hp <= 0, brR = !soft3 && v.mod('trackR') && v.mod('trackR').hp <= 0;
+      if (!shadow) { gl.uniform1f(U.uDim, dead ? 0.85 : 1); gl.uniform1f(U.uWreck, dead ? clamp((v.deadT === undefined ? 9 : v.deadT) * 1.4 + 0.25, 0, 0.97) : 0); gl.uniform2f(U.uTrk, -(v.trackL || 0) / M.P4, -(v.trackR || 0) / M.P4); gl.uniform2f(U.uBroken, brL ? 1 : 0, brR ? 1 : 0); gl.uniform1f(U.uMid, M.mid); gl.uniform1f(U.uRecoil, 0); gl.uniform1f(U.uFlash, 0); gl.uniform3f(U.uAvg, -1, 0, 0); }
+      gl.uniform1f(U.uElev, 0); gl.uniform2f(U.uPiv, 0, 0); gl.uniform1f(U.uCut, 1e6);
       gl.uniformMatrix4fv(U.uM, false, this.tankMatrix(v));
-      if (!shadow) gl.bindTexture(gl.TEXTURE_2D, WT.trackTex); WT.draw(gl, M.buf.track);
-      if (!shadow) { gl.uniform2f(U.uBroken, 0, 0); gl.bindTexture(gl.TEXTURE_2D, tex.hull); const sp = getSprites(d); gl.uniform3fv(U.uAvg, M.col); gl.uniform2f(U.uSprS, SPR / sp.hull.width, SPR / sp.hull.height); put(v, 'hull'); } WT.draw(gl, M.buf.hull); if (!shadow) gl.uniform1i(U.uMkC, 0);
+      if (shadow && (brL || brR)) { /* the belt is off: shadow from what is left */ } else { if (!shadow) gl.bindTexture(gl.TEXTURE_2D, WT.trackTex); WT.draw(gl, M.buf.track); }
+      if (brL) WT.draw(gl, W3Dmg.thrown(M, d, -1, v.id % 2)); if (brR) WT.draw(gl, W3Dmg.thrown(M, d, 1, (v.id >> 1) % 2));
+      if (!shadow) { gl.uniform2f(U.uBroken, 0, 0); gl.bindTexture(gl.TEXTURE_2D, tex.hull); const sp = getSprites(d); gl.uniform3fv(U.uAvg, M.col); gl.uniform2f(U.uSprS, SPR / sp.hull.width, SPR / sp.hull.height); put(v, 'hull'); } WT.draw(gl, M.buf.hull); if (!shadow) { gl.uniform1i(U.uMkC, 0); gl.uniform3f(U.uAvg, -1, 0, 0); if (near(v) && v.marks.length) WT.draw(gl, W3Dmg.petals(v, 'hull', M)); }
       if (M.buf.mini && v.mini) for (let i = 0; i < v.mini.length; i++) { const q = RATTE_MINI[i]; gl.uniformMatrix4fv(U.uM, false, this.tankMatrix(v, q[0], M.H, v.mini[i].a - v.ang, q[1])); WT.draw(gl, M.buf.mini); }
       if (d.turret && v.turretOff && M.buf.hole) { gl.uniformMatrix4fv(U.uM, false, this.tankMatrix(v, d.tx, M.H, 0)); WT.draw(gl, M.buf.hole); }
       if (d.turret && !v.turretOff && M.buf.tur) {
@@ -12608,7 +12735,10 @@ const W3 = {
         gl.uniformMatrix4fv(U.uM, false, this.tankMatrix(v, d.tx + ap[0], M.H + (d.mountZ || 0), v.turretAng || 0, ap[1]));
         gl.uniform1f(U.uElev, v.gunElev || 0); gl.uniform2f(U.uPiv, M.gunX, M.gunZ);
         if (!shadow) { gl.uniform1f(U.uRecoil, v.recoil || 0); gl.bindTexture(gl.TEXTURE_2D, tex.tur); gl.uniform3f(U.uAvg, -1, 0, 0); put(v, 'turret'); }
+        const burst = M.gunR && v.modOK && !v.modOK('barrel'), bk = v.id % 3; let bb = null; if (burst) { bb = W3Dmg.burst(M, bk, d); gl.uniform1f(U.uCut, M._cutX[bk]); }
         WT.draw(gl, M.buf.tur); if (!shadow) gl.uniform1i(U.uMkC, 0);
+        if (bb) { WT.draw(gl, bb); gl.uniform1f(U.uCut, 1e6); }
+        if (!shadow && near(v) && v.marks.length) { gl.uniform1f(U.uElev, 0); gl.uniform1f(U.uRecoil, 0); WT.draw(gl, W3Dmg.petals(v, 'turret', M)); gl.uniform1f(U.uElev, v.gunElev || 0); }
         if (v.guns) { if (!shadow) gl.uniform1f(U.uRecoil, 0); v.guns.forEach((g, j) => { if (j === (v.arcI || 0)) return; const q = d.arcPivot ? d.arcPivot[j] : [0, 0]; gl.uniformMatrix4fv(U.uM, false, this.tankMatrix(v, d.tx + q[0], M.H + (d.mountZ || 0), g.ta, q[1])); WT.draw(gl, M.buf.tur); }); }
       }
       // a thrown turret is its own little body
@@ -12783,7 +12913,7 @@ const W3Scene = {
     const box = (c, ct, m = 0) => this.box(a, w.x, w.y, w.a, w.hx, w.hy, zg - 1.2, zg + H, c, ct || c, m);
     switch (K) {
       case 'wreck': if ((this.map.decor || []).some(d => dist(d.x, d.y, w.x, w.y) < 1 && (d.car || TANKS[d.def]))) return; box([0.16, 0.15, 0.14]); return;
-      case 'berm': case 'dune': { const c = K === 'dune' ? cssRGB(this.map.biome.dirt).map(v => v * 1.15) : [0.36, 0.32, 0.22]; this.lumpMesh(a, w.x, w.y, zg - 0.4, w.hx * 1.08, w.hy * 1.3, H + 0.4, w.a, c, (w.x | 0) % 97); return; }
+      case 'berm': case 'dune': { const c = K === 'dune' ? cssRGB(this.map.biome.dirt).map(v => v * 1.15) : [0.36, 0.32, 0.22]; this.lumpMesh(a, w.x, w.y, zg - 0.4, w.hx * 1.08, w.hy * 1.3, H + 0.4, w.a, c, (w.x | 0) % 97, 4, Math.max(9, Math.ceil(w.hx / 1.3)), 6); return; }
       case 'rubble': { const c = w.sand ? [0.62, 0.5, 0.36] : [0.42, 0.38, 0.34]; this.lumpMesh(a, w.x, w.y, zg - 0.3, w.hx, w.hy, H + 0.3, w.a, c, (w.x | 0) % 97); return; }
       case 'sandbag': { const n = Math.max(2, Math.round(w.hx / 0.55)); for (let row = 0; row < 3; row++) for (let i = 0; i < n; i++) { const lx = -w.hx + (i + 0.5 + (row % 2) * 0.5) * (w.hx * 2 / n), [x, y] = toWorld(lx, 0, w.x, w.y, w.a), c = [0.5 + sd() * 0.08, 0.44 + sd() * 0.07, 0.3]; this.box(a, x, y, w.a, w.hx / n * 0.98, w.hy * 0.9 * (1 - row * 0.12), zg + row * 0.34 - (row ? 0 : 0.5), zg + (row + 1) * 0.34, c, c); } return; }
       case 'logs': { const n = 3; for (let i = 0; i < n; i++) { const [x, y] = toWorld(0, (i - 1) * w.hy * 0.66, w.x, w.y, w.a); this.cyl(a, x, y, zg + 0.35, w.a, w.hx, 0.34, [0.34, 0.25, 0.17]); } this.cyl(a, w.x, w.y, zg + 0.9, w.a, w.hx, 0.32, [0.38, 0.28, 0.19]); return; }
@@ -12793,6 +12923,7 @@ const W3Scene = {
       case 'craneleg': box([0.5, 0.36, 0.14]); return;
       case 'jersey': box([0.66, 0.65, 0.62]); return;
       case 'cube': box([0.55, 0.54, 0.5]); return;
+      case 'carw': return;
       case 'plane': if (w.pl) W3Plane.build(a, w.pl); return;
       case 'mudwall': box([0.68, 0.56, 0.4], [0.72, 0.6, 0.44], 3); return;
       case 'ruin': { const n = Math.max(2, Math.round(w.hx / 1.3)), col = w.brick ? [0.46, 0.27, 0.21] : [0.5, 0.48, 0.45]; for (let i = 0; i < n; i++) { const lx = -w.hx + (i + 0.5) * (w.hx * 2 / n), [x, y] = toWorld(lx, 0, w.x, w.y, w.a); this.box(a, x, y, w.a, w.hx / n, w.hy, zg - 1, zg + H * (0.3 + sd() * 0.7), col, col.map(v => v * 0.8), 3); } return; }
@@ -12804,6 +12935,8 @@ const W3Scene = {
     for (let i = 0; i < n; i++) { const t0 = i / n * TAU, t1 = (i + 1) / n * TAU; this.quad(a, [P(-hl, t0), P(hl, t0), P(hl, t1), P(-hl, t1)], N((t0 + t1) / 2), c, null, 4); }
     for (const e of [-hl, hl]) for (let i = 0; i < n; i++) this.tri(a, [P(e, 0).map((v, k) => [x + e * ca, y + e * sa, z][k]), P(e, i / n * TAU), P(e, (i + 1) / n * TAU)], [Math.sign(e) * ca, Math.sign(e) * sa, 0], c.map(v => v * 1.5));
   },
+  // a run of vertices follows the ground instead of sitting level
+  drape(a, from, zRef) { for (let i = from; i < a.length; i += 12) a[i + 2] += W3.gz(a[i], a[i + 1]) - zRef; },
   rebuildCell(c) {
     const gl = W3.gl, a = [];
     for (const [t, o] of c.items) {
@@ -12811,9 +12944,9 @@ const W3Scene = {
       else if (t === 'w') this.addWall(a, o);
       else if (t === 'rl') W3Train.track(a, o);
       else if (t === 'rf') { const z = W3.gz(o.x, o.y), c0 = o.tint === 'sand' ? [0.55, 0.45, 0.32] : o.tint === 'brick' ? [0.3, 0.24, 0.21] : [0.33, 0.32, 0.3]; this.box(a, o.x, o.y, o.a, o.hx, o.hy, z - 0.6, z + 0.09, c0, c0); }
-      else if (t === 'k') { const z = W3.gz(o.x, o.y), s = this.map.biome.dirt ? 0.8 : 1, g = 0.34 + hash01(o.x, o.y) * 0.12; this.lumpMesh(a, o.x, o.y, z - o.r * 0.25, o.r, o.r * 0.9, o.r * 1.05, (o.x | 0) * 0.7, [g * 1.05, g, g * 0.92 * s + 0.03], (o.y | 0) % 89); }
+      else if (t === 'k') { const z = W3.gz(o.x, o.y), s = this.map.biome.dirt ? 0.8 : 1, g = 0.34 + hash01(o.x, o.y) * 0.12, a0 = a.length; this.lumpMesh(a, o.x, o.y, z - o.r * 0.25, o.r, o.r * 0.9, o.r * 1.05, (o.x | 0) * 0.7, [g * 1.05, g, g * 0.92 * s + 0.03], (o.y | 0) % 89); this.drape(a, a0, z); }
       else if (t === 'br') { const z = W3.gz(o.x, o.y) + 0.22, w = [0.3, 0.23, 0.16], along = o.hx >= o.hy, a2 = along ? o.a : o.a + Math.PI / 2, hl = Math.max(o.hx, o.hy), hw = Math.min(o.hx, o.hy); this.box(a, o.x, o.y, a2, hl, hw, z - 0.6, z, w, w); for (const s of [-1, 1]) { const [x, y] = toWorld(0, s * (hw - 0.1), o.x, o.y, a2); this.box(a, x, y, a2, hl, 0.09, z, z + 0.9, [0.24, 0.19, 0.14]); } }
-      else if (t === 'car') { const z = W3.gz(o.x, o.y), c2 = o.burning ? [0.12, 0.11, 0.1] : [0.26, 0.24, 0.22]; this.box(a, o.x, o.y, o.a, 2.1, 0.9, z + 0.25, z + 0.95, c2, c2); this.box(a, o.x, o.y, o.a, 1.1, 0.8, z + 0.95, z + 1.45, c2.map(v => v * 0.7), c2); }
+      else if (t === 'car') W3Car.build(a, o);
     }
     c.dirty = false; c.n = a.length / 12;
     if (!c.vao) { c.vao = gl.createVertexArray(); c.vb = gl.createBuffer(); gl.bindVertexArray(c.vao); gl.bindBuffer(gl.ARRAY_BUFFER, c.vb); for (const [l, s, o] of [[0, 3, 0], [1, 3, 12], [2, 3, 24], [3, 2, 36], [4, 1, 44]]) { gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, s, gl.FLOAT, false, 48, o); } gl.bindVertexArray(null); }
@@ -13132,6 +13265,18 @@ const WATER_LEVEL = -0.8;
     return p;
   };
 }
+// barriers follow the ground: long ones are built in short lengths so they bend over a crest, and nothing is left buried
+{
+  const aw = W3Scene.addWall, FIXED = { carw: 1, plane: 1, railcar: 1, railcarOld: 1, craneleg: 1, wreck: 1, log: 1, rwall: 1 }, LONG = { wall: 1, mudwall: 1, jersey: 1, parapet: 1 };
+  W3Scene.addWall = function (a, w) {
+    if (FIXED[w.kind]) return aw.call(this, a, w);
+    const n = LONG[w.kind] || (!WALL_H[w.kind] && !w.tall) ? Math.max(1, Math.ceil(w.hx / 0.8)) : 1;
+    for (let i = 0; i < n; i++) {
+      const [x, y] = n > 1 ? toWorld(-w.hx + (i + 0.5) * w.hx * 2 / n, 0, w.x, w.y, w.a) : [w.x, w.y], q = n > 1 ? Object.assign({}, w, { x, y, hx: w.hx / n + 0.005, seed: (w.seed || 1) + i }) : w, a0 = a.length;
+      aw.call(this, a, q); this.drape(a, a0, W3.gz(q.x, q.y));
+    }
+  };
+}
 
 // =====================================================================
 //  RAILWAY — real rails and sleepers, and detailed rolling stock: ribbed boxcars, framed tank containers on flatcars,
@@ -13268,10 +13413,10 @@ const W3Plane = {
   // the skins: faded paint schemes and bare rusted metal, one row each in a shared texture
   tex() {
     if (this.t) return this.t;
-    const S = 1024, RW = S / 4, cv = document.createElement('canvas'); cv.width = cv.height = S; const c = cv.getContext('2d'), R = mulberry32(90125);
+    const S = 1024, RW = S / 4, cv = document.createElement('canvas'); cv.width = S; cv.height = RW * 6; const c = cv.getContext('2d'), R = mulberry32(90125);
     const blot = (x, y, r, col, al) => { const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(${col},${al})`); g.addColorStop(1, `rgba(${col},0)`); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); };
     const chip = (x, y, r, col) => { c.fillStyle = col; c.beginPath(); const n = 9 + (R() * 7 | 0); for (let i = 0; i < n; i++) { const a = i / n * TAU, q = r * (0.45 + R() * 0.8), px = x + Math.cos(a) * q * 1.4, py = y + Math.sin(a) * q; i ? c.lineTo(px, py) : c.moveTo(px, py); } c.closePath(); c.fill(); };
-    [['#4f5a33', 0.42, 0], ['#8b8468', 0.5, 1], ['#3d4a3c', 0.6, 2], ['#5d3a2a', 1.6, 3]].forEach(([base, rust, r]) => {
+    [['#4f5a33', 0.42, 0], ['#8b8468', 0.5, 1], ['#3d4a3c', 0.6, 2], ['#5d3a2a', 1.6, 3], ['#d2cfc8', 0.34, 4], ['#6d4a32', 1.4, 5]].forEach(([base, rust, r]) => {
       const y0 = r * RW; c.save(); c.beginPath(); c.rect(0, y0, S, RW); c.clip();
       c.fillStyle = base; c.fillRect(0, y0, S, RW);
       for (let i = 0; i < 90; i++) blot(R() * S, y0 + R() * RW, 20 + R() * 80, R() < 0.5 ? '198,178,132' : '18,16,12', 0.1 + R() * 0.17); // sun bleaching and grime
@@ -13279,9 +13424,11 @@ const W3Plane = {
       for (let i = 0; i < 120 * rust; i++) { const x = R() * S, y = y0 + R() * RW, L = 12 + R() * 70, g = c.createLinearGradient(0, y, 0, y + L); g.addColorStop(0, 'rgba(112,60,26,.5)'); g.addColorStop(1, 'rgba(112,60,26,0)'); c.fillStyle = g; c.fillRect(x, y, 1 + R() * 4, L); }
       for (let i = 0; i < 44; i++) blot(R() * S, y0 + R() * RW, 12 + R() * 42, '206,184,136', 0.2 + R() * 0.3); // blown sand caught on the metal
       for (let i = 0; i < 7000; i++) { c.fillStyle = R() < 0.6 ? `rgba(14,10,8,${0.12 + R() * 0.3})` : `rgba(220,190,140,${0.05 + R() * 0.16})`; c.fillRect(R() * S, y0 + R() * RW, 1 + R() * 2, 1 + R() * 2); } // pitting
-      c.strokeStyle = 'rgba(10,8,6,.62)'; c.lineWidth = 2; for (let x = 0; x < S; x += 64) { c.beginPath(); c.moveTo(x + 0.5, y0); c.lineTo(x + 0.5, y0 + RW); c.stroke(); } for (let y = 0; y < RW; y += 42) { c.beginPath(); c.moveTo(0, y0 + y); c.lineTo(S, y0 + y); c.stroke(); }
+      if (r === 5) { for (let i = 0; i < 160; i++) blot(R() * S, y0 + R() * RW, 16 + R() * 70, i % 3 ? '14,12,11' : '176,168,156', 0.2 + R() * 0.45); for (let i = 0; i < 70; i++) blot(R() * S, y0 + R() * RW, 12 + R() * 40, '176,92,36', 0.3 + R() * 0.4); } // soot, ash and orange scale
+      if (r === 4) for (let i = 0; i < 90; i++) { const x = R() * S, y = y0 + R() * RW, q = 2.5 + R() * 3; c.fillStyle = 'rgba(190,190,185,.8)'; c.beginPath(); c.arc(x, y, q + 2.2, 0, TAU); c.fill(); c.fillStyle = '#0a0807'; c.beginPath(); c.arc(x, y, q, 0, TAU); c.fill(); } // bullet holes in thin sheet
+      if (r < 4) { c.strokeStyle = 'rgba(10,8,6,.62)'; c.lineWidth = 2; for (let x = 0; x < S; x += 64) { c.beginPath(); c.moveTo(x + 0.5, y0); c.lineTo(x + 0.5, y0 + RW); c.stroke(); } for (let y = 0; y < RW; y += 42) { c.beginPath(); c.moveTo(0, y0 + y); c.lineTo(S, y0 + y); c.stroke(); }
       c.strokeStyle = 'rgba(230,215,180,.14)'; c.lineWidth = 1; for (let x = 2; x < S; x += 64) { c.beginPath(); c.moveTo(x + 0.5, y0); c.lineTo(x + 0.5, y0 + RW); c.stroke(); }
-      for (let x = 7; x < S; x += 64) for (let y = 0; y < RW; y += 8) { c.fillStyle = 'rgba(8,6,5,.5)'; c.fillRect(x, y0 + y, 2, 2); c.fillRect(x + 50, y0 + y, 2, 2); }
+      for (let x = 7; x < S; x += 64) for (let y = 0; y < RW; y += 8) { c.fillStyle = 'rgba(8,6,5,.5)'; c.fillRect(x, y0 + y, 2, 2); c.fillRect(x + 50, y0 + y, 2, 2); } }
       if (r === 0 || r === 2) { const cx = r ? 170 : 830, cy = y0 + RW / 2, q = 62; c.globalAlpha = 0.46; c.fillStyle = r ? '#7c2a20' : '#c9c2a4'; c.beginPath(); if (r) c.arc(cx, cy, q, 0, TAU); else for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, d = i % 2 ? q * 0.38 : q; i ? c.lineTo(cx + Math.cos(a) * d, cy + Math.sin(a) * d) : c.moveTo(cx + Math.cos(a) * d, cy + Math.sin(a) * d); } c.closePath(); c.fill(); c.globalAlpha = 1; for (let i = 0; i < 30; i++) chip(cx + (R() - 0.5) * q * 2.3, cy + (R() - 0.5) * q * 2.2, 3 + R() * 9, R() < 0.5 ? '#7a4524' : base); } // a faded national marking
       for (let i = 0; i < 26; i++) { const x = R() * S, y = y0 + R() * RW, q = 2 + R() * 3.5; c.fillStyle = 'rgba(100,54,24,.8)'; c.beginPath(); c.arc(x, y, q + 2, 0, TAU); c.fill(); c.fillStyle = '#080605'; c.beginPath(); c.arc(x, y, q, 0, TAU); c.fill(); } // bullet holes
       c.restore();
@@ -13301,7 +13448,7 @@ const W3Plane = {
   walls(m, pl, i) {
     pl.v = i % 4; this.HIT[pl.v].forEach((h, j) => { const [x, y] = toWorld(h[0], h[1], pl.x, pl.y, pl.a), w = { kind: 'plane', x, y, a: pl.a + h[2], hx: h[3], hy: h[4], h3: h[5], hp: 9999, tall: !!h[6] }; if (!j) w.pl = pl; m.walls.push(w); });
   },
-  rowV(r, v) { return (r + 0.03 + clamp(v, 0, 1) * 0.94) / 4; },
+  rowV(r, v) { return (r + 0.03 + clamp(v, 0, 1) * 0.94) / 6; },
   nz(a, b) { return hash01(a * 7.13 + 11.7, b * 3.37 + 2.9); },
   // places a part: yaw about z, then pitch (positive drops the nose), then roll
   rot(yaw, pit, rol) {
@@ -13532,6 +13679,238 @@ const W3Plane = {
 };
 
 // =====================================================================
+//  TORN METAL — real geometry for damage: a gun barrel burst into peeled strips, and the petals of steel around a
+//  penetration. One curling strip generator builds both.
+// =====================================================================
+const W3Dmg = {
+  // writes [pos, uv, normal, colour, side], the layout of the tank meshes
+  vtx(o, p, n, c, side) { o.push(p[0], p[1], p[2], 0, 0, n[0], n[1], n[2], c[0], c[1], c[2], 0, side); },
+  // a thick strip of metal leaving O along X, bending over toward Rd, twisting as it goes
+  // q: { L length, W half width, t thickness, a0..a1 bend range, tw twist, arc cross curve, outer, inner, tip colours, seed, nu, nv }
+  strip(out, O, X, Rd, q, side) {
+    const nu = q.nu || 10, nv = q.nv || 4, Sd = V3.norm(V3.cross(X, Rd)), R = mulberry32(q.seed | 0), jag = []; for (let j = 0; j <= nv; j++) jag.push(R());
+    const edgeL = [], edgeR = []; for (let i = 0; i <= nu; i++) { edgeL.push(1 + (R() - 0.5) * 0.3); edgeR.push(1 + (R() - 0.5) * 0.3); }
+    const C = [O.slice()], Ts = [], Ns = [], Ws = [], ds = q.L / nu;
+    for (let i = 0; i <= nu; i++) {
+      const s = i / nu, a = q.a0 + (q.a1 - q.a0) * s ** (q.pw || 0.8), T = V3.add(V3.mul(X, Math.cos(a)), V3.mul(Rd, Math.sin(a))), tw = q.tw * s * s, N0 = V3.norm(V3.cross(Sd, T)), W = V3.add(V3.mul(Sd, Math.cos(tw)), V3.mul(N0, Math.sin(tw))), N = V3.norm(V3.cross(W, T));
+      Ts.push(T); Ws.push(W); Ns.push(N); if (i < nu) C.push(V3.add(C[i], V3.mul(T, ds)));
+    }
+    const P = [], Nv = [], Cl = [];
+    for (let i = 0; i <= nu; i++) {
+      const s = i / nu, taper = (1 - (q.taper === undefined ? 0.42 : q.taper) * s) * (s > 0.78 ? Math.sqrt(Math.max(0.03, (1.02 - s) / 0.24)) : 1), row = [], rn = [], rc = [];
+      for (let j = 0; j <= nv; j++) {
+        const u = j / nv * 2 - 1, wd = q.W * taper * (u < 0 ? edgeL[i] : edgeR[i]), bow = (q.arc || 0) * (1 - s) * (u * u - 0.33), tipCut = s > 0.9 ? (jag[j] - 0.5) * q.L * 0.08 : 0, p = V3.add(V3.add(V3.add(C[i], V3.mul(Ws[i], u * wd)), V3.mul(Ns[i], bow)), V3.mul(Ts[i], tipCut));
+        const rust = mulberry32(((i * 7 + j * 13 + (q.seed | 0)) | 0))(), burn = clamp((s - 0.55) * 1.5, 0, 1) * (0.55 + 0.45 * rust);
+        const mix3 = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k], rs = [0.36, 0.2, 0.1], tint = c => mix3(mix3(c, rs, rust > 0.55 ? 0.72 : rust * 0.3), q.tip, burn);
+        row.push(p); rn.push(V3.norm(V3.add(Ns[i], V3.mul(Ws[i], -u * 0.28)))); rc.push([tint(q.outer), tint(q.inner)]);
+      }
+      P.push(row); Nv.push(rn); Cl.push(rc);
+    }
+    const h = q.t / 2, off = (i, j, sg) => V3.add(P[i][j], V3.mul(Nv[i][j], sg * h));
+    const quad = (a, b, c, d, n0, n1, n2, n3, c0, c1, c2, c3) => { for (const [p, n, cc] of [[a, n0, c0], [b, n1, c1], [c, n2, c2], [a, n0, c0], [c, n2, c2], [d, n3, c3]]) this.vtx(out, p, n, cc, side); };
+    for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) {
+      const A = [i, j], B2 = [i + 1, j], D = [i + 1, j + 1], E = [i, j + 1], neg = v => [-v[0], -v[1], -v[2]], n = (w) => Nv[w[0]][w[1]], c = (w, k) => Cl[w[0]][w[1]][k];
+      quad(off(...A, 1), off(...B2, 1), off(...D, 1), off(...E, 1), n(A), n(B2), n(D), n(E), c(A, 0), c(B2, 0), c(D, 0), c(E, 0));
+      quad(off(...A, -1), off(...B2, -1), off(...D, -1), off(...E, -1), neg(n(A)), neg(n(B2)), neg(n(D)), neg(n(E)), c(A, 1), c(B2, 1), c(D, 1), c(E, 1));
+    }
+    const rim = [0.5, 0.48, 0.45].map((v, k) => v * 0.8 + q.tip[k] * 0.2); // the raw torn edge
+    for (let i = 0; i < nu; i++) for (const j of [0, nv]) { const sg = j ? 1 : -1, n0 = V3.mul(Ws[i], sg), n1 = V3.mul(Ws[i + 1], sg); quad(off(i, j, 1), off(i + 1, j, 1), off(i + 1, j, -1), off(i, j, -1), n0, n1, n1, n0, rim, rim, rim, rim); }
+    for (let j = 0; j < nv; j++) { const n0 = Ts[nu]; quad(off(nu, j, 1), off(nu, j + 1, 1), off(nu, j + 1, -1), off(nu, j, -1), n0, n0, n0, n0, rim, rim, rim, rim); }
+  },
+  upload(arr) { const gl = W3.gl, b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr), gl.STATIC_DRAW); return { b, n: arr.length / W3.WT.STRIDE }; },
+  // a barrel that burst: the wall of the tube opened into strips that peel back from the tear
+  burst(M, k, d) {
+    M._burst = M._burst || []; if (M._burst[k]) return M._burst[k];
+    const r = Math.max(0.05, M.gunR), R = mulberry32(977 * (k + 1) + d.id.length * 31), xc = M.gunX + (M.gunXE - M.gunX) * (0.72 + 0.05 * k), out = [], n = 5 + (k % 2), paint = (M.tcol || M.col || [0.4, 0.42, 0.3]).slice(0, 3), inner = [0.5, 0.47, 0.42], tip = [0.2, 0.13, 0.09], O0 = [xc, M.gunY || 0, M.gunZ2 === undefined ? M.gunZ : M.gunZ2], th0 = R() * TAU;
+    M._cutX = M._cutX || []; M._cutX[k] = xc + r * 0.1;
+    for (let i = 0; i < n; i++) {
+      const th = th0 + (i + (R() - 0.5) * 0.3) / n * TAU, Rd = [0, Math.cos(th), Math.sin(th)], O = V3.add(O0, V3.mul(Rd, r * 0.93)), X = [1, 0, 0], long = R() < 0.4;
+      this.strip(out, O, X, Rd, { L: r * (long ? 7.5 + R() * 2.6 : 4 + R() * 2.4), W: Math.PI * r / n * (1.2 + R() * 0.3), t: r * 0.17, a0: 0.75 + R() * 0.4, a1: 1.55 + R() * (long ? 1.5 : 0.8), pw: 0.7, tw: (R() - 0.5) * (long ? 1.9 : 1.0), taper: 0.24, arc: r * 0.42, outer: paint, inner, tip, seed: i * 37 + k * 11 + 3, nu: 12, nv: 4 }, 2.5);
+    }
+    // the open bore and the ragged lip of the tube
+    const bore = [0.012, 0.01, 0.009], wall = [0.27, 0.25, 0.23], seg = 18, rb = r * 0.6;
+    for (let i = 0; i < seg; i++) {
+      const a0 = i / seg * TAU, a1 = (i + 1) / seg * TAU, q = (a, rr, x) => [x, O0[1] + Math.cos(a) * rr, O0[2] + Math.sin(a) * rr], x = xc + r * 0.1, n0 = [0, -Math.cos(a0), -Math.sin(a0)], n1 = [0, -Math.cos(a1), -Math.sin(a1)];
+      for (const [p, nn, c] of [[q(a0, rb, x), n0, wall], [q(a1, rb, x), n1, wall], [q(a1, rb, x - r * 3), n1, bore], [q(a0, rb, x), n0, wall], [q(a1, rb, x - r * 3), n1, bore], [q(a0, rb, x - r * 3), n0, bore]]) this.vtx(out, p, nn, c, 2.5);
+      for (const [p, c] of [[q(a0, rb, x), wall], [q(a0, r * 1.02, x), wall], [q(a1, r * 1.02, x), wall], [q(a0, rb, x), wall], [q(a1, r * 1.02, x), wall], [q(a1, rb, x), wall]]) this.vtx(out, p, [1, 0, 0], c, 2.5);
+      for (const [p, c] of [[q(a0, 0, x - r * 3), bore], [q(a0, rb, x - r * 3), bore], [q(a1, rb, x - r * 3), bore]]) this.vtx(out, p, [1, 0, 0], c, 2.5);
+    }
+    return M._burst[k] = this.upload(out);
+  },
+  bx(o, c, h, ry, col, side) { // a box turned about the width axis
+    const cr = Math.cos(ry), sr = Math.sin(ry), P = (x, y, z) => [c[0] + x * cr + z * sr, c[1] + y, c[2] - x * sr + z * cr], N = (x, z) => [x * cr + z * sr, 0, -x * sr + z * cr], X = h[0], Y = h[1], Z = h[2];
+    const F = [[[X, -Y, Z], [X, Y, Z], [-X, Y, Z], [-X, -Y, Z], N(0, 1), 1], [[X, -Y, -Z], [-X, -Y, -Z], [-X, Y, -Z], [X, Y, -Z], N(0, -1), 0.45], [[X, -Y, -Z], [X, Y, -Z], [X, Y, Z], [X, -Y, Z], N(1, 0), 0.8], [[-X, -Y, -Z], [-X, -Y, Z], [-X, Y, Z], [-X, Y, -Z], N(-1, 0), 0.8]];
+    for (const [a, b, c2, d, n, k] of F) { const cc = col.map(v => v * k); for (const q of [a, b, c2, a, c2, d]) this.vtx(o, P(q[0], q[1], q[2]), n, cc, side); }
+    for (const sy of [-1, 1]) { const cc = col.map(v => v * 0.7), n = [0, sy, 0]; for (const q of [[-X, -Z], [X, -Z], [X, Z], [-X, -Z], [X, Z], [-X, Z]]) this.vtx(o, P(q[0], sy * Y, q[1]), n, cc, side); }
+  },
+  // a broken track: come off the wheels and lying in a loose run across the ground, under and past the hull
+  thrown(M, d, sy, k) {
+    const key = (sy > 0 ? 2 : 0) + k, B2 = M._thrown || (M._thrown = []); if (B2[key]) return B2[key];
+    const out = [], R = mulberry32(key * 71 + 13), tw = d.trackW, y0 = sy * (d.W / 2 - tw / 2), pitch = clamp(d.L * 0.042, 0.2, 0.3), fwd = k === 0 ? 1 : -1, st = -fwd * (d.L / 2 - 0.5), ext = d.L * (0.25 + R() * 0.18), n = Math.ceil((d.L - 0.5 + ext) / pitch), sw = (0.25 + R() * 0.3) * sy, steel = [0.17, 0.145, 0.125], pad = [0.095, 0.09, 0.085], rust = [0.27, 0.15, 0.09];
+    let x = st, z = 0.05, a = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1), far = clamp((t - 0.62) / 0.38, 0, 1), y = y0 + sw * far * far + Math.sin(i * 0.5) * 0.015 * far;
+      // flat under the wheels, wandering once clear of them, a last curl where the torn end lies
+      a = far > 0 ? Math.sin(i * 1.15 + key) * 0.16 * far - (far > 0.86 ? (far - 0.86) * 6 : 0) * 1 : 0;
+      const col = R() < 0.3 ? rust : steel, c = [x, y, z + 0.035];
+      this.bx(out, c, [pitch * 0.4, tw / 2, 0.03], a, col, 0); // the shoe
+      this.bx(out, [x + fwd * pitch * 0.46, y, c[2]], [pitch * 0.09, tw / 2 + 0.02, 0.022], a, pad, 0); // the hinge pin
+      this.bx(out, [x, y, c[2] + 0.05], [pitch * 0.15, tw * 0.09, 0.05], a, steel.map(v => v * 1.2), 0); // the guide horn
+      for (const s2 of [-1, 1]) this.bx(out, [x, y + s2 * tw * 0.26, c[2] - 0.03], [pitch * 0.2, tw * 0.15, 0.012], a, pad, 0); // grousers
+      x += fwd * pitch * Math.cos(a); z = clamp(z + Math.sin(a) * pitch * fwd * -1, 0.03, 0.34);
+    }
+    return B2[key] = this.upload(out);
+  },
+  // petals of steel standing around a penetration, leaning the way the round was travelling
+  petals(v, part, M) {
+    const bag = v._pet || (v._pet = {}), trkY = v.def.W / 2 - v.def.trackW - 0.04, ms = v.marks.filter(m => m.part === part && m.l3 && m.k3 === 0 && !(part === 'hull' && Math.abs(m.l3[1]) > trkY && m.l3[2] < (M.trkZ || 1) + 0.06)).slice(-12), key = ms.length ? ms.length + ':' + ms[ms.length - 1].t : '', cur = bag[part];
+    if (cur && cur.key === key) return cur.buf; if (cur && cur.buf) W3.gl.deleteBuffer(cur.buf.b); if (!ms.length) { bag[part] = { key, buf: null }; return null; }
+    const out = [], paint = (part === 'turret' ? M.tcol || M.col : M.col || [0.4, 0.42, 0.3]).slice(0, 3), inner = [0.5, 0.48, 0.45], tip = [0.055, 0.045, 0.04];
+    for (const m of ms) {
+      const N = m.n3, T = m.t3, Bt = V3.cross(N, T), E = m.e3 || 1, r = m.r3, rho = r * 0.2, R = mulberry32(((m.l3[0] * 991 + m.l3[1] * 577 + m.l3[2] * 311) | 0) ^ 5381), n = 6 + (R() * 3 | 0), lean = clamp(E - 1, 0, 1.4), th0 = R() * TAU;
+      for (let i = 0; i < n; i++) {
+        const th = th0 + (i + (R() - 0.5) * 0.45) / n * TAU, cx = Math.cos(th), sy = Math.sin(th), Rd = V3.norm(V3.add(V3.mul(T, cx), V3.mul(Bt, sy))), O = V3.add(V3.add(m.l3, V3.add(V3.mul(T, cx * rho * E), V3.mul(Bt, sy * rho))), V3.mul(N, -r * 0.02)), downrange = Math.max(0, cx), X = V3.norm(V3.add(N, V3.mul(T, lean * 0.5))), skip = R();
+        if (skip < 0.2) continue; // not every tear lifts
+        this.strip(out, O, X, Rd, { L: r * (0.07 + R() * 0.12) * (1 + downrange * lean * 0.6), W: Math.PI * rho / n * (1 + R() * 0.3), t: r * 0.018, a0: 0.55 + R() * 0.4, a1: 1.9 + R() * 0.7, pw: 1, tw: (R() - 0.5) * 1.4, arc: rho * 0.1, outer: paint, inner, tip, seed: ((m.l3[0] * 1000) | 0) + i * 19, nu: 6, nv: 2 }, 0);
+      }
+    }
+    const buf = this.upload(out); bag[part] = { key, buf }; return buf;
+  },
+};
+
+// =====================================================================
+//  SCENERY DAMAGE — bullet holes and shell scars left on anything solid: walls, houses, trains, cars, rocks. Each is a small
+//  textured patch laid on the surface it hit; the oldest are reused when the pool is full.
+// =====================================================================
+const W3Mark = {
+  MAX: 1400, n: 0, head: 0, F: 6, P: null, buf: null, vao: null, tex: null, tmp: new Float32Array(36),
+  art() {
+    const S = 128, cv = document.createElement('canvas'); cv.width = S * 4; cv.height = S; const c = cv.getContext('2d'), R = mulberry32(777);
+    const ragged = (x, y, r, n, j) => { c.beginPath(); for (let i = 0; i < n; i++) { const a = i / n * TAU, q = r * (1 - j + R() * j * 2); i ? c.lineTo(x + Math.cos(a) * q, y + Math.sin(a) * q) : c.moveTo(x + Math.cos(a) * q, y + Math.sin(a) * q); } c.closePath(); c.fill(); };
+    for (let k = 0; k < 2; k++) { // bullet strikes: a dark pit in a pale chipped ring
+      const x = S * k + S / 2, y = S / 2; c.fillStyle = 'rgba(205,198,185,.5)'; ragged(x, y, 42, 15, 0.3); c.fillStyle = 'rgba(95,88,80,.75)'; ragged(x, y, 27, 12, 0.3); c.fillStyle = 'rgba(10,8,7,.97)'; ragged(x, y, 17, 10, 0.26);
+      c.strokeStyle = 'rgba(25,22,20,.55)'; c.lineWidth = 1.5; for (let i = 0; i < 5; i++) { const a = R() * TAU; c.beginPath(); c.moveTo(x + Math.cos(a) * 18, y + Math.sin(a) * 18); c.lineTo(x + Math.cos(a + 0.25) * 34, y + Math.sin(a + 0.25) * 34); c.lineTo(x + Math.cos(a) * (42 + R() * 14), y + Math.sin(a) * (42 + R() * 14)); c.stroke(); }
+    }
+    for (let k = 2; k < 4; k++) { // shell strikes: a torn hole in a blackened scorch
+      const x = S * k + S / 2, y = S / 2, g = c.createRadialGradient(x, y, 12, x, y, 62); g.addColorStop(0, 'rgba(14,12,10,.92)'); g.addColorStop(0.55, 'rgba(26,23,20,.6)'); g.addColorStop(1, 'rgba(30,26,22,0)'); c.fillStyle = g; c.fillRect(x - 64, y - 64, 128, 128);
+      c.fillStyle = 'rgba(150,142,128,.8)'; ragged(x, y, 31, 17, 0.28); c.fillStyle = 'rgba(55,48,42,.95)'; ragged(x, y, 24, 15, 0.24); c.fillStyle = 'rgba(6,5,4,.98)'; ragged(x, y, 17, 13, 0.3);
+      for (let i = 0; i < 26; i++) { const a = R() * TAU, d = 30 + R() * 28; c.fillStyle = `rgba(12,10,9,${0.4 + R() * 0.4})`; c.beginPath(); c.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, 1 + R() * 2.2, 0, TAU); c.fill(); }
+    }
+    return cv;
+  },
+  init() {
+    const gl = W3.gl;
+    this.P = W3.prog(`layout(location=0) in vec3 aP; layout(location=1) in vec2 aU; layout(location=2) in float aL; uniform mat4 uVP; out vec2 vU; out vec3 vW; out float vL; void main(){ vU = aU; vW = aP; vL = aL; gl_Position = uVP * vec4(aP, 1.0); }`,
+      `in vec2 vU; in vec3 vW; in float vL; out vec4 o; uniform sampler2D uT; uniform vec3 uCam, uAmb, uSunC; void main(){ vec4 t = texture(uT, vU); float d = length(uCam - vW); vec3 l = uAmb * 0.9 + uSunC * vL * 0.75; o = vec4(t.rgb * l, t.a * smoothstep(420.0, 240.0, d)); if (o.a < 0.01) discard; }`, ['aP', 'aU', 'aL']);
+    this.vao = gl.createVertexArray(); gl.bindVertexArray(this.vao); this.buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.buf); gl.bufferData(gl.ARRAY_BUFFER, this.MAX * 36 * 4, gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0); gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 24, 12); gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 24, 20); gl.bindVertexArray(null);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); this.tex = gl.createTexture(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.art()); gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  },
+  reset() { this.n = 0; this.head = 0; },
+  // s: size in metres. Small ones are bullet strikes, larger ones shell strikes
+  add(x, y, z, nx, ny, nz, s) {
+    if (!this.P) this.init();
+    const gl = W3.gl, up = Math.abs(nz) > 0.9 ? [1, 0, 0] : [0, 0, 1], n = [nx, ny, nz], t = V3.norm(V3.cross(up, n)), b = V3.cross(n, t), a = Math.random() * TAU, ca = Math.cos(a), sa = Math.sin(a), T = V3.add(V3.mul(t, ca), V3.mul(b, sa)), Bn = V3.add(V3.mul(t, -sa), V3.mul(b, ca)), c = [x + nx * 0.03, y + ny * 0.03, z + nz * 0.03], kind = s < 0.3 ? (Math.random() * 2 | 0) : 2 + (Math.random() * 2 | 0), u0 = kind / 4 + 0.002, u1 = (kind + 1) / 4 - 0.002, sun = Math.max(0, nx * SUN[0] + ny * SUN[1] + nz * SUN[2]);
+    const Q = (p, q, u, v) => [c[0] + T[0] * p * s + Bn[0] * q * s, c[1] + T[1] * p * s + Bn[1] * q * s, c[2] + T[2] * p * s + Bn[2] * q * s, u, v, sun], A = Q(-1, -1, u0, 0), B2 = Q(1, -1, u1, 0), C = Q(1, 1, u1, 1), D = Q(-1, 1, u0, 1), d = this.tmp; let i = 0;
+    for (const q of [A, B2, C, A, C, D]) for (const f of q) d[i++] = f;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buf); gl.bufferSubData(gl.ARRAY_BUFFER, this.head * 36 * 4, d); this.head = (this.head + 1) % this.MAX; this.n = Math.min(this.MAX, this.n + 1);
+  },
+  draw() {
+    if (!this.n) return; const gl = W3.gl, U = this.P.U; gl.useProgram(this.P.p); W3.common(this.P); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.tex); gl.uniform1i(U.uT, 0);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-2, -4); gl.bindVertexArray(this.vao); gl.drawArrays(gl.TRIANGLES, 0, this.n * 6); gl.bindVertexArray(null); gl.disable(gl.POLYGON_OFFSET_FILL); gl.depthMask(true); gl.disable(gl.BLEND);
+  },
+  NOHOLE: { berm: 1, dune: 1, rubble: 1, sandbag: 1, log: 1, logs: 1, plane: 1, wreck: 1 },
+  // a shell or bullet stopped by scenery: find the face it met and mark it
+  hit(p, s, x, y, z, dir) {
+    let n = null; const o = s.b || s.w;
+    if (o && s.h) { if (s.w && this.NOHOLE[s.w.kind]) return; const ca = Math.cos(o.a || 0), sa = Math.sin(o.a || 0), h = s.h; n = [h.nx * ca - h.ny * sa, h.nx * sa + h.ny * ca, h.nz]; }
+    else if (s.k) { const L = Math.hypot(x - s.k.x, y - s.k.y) || 1; n = [(x - s.k.x) / L * 0.8, (y - s.k.y) / L * 0.8, 0.6]; }
+    if (!n) n = V3.norm(V3.mul(dir, -1));
+    const mg = p.owner && p.owner.mgSh === p.sh, cal = p.owner ? p.owner.def.cal : 75, sz = mg ? 0.15 + Math.random() * 0.09 : clamp(cal / 1000 * (p.T && p.T.he ? 11 : 6.5), 0.3, 1.5);
+    this.add(x, y, z, n[0], n[1], n[2], sz); if (B.net === 'host') NET.rec(['sc', r2(x), r2(y), r2(z), r3(n[0]), r3(n[1]), r3(n[2]), r3(sz)]);
+  },
+};
+
+// =====================================================================
+//  WRECKED CARS — real bodies with empty window frames, seats and wheels: burnt-out shells on bare rims, and shot-up, rusting
+//  cars with sprung doors. A tank climbs over one and leaves it crushed flat.
+// =====================================================================
+const W3Car = {
+  // height of the waist and of the roofline along the car, rear (0) to front (1)
+  P: {
+    sedan: { belt: [[0, 0.82], [0.12, 0.86], [0.72, 0.88], [0.97, 0.74], [1, 0.62]], top: [[0, 0.82], [0.12, 0.88], [0.27, 1.38], [0.56, 1.42], [0.72, 0.9], [1, 0.62]], cab: [0.22, 0.68], post: [0.45] },
+    hatch: { belt: [[0, 0.86], [0.08, 0.92], [0.72, 0.9], [0.97, 0.76], [1, 0.66]], top: [[0, 0.9], [0.05, 1.08], [0.2, 1.42], [0.58, 1.46], [0.76, 0.92], [1, 0.66]], cab: [0.1, 0.72], post: [0.42] },
+    beetle: { belt: [[0, 0.62], [0.14, 0.84], [0.72, 0.84], [0.96, 0.68], [1, 0.54]], top: [[0, 0.62], [0.12, 0.98], [0.3, 1.38], [0.5, 1.44], [0.68, 1.16], [0.76, 0.88], [1, 0.54]], cab: [0.24, 0.68], post: [0.5] },
+    van: { belt: [[0, 1.0], [0.8, 1.02], [0.92, 0.92], [1, 0.8]], top: [[0, 1.9], [0.03, 1.96], [0.78, 1.96], [0.92, 1.0], [1, 0.8]], cab: [0.48, 0.88], post: [0.68] },
+    pickup: { belt: [[0, 0.98], [0.48, 1.0], [0.72, 0.98], [0.97, 0.84], [1, 0.72]], top: [[0, 0.98], [0.44, 1.0], [0.46, 1.54], [0.6, 1.56], [0.72, 1.02], [1, 0.72]], cab: [0.47, 0.7], post: [] },
+  },
+  pl(t, u) { for (let i = 1; i < t.length; i++) if (u <= t[i][0]) return lerp(t[i - 1][1], t[i][1], (u - t[i - 1][0]) / Math.max(1e-4, t[i][0] - t[i - 1][0])); return t[t.length - 1][1]; },
+  // called from the wall list: the car is `w.car`
+  crush(w) {
+    if (w.crushed) return; w.crushed = 1; w.h3 = 0.45; if (w.car && w.car._cell) w.car._cell.dirty = true;
+    if (B && B.net === 'host') NET.rec(['cc', B.map.walls.indexOf(w)]);
+    if (B) { B.fxSparks(w.x, w.y, 1, 0, 8); Sfx.play('crush', w.x, w.y); }
+  },
+  build(a, d) {
+    const a0 = a.length, S = this.P[d.type] || this.P.sedan, sd = d.seed | 0, R = mulberry32(sd), nzf = W3Plane.nz.bind(W3Plane), burnt = d.state !== 'wreck', w2 = d.w, flat = !!(w2 && w2.crushed), L = d.L, W = d.W, hw = W / 2, zg = W3.gz(d.x, d.y), ca = Math.cos(d.a), sa = Math.sin(d.a), row = burnt ? 5 : 4, drop = burnt ? 0.16 : 0.05;
+    const tint = burnt ? [1, 1, 1] : cssRGB(d.paint).map(v => clamp(v * 1.05 + 0.07, 0.08, 1));
+    const crushZ = z => flat ? 0.1 + z * 0.3 + nzf(z * 7, sd) * 0.05 : z;
+    const G = { a, R, ca, sa, pa: d.a, dk: burnt ? 0.8 : 1, seed: sd % 97, c: tint, root: (x, y, z) => [d.x + x * ca - y * sa, d.y + x * sa + y * ca, zg + crushZ(z) - (flat ? 0 : drop)] }, f = W3Plane.part(G, 0, 0, 0), hood = sd % 3 === 0, frontHit = 0.1 + R() * 0.16, side0 = R() < 0.5 ? 1 : -1, doorOpen = !burnt ? R() < 0.6 : R() < 0.25, doorRear = R() < 0.4;
+    const nu = 26, Sv = [[-1, 0.3], [-1, 0.55], [-1, 0.78], [-1, 1], [-0.92, 1.25], [-0.82, 1.6], [-0.74, 2], [-0.3, 2.1], [0.3, 2.1], [0.74, 2], [0.82, 1.6], [0.92, 1.25], [1, 1], [1, 0.78], [1, 0.55], [1, 0.3], [0.5, 0.26], [-0.5, 0.26]], nv = Sv.length;
+    const body = (i, j) => {
+      const u = i / nu, k = Sv[j % nv], b = this.pl(S.belt, u), t = Math.max(b, this.pl(S.top, u)), crump = clamp((u - (1 - frontHit)) / frontHit, 0, 1), xz = (Math.round(u * 40) + j * 3 + sd);
+      const ww = hw * (1 - 0.1 * Math.pow(Math.abs(u - 0.48) * 2, 3)) * (1 - crump * 0.1), z = k[1] <= 1 ? 0.28 + (b - 0.28) * ((k[1] - 0.26) / 0.74) : b + (t - b) * ((k[1] - 1) / 1.1), dent = (nzf(xz, 3) - 0.5) * (burnt ? 0.05 : 0.035);
+      const x = (u - 0.5) * L * (1 - crump * crump * 0.04) - crump * crump * 0.5 * (L * frontHit), wob = crump * (nzf(xz, 9) - 0.5) * 0.22;
+      return [x + wob * 0.6, k[0] * (t > b + 0.1 && k[1] > 1 ? ww * 0.97 : ww) + dent + wob, z + dent + wob * 0.8];
+    };
+    const wx = [-L * 0.31, L * 0.31];
+    const keep = (i, j) => {
+      const u = (i + 0.5) / nu, k = Sv[j % nv], k2 = Sv[(j + 1) % nv], up = k[1] >= 1 && k2[1] >= 1, cb = u > S.cab[0] && u < S.cab[1], rf = Math.abs(k[0]) < 0.8 && Math.abs(k2[0]) < 0.8 && up, sideWin = up && Math.abs(k[0]) > 0.7 && Math.abs(k2[0]) > 0.7 && k[1] < 2;
+      if (sideWin && cb && !S.post.some(q => Math.abs(u - q) < 0.022)) return false; // door and rear windows are gone
+      const dTop = this.pl(S.top, u + 0.02) - this.pl(S.top, u - 0.02); if (rf && Math.abs(dTop) > 0.06 && this.pl(S.top, u) > this.pl(S.belt, u) + 0.05) return false; // screens
+      if (k[1] <= 1 && k2[1] <= 1 && Math.abs(k[0]) > 0.9) { const x = (u - 0.5) * L; for (const q of wx) { const zm = (k[1] + k2[1]) / 2 * 0.74 + 0.08; if (Math.hypot(x - q, (zm - 0.3) * 1.15) < 0.44) return false; } } // wheel arches
+      if (hood && u > 0.74 && u < 0.97 && rf) return false; // the bonnet is gone
+      if (doorOpen && Math.sign(k[0]) === side0 && Math.abs(k[0]) > 0.7 && u > 0.47 && u < 0.7 && k[1] <= 1.3 && k[1] > 0.3) return false; // sprung door
+      if (burnt && nzf(i + sd, j) < 0.05 && !rf) return false;
+      return true;
+    };
+    W3Plane.surf(G, f, nu, nv, body, { wrap: true, col: tint, keep, inner: 0.025, out: (i) => [(i / nu - 0.5) * L, 0, 0.75], ic: burnt ? [0.04, 0.035, 0.03] : [0.09, 0.08, 0.07], uv: (i, j) => [i / nu * L / 7, W3Plane.rowV(row, j / nv)] });
+    const mt = burnt ? [0.17, 0.12, 0.09] : [0.12, 0.12, 0.13], rust = [0.33, 0.19, 0.11], dk = [0.05, 0.05, 0.05], tb = (p, r, c, n = 5) => W3Plane.tube(G, f, p, r, c, n);
+    // inside: floor, seats (burnt down to their frames), wheel and dash
+    if (!flat) W3Scene.box(a, ...G.root(0, 0, 0).slice(0, 2), d.a, L * 0.42, hw * 0.9, zg + 0.24, zg + 0.34, dk, dk, 4);
+    const cx = (S.cab[0] + S.cab[1]) / 2, cu = (cx - 0.5) * L;
+    if (!flat) for (const sy of [-1, 1]) for (const q of (d.type === 'pickup' ? [0.12] : [0.18, -0.28])) {
+      const x = cu + q * L * 0.9, y = sy * hw * 0.48;
+      if (burnt) { tb([[x - 0.25, y - 0.2, 0.5], [x + 0.2, y - 0.2, 0.5], [x + 0.2, y + 0.2, 0.5], [x - 0.25, y + 0.2, 0.5], [x - 0.25, y - 0.2, 0.5]], 0.018, rust, 4); tb([[x - 0.25, y - 0.2, 0.5], [x - 0.33, y - 0.18, 1.08], [x - 0.33, y + 0.18, 1.08], [x - 0.25, y + 0.2, 0.5]], 0.018, rust, 4); for (let k = 0; k < 4; k++) tb([[x - 0.25, y - 0.15 + k * 0.1, 0.5], [x + 0.2, y - 0.15 + k * 0.1, 0.46]], 0.007, mt, 3); }
+      else { const c2 = [0.11, 0.1, 0.1]; W3Plane.surf(G, f, 2, 2, (i, j) => [x - 0.24 + i * 0.22, y - 0.22 + j * 0.22, 0.55], { col: c2, m: 4 }); W3Scene.box(a, ...G.root(x - 0.27, y, 0).slice(0, 2), d.a, 0.07, 0.22, zg + 0.5, zg + 1.05, c2, c2, 4); }
+    }
+    const wx0 = (S.cab[1] - 0.5) * L - 0.42, whl = []; if (!flat) { for (let k = 0; k <= 10; k++) { const t = k / 10 * TAU; whl.push([wx0 - Math.sin(t) * 0.06, hw * 0.48 * side0 + Math.cos(t) * 0.17, 0.92 + Math.sin(t) * 0.17]); } tb(whl, 0.016, burnt ? rust : dk, 4); tb([[wx0, hw * 0.48 * side0, 0.92], [wx0 + 0.34, hw * 0.48 * side0, 0.72]], 0.02, mt, 4); }
+    if (d.type !== 'van' && !flat) W3Scene.box(a, ...G.root(wx0 + 0.3, 0, 0).slice(0, 2), d.a, 0.1, hw * 0.92, zg + 0.62, zg + 0.82, burnt ? rust.map(v => v * 0.6) : dk, null, 4);
+    // wheels: burnt cars sit on bare rims, shot-up ones on flat tyres
+    for (const q of wx) for (const sy of [-1, 1]) {
+      const flatT = !burnt && R() < 0.45, wy = sy * (hw - 0.11), rad = burnt ? 0.23 : 0.31, wf = W3Plane.part(G, q, wy, rad - (flatT ? 0.05 : 0), Math.PI / 2 + (R() - 0.5) * 0.16 + (q > 0 && frontHit > 0.2 ? 0.22 : 0), 0, 0), hub = burnt ? [0.2, 0.12, 0.08] : [0.34, 0.33, 0.31];
+      if (!burnt) W3Plane.lathe(G, wf, [[-0.1, 0.02], [-0.1, 0.17], [-0.11, 0.22], [-0.08, flatT ? 0.26 : 0.3], [0.08, flatT ? 0.26 : 0.3], [0.11, 0.22], [0.1, 0.17], [0.1, 0.02]], [0.06, 0.06, 0.06], 14);
+      W3Plane.lathe(G, wf, [[sy * 0.1, 0.03], [sy * 0.1, 0.19], [sy * 0.08, 0.215], [sy * -0.09, 0.215], [sy * -0.1, 0.1]], hub, 12);
+      for (let k = 0; k < 5; k++) { const t = k / 5 * TAU; W3Plane.tube(G, wf, [[0.11, Math.cos(t) * 0.05, Math.sin(t) * 0.05], [0.11, Math.cos(t + 0.3) * 0.18, Math.sin(t + 0.3) * 0.18]], 0.018, hub, 4); }
+    }
+    // bumpers, one usually hanging; exposed engine; sprung door
+    const fr = L / 2 * (1 - frontHit * 0.5), hang = R() < 0.6 ? side0 : 0, bcol = burnt ? rust : d.state === 'wreck' ? [0.42, 0.41, 0.4] : mt;
+    tb([[fr, -hw * 0.95, hang < 0 ? 0.12 : 0.42], [fr + 0.08, -hw * 0.4, hang < 0 ? 0.24 : 0.43], [fr + 0.1, hw * 0.4, hang > 0 ? 0.24 : 0.43], [fr, hw * 0.95, hang > 0 ? 0.12 : 0.42]], 0.055, bcol, 5);
+    tb([[-L / 2 - 0.02, -hw * 0.92, 0.48], [-L / 2 - 0.06, 0, 0.48], [-L / 2 - 0.02, hw * 0.92, 0.48]], 0.05, bcol, 5);
+    if ((hood || frontHit > 0.2) && !flat) { const ex = L * 0.34, e = burnt ? rust.map(v => v * 0.7) : [0.1, 0.1, 0.1]; W3Scene.box(a, ...G.root(ex, 0, 0).slice(0, 2), d.a, 0.34, 0.3, zg + 0.34, zg + 0.74, e, e, 4); for (let k = 0; k < 7; k++) tb([[ex + 0.2, -0.3 + k * 0.1, 0.72], [ex + 0.45 + R() * 0.2, -0.4 + k * 0.13, 0.44 + R() * 0.2]], 0.012, k % 2 ? mt : rust, 3); }
+    if (doorOpen) {
+      const hx = (0.7 - 0.5) * L, hy = side0 * hw, ang = side0 * (0.7 + R() * 0.7), dl = 0.23 * L, df = W3Plane.part(G, hx, hy, 0, ang, 0, 0), bf = this.pl(S.belt, 0.58), tf = this.pl(S.top, 0.58);
+      W3Plane.surf(G, df, 8, 8, (i, j) => { const px = -dl * i / 8, zz = 0.32 + j / 8 * (tf - 0.32); return [px, 0.02 * Math.sin(i), zz]; }, { col: tint, inner: 0.02, flip: side0 > 0, keep: (i, j) => !(j >= 5 && i > 0 && i < 7), ic: [0.13, 0.12, 0.11], uv: (i, j) => [i / 40 + 0.3, W3Plane.rowV(row, j / 12 + 0.2)] });
+      for (const y of [0.02]) tb([[0, y, tf], [-dl * 0.5, y, tf - 0.02], [-dl, y, this.pl(S.belt, 0.5) + 0.05]], 0.018, burnt ? rust : mt, 4);
+      tb([[0, 0, 0.44], [-dl * 0.3, 0.02, 0.5]], 0.012, mt, 3);
+    }
+    // glass crumbs and scrap around it
+    for (let i = 0; i < 5; i++) { const q = R() * TAU, r = hw + 0.4 + R() * 1.3, x = Math.cos(q) * r * 1.5, y = Math.sin(q) * r, fs = W3Plane.part(G, x, y, 0.09, R() * TAU, 0, (R() - 0.5) * 0.5); W3Plane.surf(G, fs, 3, 2, (p, o) => [(p - 1.5) * 0.14, (o - 1) * 0.1, 0.04 * Math.sin(p * 2)], { col: tint.map(v => v * 0.55), uv: (p, o) => [p / 30, W3Plane.rowV(row, o / 8 + i / 16)] }); }
+    W3Scene.drape(a, a0, zg);
+  },
+};
+
+// =====================================================================
 //  3D SIMULATION — the armour, crew and module model of the first game now works on real geometry: shells have height
 //  and drop, guns elevate, hills and buildings block sight and fire, and a shell can land on a roof plate.
 // =====================================================================
@@ -13562,7 +13941,7 @@ const S3 = {
   },
   mgAim(v, sh) {
     const p = this.mgPoint(v), c = v.ctrl, t = v.ai && v.ai.target; let tx, ty, tz;
-    if (c.aim3 && !Aim.manual()) { tx = c.ax; ty = c.ay; tz = c.az; }
+    if (c.aim3 && !Aim.manFor(v)) { tx = c.ax; ty = c.ay; tz = c.az; }
     else if (c.aim3 || !(c.aimDist > 0)) { const G = this.gun(v), hs = Math.hypot(G.dir[0], G.dir[1]) || 1; return { p, tan: G.dir[2] / hs, a: Math.atan2(G.dir[1], G.dir[0]) }; }
     else { tx = p[0] + Math.cos(c.aim) * c.aimDist; ty = p[1] + Math.sin(c.aim) * c.aimDist; tz = t && t.alive && t.z3 !== undefined ? t.z3 + hullHeight(t.def) * 0.6 : W3.gz(tx, ty) + 1; }
     const w = this.solve(p, tx, ty, tz, sh.v); return { p, tan: w[2], a: Math.atan2(w[1], w[0]) };
@@ -13659,7 +14038,7 @@ const S3 = {
   // ---- climbing: what a tank can drive over instead of being stopped by
   climbH(d) { return d.jugg ? 3.2 : d.soft ? 0.4 : clamp(hullHeight(d) * 0.8, 0.85, 1.5); },
   LUMP: { berm: 1, dune: 1, rubble: 1 },
-  climbW(v, w) { if (w.kind === 'log') return true; const H = wallH(w); if (w.kind === 'wreck' || w.tall) return false; return H <= this.climbH(v.def) * (this.LUMP[w.kind] ? 1.35 : 1); },
+  climbW(v, w) { if (w.kind === 'log' || w.kind === 'carw') return true; const H = wallH(w); if (w.kind === 'wreck' || w.tall) return false; return H <= this.climbH(v.def) * (this.LUMP[w.kind] ? 1.35 : 1); },
   climbK(v, k) { return k.r * 0.95 <= this.climbH(v.def); },
   obsList(v) {
     const m = B.map, e = Math.hypot(v.def.L, v.def.W) / 2 + 1, o = v._obs || (v._obs = []), tmp = v._otmp || (v._otmp = []); o.length = 0;
@@ -13718,7 +14097,9 @@ const S3 = {
       if (h && h.t < bt) { bt = h.t; best = { b, t: bt, h }; }
     }
     for (const w of map.segObjects(o[0], o[1], x1, y1, 'w', tmp)) {
-      const zg = W3.gz(w.x, w.y), h = this.slab(this.zrot(w.x, w.y, zg, w.a), o, dir, len, -w.hx, w.hx, -w.hy, w.hy, -2, wallH(w));
+      // barriers follow the ground, so what counts is the ground where the shell actually meets this one
+      const z0 = W3.gz(w.x, w.y), pr = this.slab(this.zrot(w.x, w.y, z0, w.a), o, dir, len, -w.hx, w.hx, -w.hy, w.hy, -999, 999); if (!pr) continue;
+      const zg = W3.gz(o[0] + dir[0] * pr.t, o[1] + dir[1] * pr.t), h = this.slab(this.zrot(w.x, w.y, zg, w.a), o, dir, len, -w.hx, w.hx, -w.hy, w.hy, -2, wallH(w));
       if (h && h.t < bt) { bt = h.t; best = { w, t: bt, h }; }
     }
     for (const k of map.segObjects(o[0], o[1], x1, y1, 'k', tmp)) {
@@ -13784,7 +14165,7 @@ const S3 = {
       }
       if (have && !this.turretOff) {
         const G = S3.gun(this), sh = S3.shellOf(this) || d.shells[0], m = S3.mR(this); let w;
-        if (c.aim3 && Aim.manual()) { // manual: the gun lies exactly along the sight line, and the gunner adds the elevation himself
+        if (c.aim3 && Aim.manFor(this)) { // manual: the gun lies exactly along the sight line, and the gunner adds the elevation himself
           if (c.sdir) { const hs = Math.hypot(c.sdir[0], c.sdir[1]) || 1; w = [c.sdir[0] / hs, c.sdir[1] / hs, c.sdir[2] / hs]; }
           else { const dx = tx - G.piv[0], dy = ty - G.piv[1], Rg = Math.hypot(dx, dy) || 1; w = [dx / Rg, dy / Rg, (tz - G.piv[2]) / Rg]; }
         } else w = S3.solve(G.piv, tx, ty, tz, sh.v);
@@ -13804,6 +14185,7 @@ const S3 = {
       return;
     }
     if (d.turret && this.has('gunner')) { const r = clamp((d.traverse || 20) * 0.32, 4, 11) * DEG * (this.modOK('drive') ? 1 : 0.2) * dt; this.gunElev += clamp(this.gunWant - this.gunElev, -r, r); }
+    if (!d.soft && !net) { const e = Math.hypot(d.L, d.W) / 2 + 3, T = this._ct || (this._ct = []); for (const w of B.map.query(this.x - e, this.y - e, this.x + e, this.y + e, 'w', T)) if (w.kind === 'carw' && !w.crushed && obbSAT(w, this.hullBox())) { w._ct = (w._ct || 0) + dt; if (w._ct > 0.3) W3Car.crush(w); } }
     S3.ride(this, dt, dt > 0 ? (this.vel - vel0) / dt : 0);
   };
   Vehicle.prototype.fireGun = function () {
@@ -13911,8 +14293,8 @@ updateProjectiles = function (dt) {
         if (best.ground) { W3.fxZ = W3.gz(hx, hy) + 0.3; impactWorld(p, hx, hy, 'ground'); p.alive = false; }
         else if (best.v && p.scripted) { p.alive = false; p.scripted(best.v, hx, hy, p); }
         else if (best.v) resolveVehicleHit(p, best.v, best.part, best.h, hx, hy);
-        else if (best.b) hitBuilding(p, best.b, hx, hy);
-        else if (best.w || best.k) { impactWorld(p, hx, hy, best.w ? 'wall' : 'rock'); p.alive = false; }
+        else if (best.b) { W3Mark.hit(p, best, hx, hy, hz, dir); hitBuilding(p, best.b, hx, hy); }
+        else if (best.w || best.k) { W3Mark.hit(p, best, hx, hy, hz, dir); impactWorld(p, hx, hy, best.w ? 'wall' : 'rock'); p.alive = false; }
         else if (best.tree) {
           if (p.T.he || p.T.chem) { impactWorld(p, hx, hy, 'tree'); p.alive = false; B.crushTree(best.tree, null); }
           else { p.v *= 0.92; p.penK *= 0.9; p.x += p.dx * 0.6; p.y += p.dy * 0.6; B.fxSplinters(hx, hy); if (chance(0.4)) B.crushTree(best.tree, null); }
@@ -13948,11 +14330,13 @@ playerInput = function (v, dt) {
 };
 // ---------------------------------------------------------------- camera
 const Cam3 = {
+  noSight() { B.center = { t: 0, text: 'AIMSIGHT DAMAGED', sub: 'Repair the tank to use the gunner sight', col: '#ff6b5a', big: true }; Sfx.play('crit'); },
   init(cam, v) { cam.yaw = v ? v.ang + (v.turretAng || 0) : 0; cam.pitch = -0.04; cam.dist = v ? clamp(v.def.L * 1.9 + 3.5, 9, 60) : 14; cam.ready = v || true; },
   update(dt) {
     const cam = B.cam, p = B.player, alive = p && p.alive, busy = UI.blocking || App.paused || Lock3.gated();
     if (!cam.ready || (alive && cam.ready !== p)) this.init(cam, p);
-    if (alive && Input.mclick[2] && !busy) { cam.sightOn = !cam.sightOn; if (cam.sightOn && Aim.manual() && (cam.sightMag || 0) < 6) cam.sightMag = 6; }
+    if (alive && Input.mclick[2] && !busy) { if (!p.modOK('optics')) this.noSight(); else { cam.sightOn = !cam.sightOn; if (cam.sightOn && Aim.manual() && (cam.sightMag || 0) < 6) cam.sightMag = 6; } }
+    if (alive && cam.sightOn && !p.modOK('optics')) { cam.sightOn = false; this.noSight(); } // a sight shot out while you look through it
     if (!alive || busy) cam.sightOn = false; cam.sight = !!cam.sightOn;
     if (Input.wheel) { if (cam.sight) cam.sightMag = clamp((cam.sightMag || 3) * (Input.wheel > 0 ? 0.92 : 1.087), 2, alive && p.def.era >= 3 ? 14 : Aim.manual() ? 9 : 7); else cam.dist = clamp((cam.dist || 14) * (Input.wheel > 0 ? 1.08 : 0.925), 5.5, 46 * (alive && p.def.jugg ? 2 : 1)); }
     if (alive && Input.pressed.KeyV && !busy) Aim.lase(p);
@@ -14019,7 +14403,7 @@ W3.frame = function (dt) {
   this.shadowPass(focus, pool.filter(v => dist(v.x, v.y, focus[0], focus[1]) < 190));
   gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, this.cv.width, this.cv.height);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  this.drawSky(); this.drawTerrain(); W3Scene.drawStatic(false); W3Scene.drawCollapses(false); W3Scene.drawTrees(false); W3Scene.drawGrass(); this.drawWater(); W3Scene.drawRuts(); this.drawTankList(vis, false); W3Scene.drawFX();
+  this.drawSky(); this.drawTerrain(); W3Scene.drawStatic(false); W3Scene.drawCollapses(false); W3Scene.drawTrees(false); W3Scene.drawGrass(); this.drawWater(); W3Scene.drawRuts(); W3Mark.draw(); this.drawTankList(vis, false); W3Scene.drawFX();
 };
 // ---------------------------------------------------------------- menu backdrop: the selected tank on an apron at dusk
 W3.garageSky = { top: [0.13, 0.17, 0.25], hor: [0.78, 0.46, 0.26], fog: [0.56, 0.38, 0.28], sun: [1.15, 0.72, 0.42], amb: [0.3, 0.33, 0.42], fogD: 0.0042, cloud: 0.5 };
@@ -14050,7 +14434,7 @@ Render.frame = function (dt) {
   if (B.mode.drawHud3) B.mode.drawHud3(c);
   this.drawWeather(c, dt);
   if (!B.cam.sight) { c.globalAlpha = 0.5; c.fillStyle = this.washFor(B.map); c.fillRect(0, 0, this.W, this.H); c.globalAlpha = 0.7; c.drawImage(this.vign, 0, 0, this.W, this.H); c.globalAlpha = 1; }
-  if (!window.NO_HUD) { HUD.draw(c, dt); Streak.draw(c, this.W, this.H); }
+  if (!window.NO_HUD) { HUD.draw(c, dt); Streak.draw(c, this.W, this.H); Border.draw(c, this.W, this.H, dt); }
   if (B.player && B.player.alive && !Sfx.engine && GSfx.has('drive') && App.state === 'battle') Sfx.startEngine();
   if (B.player && B.player.alive && !document.pointerLockElement && !UI.blocking && !App.paused) {
     if (Lock3.blocked) { HUD.text(c, 'Mouse lock is blocked in this preview. Push the cursor to a screen edge to turn.', this.W / 2, 96, '#ffb07a', 14, 'center', 700); HUD.text(c, 'For the full game, download index.html and open it in Chrome or Edge.', this.W / 2, 114, 'rgba(255,255,255,.75)', 12, 'center'); }
@@ -14146,6 +14530,7 @@ const Lock3 = {
 const Aim = {
   L: null, laseCD: 0,
   manual() { return !!(Save.data && Save.data.settings.aimMode === 'manual'); },
+  manFor(v) { return v.ctrl.man !== undefined ? v.ctrl.man : this.manual(); },
   set(m) { Save.data.settings.aimMode = m; Save.save(); const s = document.getElementById('sAim'); if (s) s.value = m; },
   hasLaser(d) { return (d.year || 0) >= 1975; },
   shownRange(v) { if (!this.manual()) return v.ctrl.aimDist || 500; return this.L && B && B.time - this.L.t < 12 ? this.L.d : 500; },
@@ -14303,7 +14688,8 @@ const Tac = {
   nodes(map) {
     if (map._tac) return map._tac;
     const N = [], st = 24, tw = [], tb = [], tk = [];
-    for (let y = 30; y < map.H - 30; y += st) for (let x = 30; x < map.W - 30; x += st) {
+    const e = Border.inset(map) + 12;
+    for (let y = e; y < map.H - e; y += st) for (let x = e; x < map.W - e; x += st) {
       if (!map.navFree(x, y) || map.collidesStatic(x, y, 3.6)) continue;
       let mask = 0; const mark = (ox, oy) => { mask |= 1 << (Math.floor(((Math.atan2(oy - y, ox - x) + TAU) % TAU) / TAU * 8 + 0.5) % 8); };
       const near = o => { const [lx, ly] = toLocal(x, y, o.x, o.y, o.a || 0), [px, py] = toWorld(clamp(lx, -o.hx, o.hx), clamp(ly, -o.hy, o.hy), o.x, o.y, o.a || 0); if (dist(x, y, px, py) < 15) mark(px, py); };
@@ -14416,6 +14802,61 @@ const Tac = {
     if (Math.abs(v.vel) < 1.5) { const da = angDiff(v.ang, q.th + (this.angleSide || 1) * 0.45); if (Math.abs(da) > 0.1) { c.throttle = 0; c.steer = clamp(da * 3, -1, 1); } }
   };
 }
+// looks for the new nations' tanks
+Object.assign(CAMOS, {
+  kr_od: { base: [82, 86, 56], patches: [], grain: 7 },
+  kr_camo: { base: [86, 92, 62], patches: [{ c: [58, 66, 44], t: 0.12, f: 0.5, s: 7 }, { c: [106, 84, 56], t: 0.24, f: 0.55, s: 19 }, { c: [34, 34, 30], t: 0.34, f: 0.5, s: 31 }], grain: 6 },
+  se_od: { base: [74, 84, 58], patches: [], grain: 7 },
+  se_splint: { base: [96, 106, 76], patches: [{ c: [50, 66, 44], t: 0.08, f: 0.7, s: 5 }, { c: [30, 34, 28], t: 0.22, f: 0.8, s: 13 }, { c: [140, 142, 110], t: 0.32, f: 0.75, s: 29 }], grain: 5 },
+});
+Object.assign(HULL_STYLE, { strv103: Object.assign({}, HULL_STYLE.t72, { fc: 0.3, glacis: 2.5, cover: 0.9 }) });
+Object.assign(HULL_H, { strv103: 1.62 });
+Object.assign(TUR_H, { k1: 0.68, k2: 0.74 }); Object.assign(TUR_TAPER, { k1: 0.92, k2: 0.95 });
+Object.assign(TUR3D, {
+  kr_k1: { rings: [[0, 1, 1, 1], [0.5, 0.97, 0.99, 0.98], [1, 0.88, 0.97, 0.93]], mant: 'box', mantH: 0.3 }, kr_k1a2: { rings: [[0, 1, 1, 1], [0.5, 0.97, 0.99, 0.98], [1, 0.88, 0.97, 0.93]], mant: 'box', mantH: 0.3 },
+  kr_k2: { rings: [[0, 1, 1, 1], [0.6, 0.99, 0.99, 0.99], [1, 0.92, 0.98, 0.95]], mant: 'box', mantH: 0.28 },
+});
+Object.assign(MG_SPECS, { kr_m4a3e8: { name: 'M1919A4 coaxial', g: 'rifle762', belt: 4750 }, kr_m36: { name: 'M2 pintle', g: 'rifle762', belt: 1000 }, kr_m47: { name: 'M1919A4 coaxial', g: 'rifle762', belt: 5000 }, kr_m48a3k: { name: 'M1919A4 coaxial', g: 'rifle762', belt: 6000 }, kr_m48a5k: { name: 'M60D coaxial', g: 'rifle762', belt: 7000 }, kr_k1: { name: 'M60E2 coaxial', g: 'rifle762', belt: 7200 }, kr_k1a2: { name: 'M60E2 coaxial', g: 'rifle762', belt: 7200 }, kr_k2: { name: 'K12 coaxial', g: 'rifle762', belt: 7200 }, se_m42: { name: 'Ksp m/39 coaxial', g: 'rifle8', belt: 3000 }, se_74: { name: 'Ksp m/39 coaxial', g: 'rifle8', belt: 3000 }, se_81: { name: 'Ksp m/39 coaxial', g: 'rifle762', belt: 3600 }, se_ikv91: { name: 'Ksp 58 coaxial', g: 'rifle762', belt: 4250 }, se_101: { name: 'Ksp 58 coaxial', g: 'rifle762', belt: 3600 }, se_103: { name: 'Ksp 58 twin', g: 'rifle762', belt: 2750, mount: 'hull', arc: 0.1 }, se_104: { name: 'Ksp 58 coaxial', g: 'rifle762', belt: 3600 }, se_122: { name: 'Ksp m/39 coaxial', g: 'rifle762', belt: 4750 } });
+
+// =====================================================================
+//  THE EDGE OF THE BATTLEFIELD — drive past the border and the view blurs, the warning comes up, and ten seconds later
+//  the tank is gone. Only human crews can stray: AI tanks never choose a spot out there.
+// =====================================================================
+const Border = {
+  LIMIT: 10,
+  inset(m) {
+    if (m._bd !== undefined) return m._bd; let q = 45;
+    const M = B.mode, sp = (M && M.spawn) || []; for (const s of sp) q = Math.min(q, s.x - 22, s.y - 22, m.W - s.x - 22, m.H - s.y - 22);
+    for (const p of m.points || []) q = Math.min(q, p.x - p.r - 15, p.y - p.r - 15, m.W - p.x - p.r - 15, m.H - p.y - p.r - 15);
+    return m._bd = Math.max(16, q);
+  },
+  isOut(v) { const m = B.map, e = this.inset(m); return v.x < e || v.y < e || v.x > m.W - e || v.y > m.H - e; },
+  tick(dt) {
+    if (B.net === 'client') return;
+    for (const v of B.vehicles) {
+      if (!v.alive || (!v.isPlayer && v.human == null) || v.hidden) continue;
+      if (!this.isOut(v)) { v.oobT = 0; continue; }
+      v.oobT = (v.oobT || 0) + dt; if (v.oobT >= this.LIMIT) { v.oobT = 0; v.destroy('ammo', null); }
+    }
+  },
+  amount: 0,
+  // the blur eases in over a second and clears as soon as the tank is back
+  draw(c, W, H, dt) {
+    const p = B.player, out = p && p.alive && !B.over && (p.oobT || 0) > 0, gl = document.getElementById('gl3d');
+    this.amount = clamp(this.amount + (out ? dt * 1.4 : -dt * 3), 0, 1);
+    const f = this.amount ? `blur(${(this.amount * 5).toFixed(2)}px) saturate(${(1 - this.amount * 0.35).toFixed(2)})` : ''; if (this._f !== f) { this._f = f; gl.style.filter = f; }
+    if (!this.amount || !out) return;
+    const a = this.amount, left = Math.max(0, Math.ceil(this.LIMIT - p.oobT)), F = FONT;
+    c.save(); c.globalAlpha = a; c.textAlign = 'center'; c.textBaseline = 'middle';
+    const y = H * 0.17, t1 = 'LEAVING BATTLEFIELD', t2 = 'DESTRUCTION IMMINENT', sz = clamp(W * 0.042, 26, 54);
+    c.fillStyle = 'rgba(8,10,12,.62)'; c.fillRect(0, y - sz * 1.05, W, sz * 2.75);
+    c.fillStyle = '#ff7a2f'; c.fillRect(W / 2 - 170, y - sz * 1.05, 340, 3);
+    c.fillStyle = '#f4efe6'; c.font = `800 ${sz}px ${F}`; c.fillText(t1, W / 2, y - sz * 0.22);
+    c.fillStyle = '#ff5a3c'; c.font = `800 ${Math.round(sz * 0.62)}px ${F}`; c.fillText(`${t2}: ${left}`, W / 2, y + sz * 0.92);
+    c.restore();
+  },
+};
+{ const ou = Battle.prototype.update; Battle.prototype.update = function (dt) { const r = ou.call(this, dt); if (!this.demo && !this.over && !App.paused) Border.tick(dt); return r; }; }
 
 window.addEventListener('load', () => { App.start(); Lock3.init(); });
 
@@ -14544,7 +14985,7 @@ const Loader = {
 //  send their controls and render interpolated snapshots + events.
 // =====================================================================
 const MAX_PLAYERS = 12;
-const NET_VER = 1;
+const NET_VER = 2;
 const SNAP_HZ = 12, INTERP = 0.13;
 const ICE = [
   { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] },
@@ -14552,7 +14993,7 @@ const ICE = [
   { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' },
 ];
 const SIG_URL = (() => { const m = location.search.match(/[?&]sig=([^&]+)/); return m ? decodeURIComponent(m[1]) : 'wss://0.peerjs.com/peerjs'; })();
-const ROOM_PREFIX = 'steelhorizon-';
+const ROOM_PREFIX = 'steelhorizon2-';
 
 // ---------------------------------------------------------------- host event recorder
 const NET = { ev: [], depth: 0, rec(e) { if (B && B.net === 'host') this.ev.push(e); } };
@@ -14578,7 +15019,7 @@ const sigRoutes = () => {
   r.push({ kind: 'ntfy', name: 'ntfy', url: qp('ntfy') || 'https://ntfy.sh' });
   return only ? r.filter(x => only.split(',').includes(x.kind)) : r;
 };
-const SIG_TOPIC = 'steelhorizon_v1_';
+const SIG_TOPIC = 'steelhorizon2_v1_';
 class PjRoute { // PeerJS cloud server protocol
   constructor(cfg, id, cb) {
     this.cb = cb; this.ok = false;
@@ -14877,7 +15318,7 @@ const Net = {
     this.inT += dt;
     if (this.inT >= 1 / 30) {
       this.inT = 0;
-      if (v && v.alive) { const c = v.ctrl; this.toHost({ t: 'i', th: c.throttle, st: c.steer, a: r3(c.aim), ad: r1(c.aimDist || 0), h: c.height === 'turret' ? 1 : 0, f: this.firePend > 0 ? 1 : 0, br: c.brake ? 1 : 0, sg: B.cam && B.cam.sight ? 1 : 0, mg: Input.keys.KeyE && !UI.blocking ? 1 : 0 }, true); }
+      if (v && v.alive) { const c = v.ctrl; this.toHost({ t: 'i', th: c.throttle, st: c.steer, a: r3(c.aim), ad: r1(c.aimDist || 0), h: c.height === 'turret' ? 1 : 0, f: this.firePend > 0 ? 1 : 0, br: c.brake ? 1 : 0, sg: B.cam && B.cam.sight ? 1 : 0, x3: c.ax !== undefined ? [r1(c.ax), r1(c.ay), r1(c.az)] : 0, sd: c.sdir ? [r3(c.sdir[0]), r3(c.sdir[1]), r3(c.sdir[2])] : 0, man: Aim.manual() ? 1 : 0, mg: Input.keys.KeyE && !UI.blocking ? 1 : 0 }, true); }
       this.firePend = Math.max(0, (this.firePend || 0) - 1);
     }
   },
@@ -14895,7 +15336,7 @@ const Net = {
     this.snapT = 0;
     const view = [0, 1].map(team => B.vehicles.filter(v => v.alive && !v.hidden).map(v => {
       const fl = (v.fire ? 1 : 0) | (v.mod('trackL').hp <= 0 ? 2 : 0) | (v.mod('trackR').hp <= 0 ? 4 : 0) | (v.def.turret && (v.mod('barrel').hp <= 0 || v.modDamaged('barrel')) ? 8 : 0) | (v.team === team || v.seenBy[team] ? 16 : 0) | (v.ctrl.throttle ? 32 : 0) | (v.repairT > 0 ? 64 : 0) | (v.inWoods && v.woodsVis && v.woodsVis[team] ? 128 : 0);
-      return [v.id, r2(v.x), r2(v.y), r3(v.ang), r3(v.turretAng), r2(v.vel), r3(v.angVel), fl];
+      return [v.id, r2(v.x), r2(v.y), r3(v.ang), r3(v.turretAng), r2(v.vel), r3(v.angVel), fl, r3(v.gunElev || 0)];
     }));
     const P = B.map.points.map(p => [p.owner, r3(p.prog), p.contested ? 1 : 0]);
     const K = B.mode.tickets ? B.mode.tickets.map(Math.round) : null;
@@ -14978,7 +15419,7 @@ Object.assign(Battle.prototype, {
       if (a) {
         const k = (rt - a.T) / Math.max(0.001, b.T - a.T);
         v.x = lerp(a.x, b.x, k); v.y = lerp(a.y, b.y, k); v.ang = a.a + angDiff(a.a, b.a) * k; v.turretAng = a.ta + angDiff(a.ta, b.ta) * k;
-        v.vel = lerp(a.vel, b.vel, k); v.angVel = lerp(a.av, b.av, k);
+        v.vel = lerp(a.vel, b.vel, k); v.angVel = lerp(a.av, b.av, k); v.gunElev = lerp(a.ge || 0, b.ge || 0, k);
       } else {
         const L = rt > S[S.length - 1].T ? S[S.length - 1] : S[0];
         const ex = rt > L.T ? Math.min(rt - L.T, 0.25) : 0;
@@ -15012,7 +15453,7 @@ Object.assign(Battle.prototype, {
     this.latestT = m.T;
     for (const a of m.V) {
       const v = this.vmap[a[0]]; if (!v || !v.alive) continue;
-      (v._snaps = v._snaps || []).push({ T: m.T, x: a[1], y: a[2], a: a[3], ta: a[4], vel: a[5], av: a[6] });
+      (v._snaps = v._snaps || []).push({ T: m.T, x: a[1], y: a[2], a: a[3], ta: a[4], vel: a[5], av: a[6], ge: a[8] || 0 });
       if (v._snaps.length > 5) v._snaps.shift();
       const fl = a[7];
       if (!v.isPlayer) {
@@ -15803,6 +16244,42 @@ const JoinReq = {
 };
 
 // ---------------------------------------------------------------- connection test
+// =====================================================================
+//  MULTIPLAYER IN 3D — the host still runs the battle. These hooks carry what the 3D game added: aim points in space,
+//  gun elevation, shells with height, hit marks on the real surface, and they run the suspension on every client.
+// =====================================================================
+{
+  const pz = p => NET.rec(['pz', p.id, r2(p.x), r2(p.y), r2(p.z), r3(p.dx), r3(p.dy), r2(p.vz || 0)]);
+  const sp1 = Battle.prototype.spawnProj;
+  Battle.prototype.spawnProj = function (...a) { sp1.apply(this, a); if (this.net === 'host') pz(this.projs[this.projs.length - 1]); };
+  const fg1 = Vehicle.prototype.fireGun;
+  Vehicle.prototype.fireGun = function () { const n = B ? B.projs.length : 0; fg1.call(this); if (B && B.net === 'host' && B.projs.length > n) pz(B.projs[B.projs.length - 1]); };
+  const ri = applyRemoteInput;
+  applyRemoteInput = function (v, m, dt) {
+    ri(v, m, dt); const c = v.ctrl;
+    if (m.x3) { c.aim3 = true; c.ax = m.x3[0]; c.ay = m.x3[1]; c.az = m.x3[2]; c.sdir = m.sd || null; c.man = !!m.man; const [tx, ty] = v.turretPos(); c.aimDist = dist(tx, ty, c.ax, c.ay); c.height = 'hull'; }
+  };
+  const cu = Battle.prototype.clientUpdate;
+  Battle.prototype.clientUpdate = function (dt) {
+    cu.call(this, dt);
+    for (const v of this.vehicles) if (v.alive) { const acc = dt > 0 ? (v.vel - (v._cv === undefined ? v.vel : v._cv)) / dt : 0; v._cv = v.vel; S3.ride(v, dt, acc); }
+    for (const p of this.projs) if (p.z !== undefined) { p.z += (p.vz || 0) * dt; p.vz = (p.vz || 0) - 9.81 * dt; }
+    if (this.player && this.player.alive && Border.isOut(this.player)) this.player.oobT = (this.player.oobT || 0) + dt; else if (this.player) this.player.oobT = 0;
+  };
+  const ae = Battle.prototype.applyArrEvent;
+  Battle.prototype.applyArrEvent = function (e) {
+    switch (e[0]) {
+      case 'p+': ae.call(this, e); { const p = this.projs[this.projs.length - 1]; p.z = W3.gz(e[2], e[3]) + 2; p.vz = 0; p.sh = { type: e[7] }; p.trail = []; p.alive = true; } return;
+      case 'pz': { const p = this.projs.find(q => q.id === e[1]); if (p) { p.x = e[2]; p.y = e[3]; p.z = e[4]; p.dx = e[5]; p.dy = e[6]; p.vz = e[7]; } return; }
+      case 'ml': { const v = this.vmap && this.vmap[e[1]], m = v && v.marks[v.marks.length - 1]; if (m) { m.l3 = e[2]; m.n3 = e[3]; m.t3 = e[4]; m.r3 = e[5]; m.e3 = e[6]; m.k3 = e[7]; } return; }
+      case 'sc': W3Mark.add(e[1], e[2], e[3], e[4], e[5], e[6], e[7]); return;
+      case 'cc': { const w = this.map.walls[e[1]]; if (w) W3Car.crush(w); return; }
+      case 'mz': ae.call(this, e); { const v = this.vmap && this.vmap[e[1]]; if (v && e[5] !== -2 && v._ph) { const d = v.def, k = clamp(d.cal / 90, 0.3, 1.8) * clamp(32 / (d.mass || 32), 0.45, 1.7) * 0.42, ta = v.turretAng || 0; v._ph.vp += Math.cos(ta) * k; v._ph.vr += Math.sin(ta) * k * 1.5; } } return;
+      case 'fd': ae.call(this, e); if (e[1].kPid === this.localPid && e[1].kPid >= 0 && e[1].kTeam !== e[1].vTeam) Streak.kill(); return;
+    }
+    ae.call(this, e);
+  };
+}
 const NetTest = {
   async run(out) {
     const lines = [];
