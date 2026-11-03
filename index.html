@@ -344,6 +344,7 @@ body.nolock canvas#game,body.gate canvas#game{cursor:crosshair}
     </div>
   </div>
   <div class="bottom">
+    <button class="btn primary" id="bMulti">Multiplayer</button>
     <button class="btn" id="bTree">Tech Tree</button>
     <button class="btn" id="bHow">How to Play</button>
     <button class="btn" id="bSet">Settings</button>
@@ -11562,7 +11563,7 @@ const UI = {
       el.addEventListener('mouseenter', () => { Sfx.init(); });
       el.addEventListener('click', () => { if (el.dataset.mode === 'soon') { this.toast('The campaign is being rebuilt for 3D and will arrive in a later update.'); return; } if (el.dataset.mode === 'team') this.show('mpChoice'); else if (el.dataset.mode === 'mission') this.openCampaign(); else this.openSetup(el.dataset.mode); });
     });
-    $('bTree').onclick = () => { Sfx.init(); this.openTree(); };
+    $('bTree').onclick = () => { Sfx.init(); this.openTree(); }; $('bMulti').onclick = () => { Sfx.init(); this.show('mpChoice'); };
     $('bHow').onclick = () => { Sfx.init(); this.show('howto'); };
     $('bSet').onclick = () => { Sfx.init(); this.openSettings(); };
     $('howClose').onclick = () => this.hide('howto');
@@ -11608,7 +11609,7 @@ const UI = {
     $('resAgain').onclick = () => {
       const mode = (App.lastCfg && App.lastCfg.mode) || 'team'; App.quitToMenu();
       if (mode === 'tutorial') { this.startTutorial(); return; }
-      if (mode === 'team') this.teamFlow();
+      if (mode === 'team') this.show('mpChoice');
       else if (mode === 'mission') { const m = MISSIONS[App.lastCfg.mission || 0]; this.openChapter(m.chap, App.lastCfg.mission); }
       else this.openSetup(mode);
     };
@@ -11650,7 +11651,7 @@ const UI = {
     $('menuRP').textContent = Math.round(d.rp).toLocaleString();
     $('bestWave').textContent = `BEST WAVE ${d.stats.bestWave || '—'}`;
     $('campProg').textContent = `${Math.min(MISSIONS.length, d.missions)} / ${MISSIONS.length} MISSIONS`;
-    $('menuStats').textContent = `Battles ${d.stats.battles} · Victories ${d.stats.wins} · Kills ${d.stats.kills} · Tanks ${d.unlocked.length}/${TREE_ORDER.flat().length}`;
+    $('menuStats').textContent = `Build 3 Nov B · Battles ${d.stats.battles} · Victories ${d.stats.wins} · Kills ${d.stats.kills} · Tanks ${d.unlocked.length}/${TREE_ORDER.flat().length}`;
   },
   // ------------------------------------------------------------- setup
   // three battlefields at a time, rotating through all five
