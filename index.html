@@ -578,7 +578,7 @@ body.nolock canvas#game,body.gate canvas#game{cursor:crosshair}
 const CAP_SLOW = 2.8;
 const MATCH_MINUTES = 10;         // point-capture battles always run to this clock           // capture-time multiplier (higher = slower captures)
 const GAME_BUILD = '149d73583570';  // stamped by the build; changing it resets saved progress
-const GAME_VERSION = '1.94.86';
+const GAME_VERSION = '1.95.87';
 const DEBUG = false;            // debug/test flag — keep false for release
 const VERSION = '1.0';
 
@@ -7322,7 +7322,7 @@ class TeamMode {
     const W = this.size, H = W, r = mulberry32(this.seed), j = (k = 70) => (r() - 0.5) * k;
     if (this.mapKey !== 'farm') {
       this.spawn = [{ x: 90, y: H / 2 }, { x: W - 90, y: H / 2 }];
-      return Object.assign({ w: W, h: H, seed: this.seed, theme: this.mapKey }, MAP_THEMES[this.mapKey].layout(W, H, r, j));
+      { const LY = MAP_THEMES[this.mapKey].layout(W, H, r, j); if (LY.spawn) this.spawn = LY.spawn; return Object.assign({ w: W, h: H, seed: this.seed, theme: this.mapKey }, LY); }
     }
     const A = { name: 'A', x: W / 2 + j(), y: H * 0.2 + j(40) }, Bp = { name: 'B', x: W / 2 + j(40), y: H / 2 + j(30) }, C = { name: 'C', x: W / 2 + j(), y: H * 0.8 + j(40) };
     const biomes = ['europe', 'europe', 'steppe', 'autumn'], biome = biomes[Math.floor(r() * 4)];
@@ -7336,7 +7336,7 @@ class TeamMode {
     };
   }
   basePos(team, i) {
-    const s = this.spawn[team];
+    const s = this.spawn[team]; if (s.pos) return s.pos(i);
     return { x: s.x + (team ? -1 : 1) * (i % 2) * 18, y: s.y + (i - this.teamSize / 2) * 22, a: team ? Math.PI : 0 };
   }
   aiDef() {
@@ -10386,7 +10386,7 @@ const Tank3D = {
     const hullUV = (x, y) => [(x * SPR + sp.hull.width / 2) / sp.hull.width, (y * SPR + sp.hull.height / 2) / sp.hull.height];
     const turUV = sp.turret ? (x, y) => [(x * SPR + sp.turret.width / 2) / sp.turret.width, (y * SPR + sp.turret.height / 2) / sp.turret.height] : hullUV;
     // one vertex: pos, uv, normal, colour (a = texture weight), side flag
-    const push = (arr, p, uv, n, col, side) => arr.push(p[0], p[1], p[2], uv[0], uv[1], n[0], n[1], n[2], col[0], col[1], col[2], col[3], side);
+    const push = (arr, p, uv, n, col, side) => { if (W3._tintV) col = W3._tintV(col); arr.push(p[0], p[1], p[2], uv[0], uv[1], n[0], n[1], n[2], col[0], col[1], col[2], col[3], side); };
     const normal = (a, b, e, ctr) => {
       const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = e[0] - a[0], vy = e[1] - a[1], vz = e[2] - a[2];
       let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
@@ -12298,7 +12298,7 @@ const Tank3D = {
           TP(HL, [[-2.86, -1.28, 1.68], [-2.86, 1.28, 1.68], [-3.02, 1.28, 1.2], [-3.02, -1.28, 1.2]], [-1, 0, 1.4]); for (const s of [-1, 1]) TP(HL, [[-2.86, s * 1.28, 1.68], [-3.02, s * 1.28, 1.2], [-2.86, s * 1.28, 1.2]], [-2.6, 0, 1.3]); TP(HL, [[-2.56, -0.96, 0.5], [-2.56, 0.96, 0.5], [-2.96, 0.9, 1.2], [-2.96, -0.9, 1.2]], [-1, 0, 1.4]);
           { const P_ = []; for (let i = -14; i <= 14; i++) { const a = i / 14 * 1.95, r = 1.16; P_.push([[d.tx + Math.cos(a) * r, Math.sin(a) * r, H0 + 0.05], 0.03]); } tube(HL, P_, C(OD, 1.08)); cyl(HL, [d.tx, 0, H0], 'z', 0.06, 1.14, C(OD, 0.85), 28, 0, 1.14, true, C(OD, 0.85)); }
           // a one-piece cast nose, the riveted lip across it, tow shackles
-          { const nose = [[1.3, 2.7], [1.22, 2.86], [1.06, 2.98], [0.9, 3.04], [0.74, 3.0], [0.6, 2.86], [0.5, 2.6]], R = nose.map(([z, x]) => { const w = lerp(1.0, 0.94, clamp((1.2 - z) / 0.7, 0, 1)), b = 0.1; return [[x - 0.5, -w, z], [x - 0.04, -w, z], [x, -w + b, z], [x, w - b, z], [x - 0.04, w, z], [x - 0.5, w, z]]; }); sLoft(HL, R, [2.1, 0, 0.9], 0, false); for (const s of [-1, 1]) { tube(HL, nose.map(([z, x]) => [[x - 0.05, s * 0.98, z], 0.06]), C(OD, 1.02)); tube(HL, [[[2.96, s * 0.5, 0.68], 0.03], [[3.08, s * 0.5, 0.62], 0.032], [[3.08, s * 0.5, 0.48], 0.03], [[2.96, s * 0.5, 0.44], 0.03]], C(OD, 0.86)); } box(HL, 2.64, 2.8, -1.02, 1.02, 1.28, 1.33, C(OD, 1.06)); rivs(HL, [2.74, -0.96, 1.33], [2.74, 0.96, 1.33], 16, [0.4, 0, 0.9], OD.map(q => q * 1.3), 0.018); const nN = V3.norm([1, 0, 0.45]), nE = V3.norm([-0.45, 0, 1]); star(HL, [2.96, 0.0, 1.05], ey, nE, nN, 0.21, WHT); }
+          { const nose = [[1.3, 2.7], [1.22, 2.86], [1.06, 2.98], [0.9, 3.04], [0.74, 3.0], [0.6, 2.86], [0.5, 2.6]], R = nose.map(([z, x]) => { const w = lerp(1.0, 0.94, clamp((1.2 - z) / 0.7, 0, 1)), b = 0.1; return [[x - 0.5, -w, z], [x - 0.04, -w, z], [x, -w + b, z], [x, w - b, z], [x - 0.04, w, z], [x - 0.5, w, z]]; }); sLoft(HL, R, [2.1, 0, 0.9], 0, false); for (const s of [-1, 1]) { tube(HL, nose.map(([z, x]) => [[x - 0.05, s * 0.98, z], 0.06]), C(OD, 1.02)); tube(HL, [[[2.96, s * 0.5, 0.68], 0.03], [[3.08, s * 0.5, 0.62], 0.032], [[3.08, s * 0.5, 0.48], 0.03], [[2.96, s * 0.5, 0.44], 0.03]], C(OD, 0.86)); } box(HL, 2.64, 2.8, -1.02, 1.02, 1.28, 1.33, C(OD, 1.06)); rivs(HL, [2.74, -0.96, 1.33], [2.74, 0.96, 1.33], 16, [0.4, 0, 0.9], OD.map(q => q * 1.3), 0.018); const nN = V3.norm([1, 0, 0.45]), nE = V3.norm([-0.45, 0, 1]); if (d.nation !== 'il') star(HL, [2.96, 0.0, 1.05], ey, nE, nN, 0.21, WHT); }
           // glacis: round domed hatches, bow gun, lamps in big wire guards, cable and siren
           const gN = V3.norm([0.57, 0, 0.82]), gE = V3.norm([0.82, 0, -0.57]);
           for (const s of [-1, 1]) { const y = s * 0.54, R = [[0.3, 0], [0.29, 0.03], [0.24, 0.06], [0.05, 0.07]].map(([r, h]) => circle(r, 18).map(([a, b]) => [1.32 + a, y + b, H0 + h])); sLoft(HL, R, [1.32, y, 1.6]); plate(HL, [1.32, y, H0 + 0.07], ex, ey, ez, 0.18, 0.18, 0.17, 0.012); box(HL, 1.56, 1.66, y - 0.18, y + 0.18, H0 - 0.02, H0 + 0.05, C(OD, 0.9)); box(HL, 1.66, 1.665, y - 0.15, y + 0.15, H0 + 0.0, H0 + 0.03, C(BK)); const R2 = [[0.2, 0], [0.19, 0.04], [0.12, 0.09], [0.03, 0.1]].map(([r, h]) => circle(r, 12).map(([a, b]) => [1.9 + gN[0] * h + gE[0] * a, y + b * 0.9, zG(1.9) + gN[2] * h + gE[2] * a])); sLoft(HL, R2, [1.7, y, 1.3]); const x = 2.3, Y = s * 0.86, z = zG(x); cyl(HL, [x - 0.02, Y, z + 0.1], 'x', 0.16, 0.08, C(OD, 0.95), 12, 0, 0.085, true, C([0.6, 0.64, 0.66])); box(HL, x - 0.03, x + 0.03, Y - 0.02, Y + 0.02, z - 0.03, z + 0.06, C(OD, 0.8)); for (const q of [-0.15, 0.15]) tube(HL, [[[x - 0.02, Y + q, z + 0.0], 0.012], [[x + 0.16, Y + q * 1.1, z + 0.04], 0.012], [[x + 0.22, Y + q * 0.9, z + 0.16], 0.012], [[x + 0.12, Y + q * 0.6, z + 0.3], 0.012], [[x - 0.08, Y, z + 0.3], 0.012]], C(OD, 0.8)); }
@@ -12311,7 +12311,7 @@ const Tank3D = {
           // the mantlet: a wide cast box, the rotor ball, sleeve and long gun with its double baffle
           { const bx = (x, w, h, r) => rrect(w, h, r).map(([a, b]) => [x, a, gz - 0.02 + b]), Rm = [bx(0.9, 0.7, 0.3, 0.1), bx(1.02, 0.7, 0.3, 0.12), bx(1.08, 0.64, 0.26, 0.12), bx(1.1, 0.56, 0.2, 0.1)]; sLoft(TUR, Rm, [0.5, 0, gz]); TP(TUR, Rm[3], [0.5, 0, gz]); for (const s of [-1, 1]) { cyl(TUR, [1.02, s * 0.46, gz + 0.04], 'x', 0.09, 0.05, C(OD, 1.0), 10, 0, 0.044, true, C(DK)); } const Rc = [[1.08, 0.2], [1.14, 0.2], [1.2, 0.17], [1.24, 0.11]].map(([x, r]) => circle(r, 14).map(([a, b]) => [x, a, gz + b])); gLoft(Rc, [0.8, 0, gz]); GS(Rc[3], [0.8, 0, gz]); barrel([[1.22, 0.1], [1.56, 0.09], [1.6, 0.066], [3.66, 0.056], [3.68, 0.1], [3.74, 0.1], [3.76, 0.062], [3.8, 0.062], [3.82, 0.1], [3.9, 0.1]], 0, gz); poly(TUR, circle(0.042, 10).map(([a, b]) => [3.901, a, gz + b]), C(BLK), [3, 0, gz], 2); for (const s of [-1, 1]) { box(TUR, 3.69, 3.73, s * 0.1 - 0.02, s * 0.1 + 0.02, gz - 0.05, gz + 0.05, C(BK), null, 2); box(TUR, 3.84, 3.88, s * 0.1 - 0.02, s * 0.1 + 0.02, gz - 0.05, gz + 0.05, C(BK), null, 2); } cyl(TUR, [1.1, -0.22, gz - 0.02], 'x', 0.1, 0.016, C(BLK), 6, 2, 0.016, true, C(BLK)); coax = [1.2, -0.22, gz - 0.02]; }
           // flanks: grab rails, a raised pistol door on the left, stars; the back: vent, shelf and aerial base
-          for (const s of [-1, 1]) { const nv = V3.norm([0, s, 0.12]), e2 = V3.norm([0, -s * 0.12, 1]); star(TUR, [-0.2, s * 0.99, 0.32], ex, e2, nv, 0.25, WHT); tube(TUR, [[[0.24, s * 0.92, 0.6], 0.012], [[0.2, s * 0.94, 0.64], 0.012], [[-0.62, s * 0.84, 0.64], 0.012], [[-0.66, s * 0.82, 0.6], 0.012]], C(OD, 0.86)); }
+          for (const s of [-1, 1]) { const nv = V3.norm([0, s, 0.12]), e2 = V3.norm([0, -s * 0.12, 1]); if (d.nation !== 'il') star(TUR, [-0.2, s * 0.99, 0.32], ex, e2, nv, 0.25, WHT); tube(TUR, [[[0.24, s * 0.92, 0.6], 0.012], [[0.2, s * 0.94, 0.64], 0.012], [[-0.62, s * 0.84, 0.64], 0.012], [[-0.66, s * 0.82, 0.6], 0.012]], C(OD, 0.86)); }
           plate(TUR, [-0.76, -0.94, 0.34], ex, ez, [0, -1, 0], 0.16, 0.2, 0.03, 0.03); box(TUR, -0.8, -0.72, -0.98, -0.93, 0.5, 0.56, C(OD, 0.8));
           { const P = ext; P(TUR, [[-1.42, 0.5], [-1.74, 0.56], [-1.74, 0.58], [-1.42, 0.54]], -0.62, 0.62, OD); for (const s of [-1, 1]) box(TUR, -1.7, -1.4, s * 0.5 - 0.03, s * 0.5 + 0.03, 0.44, 0.54, C(OD, 0.86)); cyl(TUR, [-1.34, 0, 0.3], 'x', -0.22, 0.09, C(OD, 1.0), 12, 0, 0.08, true, C(OD, 0.9)); }
           // roof: the cupola with its vision blocks, the oval hatch, a tall vent, sight vane, aerial
@@ -14478,7 +14478,7 @@ const Tank3D = {
             louv(HL, -1.55, -0.85, 0.12, 0.7, RZ - 0.02, 7); { const x = -1.2, y = -0.38; box(HL, x - 0.32, x + 0.32, y - 0.26, y + 0.26, RZ - 0.02, RZ + 0.02, C(PA, 0.92)); rivs(HL, [x - 0.28, y - 0.22, RZ + 0.025], [x + 0.28, y - 0.22, RZ + 0.025], 6, ez, PA.map(q => q * 1.2), 0.011); rivs(HL, [x - 0.28, y + 0.22, RZ + 0.025], [x + 0.28, y + 0.22, RZ + 0.025], 6, ez, PA.map(q => q * 1.2), 0.011); }
             { const y = YO - 0.13, z = FZ + 0.2; cyl(HL, [-0.55, y, z], 'x', -1.3, 0.14, C(RUST, 0.9), 16, 0, 0.14, true, C(RUST, 0.8)); for (const x of [-0.75, -1.6]) box(HL, x - 0.03, x + 0.03, y - 0.15, y + 0.15, FZ + 0.06, z + 0.02, C(STL, 0.8)); tube(HL, [[[-0.55, y, z], 0.04], [[-0.4, y - 0.12, z + 0.02], 0.04], [[-0.4, YH - 0.12, 1.25], 0.04]], C(RUST, 0.8)); tube(HL, [[[-1.85, y, z], 0.035], [[-2.05, y, z - 0.06], 0.035]], C(RUST, 0.6)); }
             // the tricolour roundels on the hull sides
-            for (const s of [-1, 1]) { const o = [0.1, s * (YH + 0.006), 1.0]; for (const [r, c] of [[0.17, [0.62, 0.1, 0.1]], [0.12, [0.85, 0.85, 0.82]], [0.065, [0.1, 0.16, 0.42]]]) Dc(o[0], o[1] + s * (0.17 - r) * 0.02, o[2], r, s, c, 20); }
+            if (d.nation !== 'il') for (const s of [-1, 1]) { const o = [0.1, s * (YH + 0.006), 1.0]; for (const [r, c] of [[0.17, [0.62, 0.1, 0.1]], [0.12, [0.85, 0.85, 0.82]], [0.065, [0.1, 0.16, 0.42]]]) Dc(o[0], o[1] + s * (0.17 - r) * 0.02, o[2], r, s, c, 20); }
             cyl(HL, [d.tx, 0, RZ], 'z', 0.05, 0.6, C(PA, 0.85), 24, 0, 0.6, true, C(PA, 0.85));
             // the APX-R turret: cast, a rounded hexagon with the sides curving in, the domed cupola, the big rear hatch
             { const T_ = (r, z) => { const o = []; for (let k = 0; k < 18; k++) { const a = k / 18 * TAU; o.push([Math.cos(a) * r * 1.05 - 0.05, Math.sin(a) * r, z]); } return o; }; const R_ = [T_(0.6, 0.0), T_(0.61, 0.1), T_(0.58, 0.35), T_(0.48, 0.55), T_(0.4, 0.6)]; sLoft(TUR, R_, [-0.05, 0, 0.2]); poly(TUR, R_[4], C(PA, 1.0), [-0.05, 0, -1]);
@@ -16038,6 +16038,7 @@ function flagSVG(n, w = 21, h = 14) {
   else if (n === 'uk') b = `<rect width="30" height="20" fill="#012169"/><path d="M0 0L30 20M30 0L0 20" stroke="#fff" stroke-width="4"/><path d="M0 0L30 20M30 0L0 20" stroke="#c8102e" stroke-width="1.4"/><path d="M15 0V20M0 10H30" stroke="#fff" stroke-width="6"/><path d="M15 0V20M0 10H30" stroke="#c8102e" stroke-width="3.4"/>`;
   else if (n === 'fr') b = `<rect width="10" height="20" fill="#0055a4"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#ef4135"/>`;
   else if (n === 'it') b = `<rect width="10" height="20" fill="#009246"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#ce2b37"/>`;
+  else if (n === 'il') b = `<rect width="30" height="20" fill="#fff"/><rect y="2.5" width="30" height="2.6" fill="#0038b8"/><rect y="14.9" width="30" height="2.6" fill="#0038b8"/><g fill="none" stroke="#0038b8" stroke-width=".75"><path d="M15 6.3 18.2 11.85H11.8Z"/><path d="M15 13.7 11.8 8.15H18.2Z"/></g>`;
   else if (n === 'se') b = `<rect width="30" height="20" fill="#005293"/><rect x="9" width="4" height="20" fill="#ffcd00"/><rect y="8" width="30" height="4" fill="#ffcd00"/>`;
   else if (n === 'kr') { const bars = 'M-6-25H6M-6-22H6M-6-19H6M-6 19H6M-6 22H6M-6 25H6'; b = `<rect width="30" height="20" fill="#fff"/><g transform="translate(15 10) scale(.416667)"><g transform="rotate(-56.3099325)"><path d="${bars}" stroke="#000" stroke-width="2"/><path d="M0 17v10" stroke="#fff"/><circle r="12" fill="#cd2e3a"/><path d="M0-12A6 6 0 0 0 0 0A6 6 0 0 1 0 12A12 12 0 0 1 0-12Z" fill="#0047a0"/></g><g transform="rotate(-123.6900675)"><path d="${bars}" stroke="#000" stroke-width="2"/><path d="M0-23.5v3M0 17v3.5M0 24.5v3" stroke="#fff"/></g></g>`; }
   else if (n === 'jp') b = `<rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/>`;
@@ -16414,7 +16415,7 @@ const UI = {
     $('treeRP').textContent = `${Math.round(Save.data.rp).toLocaleString()} RP available`;
     const wrap = $('eras'); keepScroll(wrap, wrap.parentElement); wrap.innerHTML = '';
     // nation tabs: every nation's line through the eras (USSR and modern Russia share one line)
-    const NT = [['all', 'All nations'], ['us', 'USA'], ['ussr', 'USSR / Russia'], ['de', 'Germany'], ['uk', 'Britain'], ['fr', 'France'], ['jp', 'Japan'], ['cn', 'China'], ['it', 'Italy'], ['kr', 'South Korea'], ['se', 'Sweden']];
+    const NT = [['all', 'All nations'], ['us', 'USA'], ['ussr', 'USSR / Russia'], ['de', 'Germany'], ['uk', 'Britain'], ['fr', 'France'], ['jp', 'Japan'], ['cn', 'China'], ['it', 'Italy'], ['kr', 'South Korea'], ['se', 'Sweden'], ['il', 'Israel']];
     const nat = this.treeNat || 'all', inNat = id => nat === 'all' || TANKS[id].nation === nat || (nat === 'ussr' && TANKS[id].nation === 'ru');
     $('treeNat').innerHTML = NT.map(([k, n]) => `<div class="nt ${k === nat ? 'sel' : ''}" data-k="${k}">${k === 'ussr' ? flagSVG('ussr') + flagSVG('ru') : k !== 'all' ? flagSVG(k) : ''}${n}</div>`).join('');
     $('treeNat').querySelectorAll('.nt').forEach(el => el.onclick = () => { uiSnd('click'); this.treeNat = el.dataset.k; this.renderTree(); });
@@ -18725,6 +18726,7 @@ const S3 = {
     if (n === 'jp') return e <= 2 ? { name: 'Type 97', g: 'rifle77', belt: 1500 } : { name: 'M2HB .50', g: H, belt: 800 };
     if (n === 'it') return e <= 2 ? { name: 'Breda 38', g: 'rifle8', belt: 1500 } : { name: 'MG 42/59', g: M, belt: 2000 };
     if (n === 'se') return { name: 'Ksp 58', g: M, belt: 2000 };
+    if (n === 'il') return e <= 2 ? { name: 'Browning M1919A4', g: 'rifle8', belt: 1500 } : /magach|merk/.test(d.id) ? { name: 'M2HB .50', g: H, belt: 800 } : { name: 'FN MAG', g: M, belt: 2000 };
     return { name: 'Secondary machine gun', g: M, belt: 2000 };
   },
   shellOf(v) { const a = v.ammo && v.ammo[v.loaded >= 0 ? v.loaded : v.next || 0]; return a ? a.sh : null; },
@@ -18822,7 +18824,7 @@ const S3 = {
   climbH(d) { if (d.jugg) return 3.2; if (d.soft) return 0.4; const h = hullHeight(d); return h * (d.wheeled ? 0.28 : d.layout === 'ht' ? 0.4 : 0.5); },
   LUMP: { berm: 1, dune: 1, rubble: 1 },
   // the few things drawn as one level block; every other wall is drawn draped over the ground, and stands its own height above it everywhere
-  LEVEL: { carw: 1, plane: 1, railcar: 1, railcarOld: 1, craneleg: 1, wreck: 1, rwall: 1, hedgehog: 1, bgate: 1, lcraft: 1, seawall: 1, casemate: 1, atwall: 1, tobruk: 1 },
+  LEVEL: { mgb: 1, lcw: 1, carw: 1, plane: 1, railcar: 1, railcarOld: 1, craneleg: 1, wreck: 1, rwall: 1, hedgehog: 1, bgate: 1, lcraft: 1, seawall: 1, casemate: 1, atwall: 1, tobruk: 1 },
   climbW(v, w) { if (w.kind === 'carw') return true; const H = wallH(w); if (w.tall) return false; if (w.kind === 'log') return w.soft || H <= this.climbH(v.def) * 1.6; /* a round trunk is rolled over: wheels and tracks get onto it well above a square step */ if (this.LUMP[w.kind]) return !this.lumpBox(v, w); return this.wallRise(v, w) <= this.climbH(v.def) * (this.CRUSH[w.kind] || 1); }, // an earth mound is climbed up its slope, a hedgerow bank is steep and rooted
   climbK(v, k) { return this.rockR(v, k) <= 0; },
   // a wall is drawn level at the height of the ground under its middle, so on a slope its top stands lower above the ground on the uphill side
@@ -20263,9 +20265,9 @@ Object.assign(MissionMode.prototype, {
         // a few seconds to lay the gun on a new target, then a round every 7-11 s
         if (o.trk !== q.t) { o.trk = q.t; o.cd = 4.5 * this.dz().cd; continue; }
         o.cd = rnd(11, 15) * this.dz().cd; this.bunkerShot(o, q.t, q.d, era, true);
-      } else if (o.kind === 'mg' || o.kind === 'bunker') {
+      } else if (o.kind === 'mg' || o.kind === 'bunker' || o.kind === 'hmg') {
         o.cd = (o.cd === undefined ? rnd(2, 5) : o.cd) - dt; if (o.burst > 0) { o.burst -= dt; o.fT = (o.fT || 0) - dt; if (o.fT <= 0 && o.trk && o.trk.alive) { o.fT = 0.09; this.mgShot(o, o.trk); } continue; } if (o.cd > 0) continue;
-        const q = this.objTarget(o, o.kind === 'bunker' ? 420 : 360, o.kind === 'bunker' ? 1.25 : 0); if (!q) { o.cd = 1.5; continue; } o.trk = q.t; o.burst = rnd(1.2, 2.0); o.cd = rnd(2.5, 4) * this.dz().cd;
+        const q = this.objTarget(o, o.kind === 'bunker' ? 420 : 360, o.kind === 'bunker' ? 1.25 : o.kind === 'hmg' ? 1.15 : 0); if (!q) { o.cd = 1.5; continue; } o.trk = q.t; o.burst = rnd(1.2, 2.0); o.cd = rnd(2.5, 4) * this.dz().cd;
       }
     }
     // field guns: only while one of theirs can see you, and closer each salvo if you sit still
@@ -20285,7 +20287,7 @@ Object.assign(MissionMode.prototype, {
     W3.fxZ = z0; FX.add('flash', x0, y0, { r: 2.2, life: 0.1, add: true }); for (let i = 0; i < 3; i++) FX.add('smoke', x0 + Math.cos(a) * rnd(0, 3), y0 + Math.sin(a) * rnd(0, 3), { r: rnd(0.6, 1.2), gr: 1.5, life: rnd(1.5, 2.5), a: 0.4, wind: 1 }); W3.fxZ = undefined; Sfx.play('cannon', o.x, o.y, 0.9);
   },
   mgShot(o, t) {
-    const foe = this.objFoe(); if (!foe) return; const sh = this.mSh || (this.mSh = S('nmg', 'MG 42', 'MG', [12, 6], 755, 1)), d = dist(o.x, o.y, t.x, t.y), a = Math.atan2(t.y - o.y, t.x - o.x) + gauss() * 0.012, pb = o.kind === 'bunker', x0 = o.x + Math.cos(a) * (pb ? 5.2 : 1.9), y0 = o.y + Math.sin(a) * (pb ? 5.2 : 1.9), z0 = W3.gz(o.x, o.y) + (pb ? 1.32 : 0.72), tz = (t.z3 === undefined ? W3.gz(t.x, t.y) : t.z3) + hullHeight(t.def) * 0.6;
+    const foe = this.objFoe(); if (!foe) return; const sh = this.mSh || (this.mSh = S('nmg', 'MG 42', 'MG', [12, 6], 755, 1)), d = dist(o.x, o.y, t.x, t.y), a = Math.atan2(t.y - o.y, t.x - o.x) + gauss() * 0.012, pb = o.kind === 'bunker', hm = o.kind === 'hmg', x0 = o.x + Math.cos(a) * (pb ? 5.2 : hm ? 3.1 : 1.9), y0 = o.y + Math.sin(a) * (pb ? 5.2 : hm ? 3.1 : 1.9), z0 = W3.gz(o.x, o.y) + (pb ? 1.32 : hm ? 1.25 : 0.72), tz = (t.z3 === undefined ? W3.gz(t.x, t.y) : t.z3) + hullHeight(t.def) * 0.6;
     B.spawnProj(foe, sh, x0, y0, a, 'hull', 0); const p = B.projs[B.projs.length - 1]; p.x = x0; p.y = y0; p.z = z0; p.dx = Math.cos(a); p.dy = Math.sin(a); p.vz = (tz - z0) / Math.max(10, d) * sh.v + gauss() * 4; p.objShot = true;
     if (Math.random() < 0.3) Sfx.play('mg', o.x, o.y, 0.5);
   },
@@ -22023,9 +22025,11 @@ const Scorch = {
   // geometry shared by the 2D painter, the height field and the mission
   const OM = (W, H) => {
     const seaY = x => H * 0.115 + Math.sin(x / 90) * 5 + Math.sin(x / 37) * 2, beachTop = x => H * 0.275 + Math.sin(x / 70) * 4;
-    const bluffBase = H * 0.32, bluffTop = H * 0.405, draws = [0.17, 0.41, 0.62, 0.86].map(f => W * f), drawW = 48;
+    const bluffBase = H * 0.365, bluffTop = H * 0.432, draws = [0.17, 0.41, 0.62, 0.86].map(f => W * f), drawW = 48;
     const inDraw = x => { let k = 0; for (const d of draws) k = Math.max(k, Math.exp(-Math.pow((x - d) / drawW, 2))); return k; };
-    return { seaY, beachTop, bluffBase, bluffTop, draws, inDraw, coastY: H * 0.52 };
+    // the tank landing craft: where each one grounds (bow at yb, heading inland), four tanks in line on its deck
+    const lct = [0.44, 0.56].map(f => ({ x: W * f, yb: seaY(W * f) + 3 })), slot = (k, j) => ({ x: lct[k % lct.length].x, y: lct[k % lct.length].yb - 5.5 - j * 7.3, a: Math.PI / 2 });
+    return { seaY, beachTop, bluffBase, bluffTop, draws, inDraw, coastY: H * 0.55, lct, slot };
   };
   MAP_THEMES.omaha = {
     name: 'Omaha Beach', sub: 'Beach · bluffs · bocage', desc: 'Normandy in the rain. Fight across the open beach among the obstacles, up the draws onto the bluffs and their strongpoints, or through the hedgerows and villages inland.',
@@ -22040,7 +22044,8 @@ const Scorch = {
       for (const d of O.draws) roads.push({ pts: [[d - 6, O.bluffBase - 4], [d + 4, O.bluffBase + 40], [d - 4, O.bluffTop + 20], [d + 6, O.coastY]], w: 7 });
       roads.push({ pts: [[W * 0.5, O.coastY], [W * 0.52, H * 0.7], [W * 0.47, H * 0.88], [W * 0.5, H]], w: 7 });
       const villages = [{ x: O.draws[0] + 10, y: O.coastY + 26, r: 60, n: 9 }, { x: O.draws[2] - 20, y: O.coastY + 30, r: 66, n: 10 }, { x: O.draws[3] + 5, y: O.coastY + 28, r: 56, n: 8 }];
-      return { biome: OMAHA, points: [A, Bp, C], forest: 9, fields: 0, rocks: 0, roads, villages, clear: [{ x: 90, y: H * 0.62, r: 90 }, { x: W - 90, y: H * 0.62, r: 90 }] };
+      const spawn = [{ x: W / 2, y: O.lct[0].yb + 40, pos: i => O.slot(i >> 2, i & 3) }, { x: W / 2, y: H * 0.9, pos: i => ({ x: W / 2 + ((i % 4) - 1.5) * 24, y: H * 0.9 + (i >> 2) * 20, a: -Math.PI / 2 }) }];
+      return { biome: OMAHA, points: [A, Bp, C], forest: 9, fields: 0, rocks: 0, roads, villages, spawn, clear: [{ x: W / 2, y: H * 0.92, r: 80 }].concat(O.lct.map(c => ({ x: c.x, y: c.yb + 9, r: 11 }))) };
     },
     forestOn: () => false,
     treeKind: R => R < 0.7 ? 0 : R < 0.92 ? 1 : 3,
@@ -22067,12 +22072,6 @@ const Scorch = {
         const fx = c * 95 + (r % 2) * 40 + (R() - 0.5) * 16, fy = y0 + r * 80 + (R() - 0.5) * 10, hx = 38 + R() * 10, hy = 30 + R() * 8, a = (R() - 0.5) * 0.18;
         if (m.inClear(fx, fy, 30) || Math.abs(fy - O.coastY) < 36) continue;
         const f = { x: fx, y: fy, a, hx, hy, col: Math.floor(R() * m.biome.fields.length), furrow: R() < 0.5 }; m.fields.push(f); m.forOBBCells(f, i2 => { if (m.ground[i2] === G_GRASS) m.ground[i2] = R() < 0.55 ? G_FIELD : G_GRASS; });
-        for (const [lx, ly, ha, len] of [[0, -hy, 0, hx], [0, hy, 0, hx], [-hx, 0, Math.PI / 2, hy], [hx, 0, Math.PI / 2, hy]]) {
-          if (R() < 0.18) continue; // some sides open
-          const gap = R() < 0.55, seg = gap ? [[-len, -len * 0.25], [len * 0.25, len]] : [[-len, len]];
-          for (const [s0, s1] of seg) { const mid = (s0 + s1) / 2, half = (s1 - s0) / 2; const [x, y] = toWorld(ha ? lx : lx + mid, ha ? ly + mid : ly, fx, fy, a), wa = a + ha;
-            if (m.inClear(x, y, 12) || m.roadDirAt(x, y).d < 10) continue; const w = { kind: 'berm', x, y, a: wa, hx: half, hy: 1.6, hp: 9999, h3: 2.2, hedge: true }; m.walls.push(w); m.hedges.push(w); }
-        }
       }
       // beach obstacles, in the order Rommel's engineers laid them from the low-water line up: a line of Belgian gates (Element C)
       // furthest out; then stakes driven in leaning seaward and log ramps, a Teller mine on each; then the rows of steel hedgehogs nearest
@@ -22092,6 +22091,13 @@ const Scorch = {
       { const d = O.draws[0], y = O.bluffBase + 9; m.walls.push({ kind: 'atwall', x: d - 19, y, a: 0, hx: 10, hy: 0.9, hp: 9999, h3: 2.7, tall: true, br: 1 }); m.walls.push({ kind: 'atwall', x: d + 14.5, y, a: 0, hx: 11.5, hy: 0.9, hp: 9999, h3: 2.7, tall: true, br: -1 }); }
       O.ditch = (x, y) => { const v = y - (O.bluffBase - 21); if (Math.abs(v) > 5.5) return 0; let k = 0; for (let i = 1; i < 4; i++) k = Math.max(k, clamp((62 - Math.abs(x - O.draws[i])) / 8, 0, 1)); return k * 1.9 * (1 - Math.abs(v) / 5.5); };
       for (let gy = 0; gy < m.gh; gy++) for (let gx = 0; gx < m.gw; gx++) { const x = gx * GC, y = gy * GC; if (O.ditch(x, y) > 0.3 || O.ditch(x + 2, y + 2) > 0.3) { const i = gy * m.gw + gx; if (m.ground[i] !== G_ROAD) m.ground[i] = G_EARTH; } }
+      // machine-gun bunkers dug into the face of the bluff, looking down on the beach, each on a levelled bench; behind the crest a zigzag
+      // fire trench the length of the bluff, a communication trench running down to every bunker
+      m.mgbs = []; for (let x = 70; x < W - 60; x += 105 + R() * 40) { if (O.inDraw(x) > 0.25) continue; const y = lerp(O.bluffBase, O.bluffTop, 0.6 + R() * 0.12); m.mgbs.push({ x, y }); }
+      O.trY = x => O.bluffTop + 13 + (Math.abs(((x / 13) % 2 + 2) % 2 - 1) - 0.5) * 7;
+      O.trench = (x, y) => { if (y < O.bluffBase + 20 || y > O.bluffTop + 24) return 0; let k = 0; const dm = Math.abs(y - O.trY(x)); if (dm < 2.7 && O.inDraw(x) < 0.45) k = clamp((2.7 - dm) / 0.8, 0, 1); for (const q of m.mgbs) { const dx = Math.abs(x - q.x); if (dx < 2.4 && y > q.y + 3.2 && y < O.trY(q.x) + 1) k = Math.max(k, clamp((2.4 - dx) / 0.8, 0, 1)); } return k * 1.6; };
+      for (const q of m.mgbs) m.walls.push({ kind: 'mgb', x: q.x, y: q.y, a: -Math.PI / 2, hx: 2.6, hy: 3.4, hp: 9999, h3: 2.3, tall: true });
+      for (let gy = 0; gy < m.gh; gy++) for (let gx = 0; gx < m.gw; gx++) { const x = gx * GC + 2, y = gy * GC + 2; if (O.trench(x, y) > 0.4 || O.trench(x, y - 2) > 0.4 || O.trench(x - 2, y) > 0.4) { const i = gy * m.gw + gx; if (m.ground[i] !== G_ROAD) m.ground[i] = G_EARTH; } }
       // strongpoints on the bluff tops beside each draw: casemates looking down the beach, trenches, sandbagged pits
       m.wn = [];
       for (const d of O.draws) for (const s of [-1, 1]) {
@@ -22111,10 +22117,12 @@ const Scorch = {
         if (y < bt + 9) return 2.2 + (y - bt) / 9 * 0.8 + Math.sin((y - bt) / 9 * Math.PI) * 1.4;
         if (y < O.bluffBase) return 3.0 - (O.ditch ? O.ditch(x, y) : 0);
         const t = clamp((y - O.bluffBase) / (O.bluffTop - O.bluffBase), 0, 1), cliff = 3 + (plateau - 3) * (t * t * (3 - 2 * t)), td = clamp((y - O.bluffBase) / (O.coastY - O.bluffBase), 0, 1), valley = 3 + (plateau - 3) * Math.pow(td, 1.3);
-        const z = y < O.bluffTop ? cliff : plateau; return lerp(z, Math.min(z, valley), dr);
+        let z = y < O.bluffTop ? cliff : plateau; z = lerp(z, Math.min(z, valley), dr);
+        if (m.mgbs && y > O.bluffBase - 12 && y < O.bluffTop + 6) for (const q of m.mgbs) { const d = Math.max(Math.abs(x - q.x) * 0.85, Math.abs(y - q.y)); if (d < 9) { if (q.z === undefined) { const tb = clamp((q.y - O.bluffBase) / (O.bluffTop - O.bluffBase), 0, 1); q.z = 3 + (31 - 3) * (tb * tb * (3 - 2 * tb)); } const k = clamp((9 - d) / 4, 0, 1); z = lerp(z, q.z, k * k * (3 - 2 * k)); } }
+        return z - (O.trench ? O.trench(x, y) : 0);
       };
     },
-    trees(m, R) { for (const w of (m.hedges || [])) { const n = Math.floor(w.hx / 4.5); for (let i = 0; i < n; i++) { if (R() < 0.25) continue; const [x, y] = toWorld(-w.hx + (i + 0.5) * (w.hx * 2 / n) + (R() - 0.5) * 2, (R() < 0.5 ? -1 : 1) * (3.3 + R() * 0.8), w.x, w.y, w.a); m.tryTree(x, y, 1.8 + R() * 1.6); } } },
+    trees(m, R) { const O_ = m.om, keep = t => !(O_ && m.mgbs && (m.mgbs.some(q => t.y < q.y + 8 && t.y > O_.bluffBase - 30 && Math.abs(t.x - q.x) < 16 + (q.y - t.y) * 0.9) || (O_.trench && (O_.trench(t.x, t.y) > 0 || O_.trench(t.x + 2, t.y) > 0 || O_.trench(t.x - 2, t.y) > 0 || O_.trench(t.x, t.y + 2) > 0 || O_.trench(t.x, t.y - 2) > 0)))); if (m.trees) m.trees = m.trees.filter(keep); if (m.bushes) m.bushes = m.bushes.filter(keep); for (const w of (m.hedges || [])) { const n = Math.floor(w.hx / 4.5); for (let i = 0; i < n; i++) { if (R() < 0.25) continue; const [x, y] = toWorld(-w.hx + (i + 0.5) * (w.hx * 2 / n) + (R() - 0.5) * 2, (R() < 0.5 ? -1 : 1) * (3.3 + R() * 0.8), w.x, w.y, w.a); m.tryTree(x, y, 1.8 + R() * 1.6); } } },
   };
   MAP_LIST.push(OMAHA);
   // the menu card: grey sea and sky, the beach with obstacles, the bluffs and rain
@@ -22147,12 +22155,36 @@ const Scorch = {
   };
   { const hd = HUD.draw; HUD.draw = function (c, dt) { if (Rain.on() && !(B.cam && B.cam.sight)) { c.save(); c.fillStyle = 'rgba(60,70,80,0.08)'; c.fillRect(0, 0, Render.W, Render.H); c.restore(); /* the drops themselves now fall in the world: see w3_precip.js */ } hd.call(this, c, dt); }; }
   // ---- 3D for the beach pieces
-  const aw0 = W3Scene.addWall, OWN = { hedgehog: 1, bgate: 1, lcraft: 1, seawall: 1, casemate: 1, stake: 1, lramp: 1, wire: 1, msign: 1, atwall: 1, tobruk: 1 };
+  const aw0 = W3Scene.addWall, OWN = { mgb: 1, lcw: 1, hedgehog: 1, bgate: 1, lcraft: 1, seawall: 1, casemate: 1, stake: 1, lramp: 1, wire: 1, msign: 1, atwall: 1, tobruk: 1 };
   W3Scene.addWall = function (a, w) {
     const K = w.kind; if (!OWN[K]) return aw0.call(this, a, w);
     const zg = W3.gz(w.x, w.y), STEEL = [0.2, 0.19, 0.18], RUST = [0.34, 0.22, 0.15], RUST2 = [0.27, 0.19, 0.14], CON = [0.56, 0.55, 0.52], CON2 = [0.5, 0.49, 0.46], WOOD = [0.33, 0.26, 0.18], WOOD2 = [0.27, 0.21, 0.15], BLK = [0.05, 0.05, 0.05], sd = mulberry32((w.seed || (w.x * 13 + w.y * 7)) | 0);
     const L3 = (lx, ly, z) => { const [x, y] = toWorld(lx, ly, w.x, w.y, w.a); return [x, y, W3.gz(x, y) + z]; }, TB = (p0, p1, r, c, n = 4) => this.tube(a, L3(...p0), L3(...p1), r, c, n), BX = (lx, ly, hx, hy, z0, z1, c, an = 0) => { const [x, y] = toWorld(lx, ly, w.x, w.y, w.a), g = W3.gz(x, y); this.box(a, x, y, w.a + an, hx, hy, g + z0, g + z1, c, c); };
     const mine = (lx, ly, z) => { const [x, y] = toWorld(lx, ly, w.x, w.y, w.a), g = W3.gz(x, y); for (let k = 0; k < 8; k++) { const t0 = k / 8 * TAU, t1 = (k + 1) / 8 * TAU, P = (t, zz, r) => [x + Math.cos(t) * r, y + Math.sin(t) * r, g + zz]; this.quad(a, [P(t0, z, 0.16), P(t1, z, 0.16), P(t1, z + 0.08, 0.16), P(t0, z + 0.08, 0.16)], [Math.cos((t0 + t1) / 2), Math.sin((t0 + t1) / 2), 0], [0.16, 0.18, 0.15]); this.tri(a, [P(t0, z + 0.08, 0.16), P(t1, z + 0.08, 0.16), [x, y, g + z + 0.1]], [0, 0, 1], [0.2, 0.22, 0.18]); } };
+    if (K === 'lcw') return; // the sides of a beached landing craft: the craft itself is drawn as it moves
+    if (K === 'mgb') { // a machine-gun bunker in the face of the bluff: a low six-sided block of board-marked concrete, its roof edges chamfered,
+      // a wide stepped embrasure to the front and a narrower one in each angled cheek, the entrance at the back down in the trench; earth banked up its sides
+      const PT = (lx, ly, z) => { const [x, y] = toWorld(lx, ly, w.x, w.y, w.a); return [x, y, zg + z]; }, hx = w.hx, hy = w.hy, c0 = 1.5, H0 = 1.75, H1 = 2.25, dk = w.dead, CC = dk ? [0.3, 0.29, 0.27] : CON, C2 = dk ? [0.24, 0.23, 0.22] : CON2;
+      const ring = (z, ins) => [[hx - ins, -(hy - c0) + ins * 0.4], [hx - ins, hy - c0 - ins * 0.4], [hx - c0 - ins * 0.3, hy - ins], [-hx + ins, hy - ins], [-hx + ins, -hy + ins], [hx - c0 - ins * 0.3, -hy + ins]].map(([x, y]) => PT(x, y, z));
+      const R0 = ring(-1, 0), R1 = ring(H0, 0), R2 = ring(H1, 0.5), nOf = (p, q) => { const t = toLocal((p[0] + q[0]) / 2, (p[1] + q[1]) / 2, w.x, w.y, 0); return V3.norm([t[0], t[1], 0]); };
+      for (let k = 0; k < 6; k++) { const q = (k + 1) % 6, n = nOf(R0[k], R0[q]); this.quad(a, [R0[k], R0[q], R1[q], R1[k]], n, CC, null, 3); this.quad(a, [R1[k], R1[q], R2[q], R2[k]], V3.norm([n[0], n[1], 1]), C2, null, 3); for (let z = 0.45; z < H0; z += 0.45) { const A_ = [R0[k][0] + n[0] * 0.004, R0[k][1] + n[1] * 0.004], B_ = [R0[q][0] + n[0] * 0.004, R0[q][1] + n[1] * 0.004]; this.quad(a, [[A_[0], A_[1], zg + z], [B_[0], B_[1], zg + z], [B_[0], B_[1], zg + z + 0.025], [A_[0], A_[1], zg + z + 0.025]], n, C2); } }
+      // weathering: rain streaks running down from the roof edge, a pale worn arris, damp green at the foot of each wall
+      for (let k = 0; k < 6; k++) { const q = (k + 1) % 6, n = nOf(R0[k], R0[q]), at = (t, z, o) => [lerp(R0[k][0], R0[q][0], t) + n[0] * o, lerp(R0[k][1], R0[q][1], t) + n[1] * o, zg + z], band = (t0, t1, z0, z1, col, o) => this.quad(a, [at(t0, z0, o), at(t1, z0, o), at(t1, z1, o), at(t0, z1, o)], n, col);
+        band(0, 1, H0 - 0.05, H0, CC.map(q => q * 1.16), 0.006); band(0, 1, -1, 0.16 + hash01(k, w.x) * 0.12, dk ? [0.2, 0.2, 0.17] : [0.37, 0.4, 0.31], 0.006);
+        const L = Math.hypot(R0[q][0] - R0[k][0], R0[q][1] - R0[k][1]), ns = Math.max(2, Math.round(L * 1.3)); for (let i = 0; i < ns; i++) { const t = (i + 0.2 + hash01(i, k + w.x) * 0.6) / ns, wd = (0.05 + hash01(i + 3, k + w.y) * 0.09) / L, ln = 0.35 + hash01(i + 7, k) * 0.95, f = 0.7 + hash01(i, k + 9) * 0.16; band(Math.max(0, t - wd), Math.min(1, t + wd), H0 - 0.05 - ln, H0 - 0.05, CC.map(q => q * f), 0.008); band(Math.max(0, t - wd * 0.5), Math.min(1, t + wd * 0.5), H0 - 0.05 - ln * 1.5, H0 - 0.05 - ln, CC.map(q => q * (f + 0.12)), 0.008); }
+        if (!dk && hash01(k, w.y) > 0.45) { const t = 0.2 + hash01(k + 5, w.x) * 0.6; band(t - 0.5 / L, t + 0.5 / L, 0.2, 0.2 + 0.5 + hash01(k, 3) * 0.6, CC.map(q => q * 1.1), 0.007); } }
+      for (let k = 1; k < 5; k++) this.tri(a, [R2[0], R2[k], R2[k + 1]], [0, 0, 1], dk ? [0.2, 0.2, 0.19] : CON.map(q => q * 1.06));
+      if (!dk) { BX(-0.3, 0.2, 1.3, 1.6, H1, H1 + 0.004, CON.map(q => q * 0.92)); BX(0.5, -1.2, 0.6, 0.5, H1, H1 + 0.006, [0.36, 0.39, 0.3]); for (const [x, y] of [[-1.6, 2.2], [-1.6, -2.2], [1.0, 0]]) TB([x, y, H1], [x, y, H1 + 0.1], 0.03, BLK, 5); }
+      // embrasures: the dark opening inside two stepped frames
+      const slot = (cx, cy, an, wd) => { for (let k = 0; k < 4; k++) { const th = 0.035 + k * 0.035, [x, y] = toWorld(cx + Math.cos(an) * th, cy + Math.sin(an) * th, w.x, w.y, w.a), c = k === 3 ? BLK : CC.map(q => q * (1.08 - k * 0.14)); this.box(a, x, y, w.a + an, th, wd * (1.12 - k * 0.13), zg + 0.84 + k * 0.075, zg + 1.62 - k * 0.075, c, c); } };
+      slot(hx + 0.01, 0, 0, 1.25); for (const s of [-1, 1]) slot(hx - c0 / 2 + 0.01, s * (hy - c0 / 2 + 0.01), s * Math.atan2(c0, c0), 0.62);
+      if (!dk) { TB([hx - 0.5, 0, 1.2], [hx + 0.55, 0, 1.22], 0.03, BLK, 6); TB([hx + 0.55, 0, 1.22], [hx + 0.62, 0, 1.222], 0.04, BLK, 6); }
+      BX(-hx - 0.02, 0.9, 0.02, 0.55, -0.9, 1.1, BLK); BX(-hx - 0.6, 2.0, 0.6, 0.25, -1, 1.3, CC); BX(-hx - 0.6, -0.25, 0.6, 0.25, -1, 0.6, CC); // the entrance and its blast walls, down in the trench
+      if (this.lumpMesh) for (const s of [-1, 1]) this.lumpMesh(a, ...toWorld(-0.6, s * (hy + 1.2), w.x, w.y, w.a), zg - 0.5, 3.2, 1.8, 1.9, w.a, [0.33, 0.36, 0.2], 11 + s);
+      if (dk) { // blown in: the roof slab broken and tilted into the room, rubble out of the embrasure, soot above every opening
+        const p = [PT(hx - 1.2, -1.6, H1 + 0.02), PT(hx - 1.2, 1.9, H1 + 0.02), PT(-0.6, 1.5, H1 - 0.7), PT(-0.4, -1.3, H1 - 0.55)]; this.quad(a, p, [0.2, 0, 1], [0.1, 0.1, 0.09]); for (let k = 0; k < 9; k++) { const r = 0.25 + sd() * 0.45; BX(hx + 0.3 + sd() * 1.8, (sd() - 0.5) * 4.5, r, r * 0.8, -0.2, r * 0.8, k % 2 ? CC : C2, sd() * 3); } for (const [cx, cy] of [[hx + 0.02, 0], [hx - c0 / 2 + 0.03, hy - c0 / 2 + 0.03], [hx - c0 / 2 + 0.03, -(hy - c0 / 2 + 0.03)]]) BX(cx, cy, 0.02, 0.9, 1.45, 2.1, [0.06, 0.06, 0.055], Math.atan2(cy, 0.75) * (cy ? 1 : 0)); TB([hx - 0.2, 0.3, 1.1], [hx + 0.7, 0.9, 0.5], 0.03, BLK, 5); }
+      return;
+    }
     if (K === 'hedgehog') { // three lengths of steel angle bolted together at right angles through gusset plates, standing on three of its six ends
       const Lh = 1.15, ca = Math.cos(w.a), sa = Math.sin(w.a), E = [[0.816, 0, 0.577], [-0.408, 0.707, 0.577], [-0.408, -0.707, 0.577]].map(([x, y, z]) => [x * ca - y * sa, x * sa + y * ca, z]), zc = Lh * 0.577 + 0.02;
       E.forEach((e, k) => { const c = k === 1 ? RUST2 : RUST, p0 = [-e[0] * Lh, -e[1] * Lh, zc - e[2] * Lh], p1 = [e[0] * Lh, e[1] * Lh, zc + e[2] * Lh]; this.tube(a, [w.x + p0[0], w.y + p0[1], zg + p0[2]], [w.x + p1[0], w.y + p1[1], zg + p1[2]], 0.085, c, 4); this.box(a, w.x + p0[0], w.y + p0[1], w.a + k, 0.13, 0.13, zg - 0.05, zg + 0.04, STEEL, STEEL); });
@@ -22216,7 +22248,7 @@ const Scorch = {
       if (this.lumpMesh) this.lumpMesh(a, w.x - Math.cos(w.a) * (w.hx + 1.2), w.y - Math.sin(w.a) * (w.hx + 1.2), zg - 0.4, 2.6, w.hy + 1.8, w.h3 + 0.2, w.a, [0.36, 0.33, 0.24], 7);
     }
   };
-  if (typeof WALL_H !== 'undefined') Object.assign(WALL_H, { hedgehog: 1.4, bgate: 2.2, lcraft: 2.2, seawall: 1.4, casemate: 2.6, stake: 1.9, lramp: 1.6, wire: 0.3, msign: 0.25, atwall: 2.7, tobruk: 0.6 });
+  if (typeof WALL_H !== 'undefined') Object.assign(WALL_H, { mgb: 2.3, lcw: 2.2, hedgehog: 1.4, bgate: 2.2, lcraft: 2.2, seawall: 1.4, casemate: 2.6, stake: 1.9, lramp: 1.6, wire: 0.3, msign: 0.25, atwall: 2.7, tobruk: 0.6 });
 }
 // ---------------------------------------------------------------- the D-Day mission: carry Panzergrenadiers up to the strongpoints on the bluffs
 // Load at the depot inland, drive through the bocage and the naval shellfire to each strongpoint, stop and let a section dismount (four men),
@@ -22255,6 +22287,32 @@ const Scorch = {
     check() { if (this.drops && this.drops.every(d => d.done)) return 'win'; return null; },
     obj() { const n = this.drops ? this.drops.filter(d => d.done).length : 0; return `Bring Panzergrenadiers up to the strongpoints: ${n}/3 reinforced · ${Math.max(0, this.troops)} aboard${this.troops < SQUAD && n < 3 ? ' · back to the depot to load' : ''}`; },
   });
+  // ---- the American side of the same morning: tanks put ashore from LCTs under the guns of the bluff
+  OBJ_K.hmg = { hp: 240, hx: 2.6, hy: 3.4, h: 2.3, n: 'MG bunker' };
+  TPL.landing = (o = {}) => ({
+    map(seed) { return missionMap('omaha', seed, this.k); },
+    init() {
+      const m = B.map, O = m.om; this.setPoints([]); this.start = O.slot(0, 0); this.objs = [];
+      for (let i = 1; i < 8; i++) { const q = O.slot(i >> 2, i & 3); this.ally(q.x, q.y, q.a, 'attack', [q.x, O.bluffBase - 30, 40]); }
+      // every machine-gun bunker on the bluff face is manned and is a target
+      for (const w of m.walls) if (w.kind === 'mgb' && !w.dead) this.objs.push({ kind: 'hmg', x: w.x, y: w.y, r: 4.2, hp: OBJ_K.hmg.hp, max: OBJ_K.hmg.hp, w, alive: true, opt: false, spotted: true });
+      // anti-tank guns of the strongpoints, dug in on the crest beside the draws
+      for (const [x, y] of (m.wn || []).filter((q, i) => i % 2 === 0).slice(0, 4)) { const g = this.place('at', x, y + 4, -Math.PI / 2); g.spotted = false; }
+      this.goalFor = v => { if (v.team !== 0 || v === B.player) return null; const L = this.liveObjs(); if (!L.length) return null; const q = L.slice().sort((a, b) => dist(v.x, v.y, a.x, a.y) - dist(v.x, v.y, b.x, b.y))[0]; return [q.x, O.bluffBase - 22, 30]; };
+      this.navT = 30; this.aimObj();
+    },
+    update(dt) {
+      this.aimT = (this.aimT || 0) - dt; if (this.aimT <= 0) { this.aimT = 0.3; this.aimObj(); }
+      if (typeof Landing !== 'undefined' && Landing.on && Landing.crafts.some(C => !C.open)) return; // nobody shoots at the craft on the run in
+      if (!this.ashore) { this.ashore = true; this.ev('ashore'); }
+      this.objTick(dt); const L = this.liveObjs().length, n0 = this.objs.filter(q => q.kind === 'hmg').length;
+      if (L <= n0 / 2 && !this.half) { this.half = true; this.ev('half'); }
+      // destroyers close in to fire on the bluff: shells fall around a bunker still in action
+      this.navT -= dt; if (this.navT <= 0 && L) { this.navT = rnd(16, 26); const q = pick(this.liveObjs()); for (let k = 0; k < 4; k++) setTimeout(() => { if (!B || B.over) return; const x = q.x + rnd(-28, 28), y = q.y + rnd(-22, 22); B.fxExplosion(x, y, 1.3, true); Sfx.play('explosion', x, y, 0.8); if (W3.dent) W3.dent(x, y, 1.8, 0.5); }, k * rnd(350, 700)); this.ev('naval'); }
+    },
+    check() { if (this.objs && this.objs.length && !this.liveObjs().length) return 'win'; return null; },
+    obj() { const n = this.objs ? this.objs.filter(q => q.kind === 'hmg').length : 0, L = this.objs ? this.liveObjs().length : 0; return `Knock out the machine-gun bunkers on the bluff: ${n - L}/${n}`; },
+  });
   const mt0 = missionTanks; missionTanks = function (i) { const M = MISSIONS[i] || MISSIONS[0]; return M.side && M.side.tanks ? M.side.tanks.slice() : mt0(i); };
   let at = -1; MISSIONS.forEach((q, k) => { if (q.chap === 1) at = k; });
   const D = { id: 'x_omaha', chap: 1, title: 'Omaha', date: '6 June 1944', place: 'Normandy, France', sub: 'Transport', real: 'German defence of Omaha Beach (352nd Infantry Division)', reward: 2600,
@@ -22264,7 +22322,15 @@ const Scorch = {
     brief: 'Dawn, low cloud and rain. The Americans are landing below the bluffs, and the strongpoints along the beach are running out of men. You command a Panzergrenadier carrier at the reserve depot inland. Take your section up through the hedgerows to each strongpoint, let them off, and come back for the next. Destroyers are firing at anything that moves on the bluffs, and Shermans are already working their way up the draws.',
     radio: [[2, 'Btl. HQ', 'All strongpoints report heavy pressure. Get the reserve forward.'], ['loaded', 'Grenadiers', 'Section aboard. Go!'], ['naval', 'Btl. HQ', 'Ships\' guns on the bluffs. Do not stop out in the open!'], ['drop1', 'WN', 'Grenadiers in the trenches. We will hold.'], ['drop2', 'Btl. HQ', 'One strongpoint left. Hurry.'], ['wave', 'WN', 'Tanks in the draw! They are coming up!'], ['drop3', 'Btl. HQ', 'All strongpoints reinforced.']],
     win: 'Every strongpoint has its men. The bluffs hold a little longer.', lose: 'The reserve never arrived. The strongpoints are falling one by one.' };
-  MISSIONS.splice(at + 1, 0, D);
+  const U = { id: 'x_omaha_us', chap: 1, title: 'Dog White', date: '6 June 1944', place: 'Omaha Beach, Normandy', sub: 'Assault landing', real: '743rd Tank Battalion, landed from LCTs on the western half of Omaha Beach', reward: 2800,
+    sit: 'H-Hour. Your LCT is running in to the beach. Get off the ramp and silence the machine guns on the bluff.',
+    tip: 'You cannot move until the ramp is down. The bunkers are concrete: use the main gun, HE or AP, at the embrasure. Their machine guns cannot hurt a Sherman, but the anti-tank guns on the crest can.',
+    x: TPL.landing({}), side: { tanks: ['m4a1'], friend: ['m4a1'], foe: ['pz4f2'], foeUp: ['pz4f2'] },
+    brief: 'Low cloud, rain and a heavy sea. The swimming tanks further east were launched too far out and most of them have gone down, so your battalion is being taken all the way in by landing craft. When the ramp drops you are on an open beach under the bluff: obstacles ahead, a shingle bank and an anti-tank wall, and concrete machine-gun bunkers on the slope firing along the sand at the infantry coming in behind you. Knock out every bunker. Watch the crest: the strongpoints beside the draws have anti-tank guns.',
+    radio: [[1, 'LCT', 'Two hundred yards. Stand by on the ramp.'], ['ashore', 'Company', 'Ramp is down. Go, go! Get off the beach!'], ['naval', 'Navy', 'Destroyer closing in. Firing on the bluff, keep your heads down.'], ['objDown', 'Company', 'Bunker is out. Keep working along the bluff.'], ['half', 'Company', 'Half of them are quiet. The infantry is starting to move.'], ['obj_at', 'Company', 'Anti-tank gun destroyed.']],
+    win: 'The guns on the bluff are silent. The infantry is off the sand and climbing.', lose: 'The tanks are burning at the water\'s edge, and the bunkers are still firing.' };
+  MISSIONS.splice(at + 1, 0, D, U);
+  if (typeof MISSION_NATS !== 'undefined') MISSION_NATS[U.title] = ['us'];
   if (typeof MISSION_NATS !== 'undefined') MISSION_NATS[D.title] = ['de'];
 }
 
@@ -22521,22 +22587,40 @@ const Precip = {
   kind() { try { const t = B && B.map && B.map.cfg && MAP_THEMES[B.map.cfg.theme]; if (!t || GFX.cur().fx === 0) return null; return t.rain ? 'rain' : t.snow ? 'snow' : null; } catch (e) { return null; } },
   P: null, k: null, t0: 0, R: 22, TOP: 16,
   seed(p, e, top) { const R = this.R; p.x = e[0] + (Math.random() * 2 - 1) * R; p.y = e[1] + (Math.random() * 2 - 1) * R; const g = W3.gz(p.x, p.y); p.z = top ? Math.max(g, e[2] - 6) + this.TOP * (0.7 + Math.random() * 0.3) : g + Math.random() * this.TOP; p.ph = Math.random() * 6.28; },
+  // what a drop lands on decides the splash: 0 soft ground (grass), 1 dirt and mud, 2 sand, 3 hard (concrete, road, stone), 4 metal, 5 water
+  S: [], near: [],
+  surf(x, y) { for (const v of this.near) if (pointInOBB(x, y, v.x, v.y, v.ang, v.def.L / 2, v.def.W / 2)) return 4; if (typeof Landing !== 'undefined' && Landing.on && Landing.onDeck(x, y)) return 4;
+    const g = B.map.groundAt(x, y); if (g === G_WATER || g === G_BOG) return 5; if (g === G_SAND || g === G_SALT) return 2; if (g === G_ROAD || g === G_CONCRETE || g === G_STONE || g === G_BRIDGE || g === G_CLIFF || g === G_RUBBLE) return 3; if (g === G_MUD || g === G_EARTH || g === G_FIELD || g === G_CRATER || g === G_DITCH || g === G_TRENCH) return 1; return 0; },
+  splash(F, lum) { const S = this.S, now = performance.now(); let n = 0;
+    for (const q of S) { const f = (now - q.t) / q.L; if (f >= 1) continue; S[n++] = q; const a = (1 - f) * lum * 1.7, k = q.k;
+      if (k === 5) { const r = 0.06 + f * 0.3, c = a * 0.3; F.pq(q.x, q.y, q.z + 0.03, r, 0, 0, 0, r, 0, 6, c, c * 1.03, c * 1.08, 0); if (f < 0.4) F.streak([q.x, q.y, q.z], [q.x, q.y, q.z + 0.1 * Math.sin(f / 0.4 * Math.PI)], 0.012, 8, a * 0.4, a * 0.42, a * 0.46, 0); continue; }
+      if (k === 3 || k === 4) { const b = k === 4 ? 0.62 : 0.42, h = (k === 4 ? 0.2 : 0.13) * Math.sin(Math.min(1, f * 1.25) * Math.PI), w = 0.05 + f * (k === 4 ? 0.2 : 0.14), c = a * b;
+        for (let i = 0; i < 3; i++) { const t = q.r + i * 2.094, cx = Math.cos(t), cy = Math.sin(t); F.streak([q.x + cx * w * 0.5, q.y + cy * w * 0.5, q.z + h * 0.4], [q.x + cx * w, q.y + cy * w, q.z + h], 0.014, 8, c, c * 1.02, c * 1.06, 0); }
+        if (k === 3) { const r = 0.04 + f * 0.13, d = a * 0.16; F.pq(q.x, q.y, q.z + 0.03, r, 0, 0, 0, r, 0, 6, d, d, d * 1.05, 0); } else F.bill(q.x, q.y, q.z + 0.04, 0.05 + f * 0.05, 0, 4, c * 0.5, c * 0.52, c * 0.55, 0); continue; }
+      if (k === 2) { const al = Math.min(1, a * 0.5), sz = 0.05 + f * 0.07; F.bill(q.x, q.y, q.z + 0.03 + f * 0.05, sz, q.r, 4, 0.5 * al, 0.44 * al, 0.31 * al, al); continue; }
+      if (k === 1) { const al = Math.min(1, a * 0.55), h = 0.11 * Math.sin(Math.min(1, f * 1.3) * Math.PI); F.bill(q.x, q.y, q.z + 0.03, 0.055 + f * 0.06, q.r, 4, 0.25 * al, 0.19 * al, 0.13 * al, al); for (let i = 0; i < 2; i++) { const t = q.r + i * 3.1, w = 0.03 + f * 0.09; F.streak([q.x, q.y, q.z + 0.02], [q.x + Math.cos(t) * w, q.y + Math.sin(t) * w, q.z + h], 0.014, 8, 0.2 * al, 0.15 * al, 0.1 * al, al * 0.8); } continue; }
+      { const c = a * 0.17; F.bill(q.x, q.y, q.z + 0.07 + f * 0.05, 0.05 + f * 0.06, 0, 4, c * 0.9, c, c * 0.95, 0); } }
+    S.length = n; },
   draw(F) {
     const k = this.kind(); if (!k) { this.P = null; return; }
     const e = W3.view.eye, now = performance.now(), dt = clamp((now - (this.t0 || now)) / 1000, 0, 0.05); this.t0 = now;
     const N = Math.round((k === 'rain' ? 2000 : 1700) * Math.max(0.35, GFX.cur().fx));
     if (!this.P || this.k !== k || this.P.length !== N) { this.k = k; this.P = []; for (let i = 0; i < N; i++) { const p = {}; this.seed(p, e, false); this.P.push(p); } }
-    const rain = k === 'rain', wx = rain ? 1.6 : 0.7, wy = rain ? 0.6 : 0.3, vz = rain ? 9.5 : 1.3, R = this.R, sun = W3.sky ? W3.sky.amb : [0.6, 0.6, 0.6], lum = clamp((sun[0] + sun[1] + sun[2]) / 3 * 1.3, 0.12, 1);
+    const rain = k === 'rain', wx = rain ? 1.6 : 0.7, wy = rain ? 0.6 : 0.3, vz = rain ? 19 : 1.3, R = this.R, sun = W3.sky ? W3.sky.amb : [0.6, 0.6, 0.6], lum = clamp((sun[0] + sun[1] + sun[2]) / 3 * 1.3, 0.12, 1);
+    if (rain) { this.near.length = 0; for (const v of B.vehicles) if (v.z3 !== undefined && Math.abs(v.x - e[0]) < R + 6 && Math.abs(v.y - e[1]) < R + 6) this.near.push(v); } else this.S.length = 0;
     for (const p of this.P) {
       p.ph += dt * 1.7; p.x += (wx + (rain ? 0 : Math.sin(p.ph) * 0.6)) * dt; p.y += (wy + (rain ? 0 : Math.cos(p.ph * 0.8) * 0.5)) * dt; p.z -= vz * dt;
       // the box follows the camera: drops left behind come back in on the far side
       if (p.x < e[0] - R) p.x += 2 * R; else if (p.x > e[0] + R) p.x -= 2 * R; if (p.y < e[1] - R) p.y += 2 * R; else if (p.y > e[1] + R) p.y -= 2 * R;
       const g = W3.gz(p.x, p.y);
-      if (p.z <= g + 0.02) { if (rain && Math.random() < 0.35) F.bill(p.x, p.y, g + 0.05, 0.07, 0, 4, 0.25 * lum, 0.27 * lum, 0.3 * lum, 0); this.seed(p, e, true); continue; }
+      if (rain && this.near.length && p.z < g + 3.2) { let hit = null; for (const v of this.near) { if (Math.abs(v.x - p.x) > 6 || Math.abs(v.y - p.y) > 6) continue; const top = v.z3 + (v.def.hullH || 1.2) + (pointInOBB(p.x, p.y, v.x, v.y, v.ang, v.def.L * 0.22, v.def.W * 0.3) ? (v.def.turH || 0.6) : 0); if (p.z <= top && pointInOBB(p.x, p.y, v.x, v.y, v.ang, v.def.L / 2, v.def.W / 2)) { hit = top; break; } }
+        if (hit !== null) { if (this.S.length < 900) this.S.push({ x: p.x, y: p.y, z: hit, k: 4, t: now, L: 170, r: p.ph }); this.seed(p, e, true); continue; } }
+      if (p.z <= g + 0.02) { if (rain && this.S.length < 900 && Math.random() < 0.6) { const k = this.surf(p.x, p.y); this.S.push({ x: p.x, y: p.y, z: g, k, t: now, L: k === 5 ? 420 : k === 3 ? 200 : k === 4 ? 170 : 240, r: p.ph }); } this.seed(p, e, true); continue; }
       if (p.z > e[2] + this.TOP) { this.seed(p, e, true); continue; }
-      if (rain) { const L = 0.55; F.streak([p.x, p.y, p.z], [p.x - wx / vz * L, p.y - wy / vz * L, p.z + L], 0.02, 8, 0.4 * lum, 0.43 * lum, 0.48 * lum, 0); }
+      if (rain) { const L = 0.95; F.streak([p.x, p.y, p.z], [p.x - wx / vz * L, p.y - wy / vz * L, p.z + L], 0.011, 8, 0.5 * lum, 0.54 * lum, 0.6 * lum, 0); }
       else F.bill(p.x, p.y, p.z, 0.07, p.ph, 4, 0.95 * lum, 0.97 * lum, 1.0 * lum, 0);
     }
+    if (rain) this.splash(F, lum);
   },
 };
 
@@ -22940,6 +23024,8 @@ const Phys = {
     for (const ch of this.chains) { if (!B.vehicles.includes(ch.v)) { this.chains.delete(ch); continue; } this.stepChain(ch, dt); }
     this.stepRope(dt);
   },
+  // the tank shader made ready for one more plain mesh (used by the landing craft too)
+  prep0(shadow) { const gl = W3.gl, P = shadow ? W3.P.sTank : W3.P.tank, U = P.U; gl.useProgram(P.p); gl.uniformMatrix4fv(U.uVP, false, shadow ? W3.shVP : W3.view.VP); if (!shadow) { W3.common(P); if (U.uShTOn) gl.uniform1f(U.uShTOn, 0); } for (const [k, f] of [['uElev', 0], ['uRecoil', 0], ['uCut', 1e6], ['uDim', 1], ['uWreck', 0], ['uFlash', 0], ['uHatch', 0], ['uMid', 0]]) if (U[k]) gl.uniform1f(U[k], f); for (const k of ['uPiv', 'uBroken', 'uWh', 'uTrk', 'uRf', 'uAnt']) if (U[k]) gl.uniform2f(U[k], 0, 0); if (U.uSt) gl.uniform4f(U.uSt, 0, 0, 0, 0); if (U.uMkC) gl.uniform1i(U.uMkC, 0); if (U.uDnC) gl.uniform1i(U.uDnC, 0); if (U.uAvg) gl.uniform3f(U.uAvg, -1, 0, 0); return U; },
   draw(list, shadow) {
     const gl = W3.gl, P = shadow ? W3.P.sTank : W3.P.tank, U = P.U, WT = W3.WT; let set = false;
     const prep = () => { if (set) return; set = true; gl.useProgram(P.p); gl.uniformMatrix4fv(U.uVP, false, shadow ? W3.shVP : W3.view.VP); if (!shadow) { W3.common(P); if (U.uShTOn) gl.uniform1f(U.uShTOn, 0); } for (const [k, f] of [['uElev', 0], ['uRecoil', 0], ['uCut', 1e6], ['uDim', 1], ['uWreck', 0], ['uFlash', 0], ['uHatch', 0], ['uMid', 0]]) if (U[k]) gl.uniform1f(U[k], f); for (const k of ['uPiv', 'uBroken', 'uWh', 'uTrk', 'uRf', 'uAnt']) if (U[k]) gl.uniform2f(U[k], 0, 0); if (U.uSt) gl.uniform4f(U.uSt, 0, 0, 0, 0); if (U.uMkC) gl.uniform1i(U.uMkC, 0); if (U.uDnC) gl.uniform1i(U.uDnC, 0); if (U.uAvg) gl.uniform3f(U.uAvg, -1, 0, 0); };
@@ -23184,6 +23270,174 @@ const WaveSetup = {
   },
 };
 { const rs0 = UI.renderSetup; UI.renderSetup = function () { rs0.apply(this, arguments); try { WaveSetup.render(this); } catch (e) { console.error(e); } }; }
+
+// ---------------------------------------------------------------- tank landing craft
+// On Omaha the side that comes from the sea starts aboard landing craft (LCT): four tanks in line down the open well deck, the wheelhouse
+// aft. Each craft starts some sixty metres out, runs in, grounds on the sand with a jolt, drops its bow ramp, and only then are its tanks
+// free to move. The craft stays where it beached. Any vehicle standing on a craft's deck when the battle begins rides it in.
+const Landing = {
+  crafts: [], on: false, T_RUN: 9.5, T_RAMP: 1.5, D0: 62, L: 38, BEAM: 4.7, FLOOR: 0.5, mesh: null, ramp: null,
+  reset() { this.crafts = []; this.on = false; },
+  begin() {
+    this.reset(); const m = B.map, O = m && m.om; if (!O || !O.lct || B.preview || B.demo) return;
+    // everyone standing on a deck rides in: the player's tank at the bow of the first craft, the rest in line behind, four to a craft
+    const all = B.vehicles.filter(v => v.alive && O.lct.some(c => Math.abs(v.x - c.x) < 4.5 && v.y < c.yb + 1 && v.y > c.yb - 34)); if (!all.length) return;
+    all.sort((p, q) => (q === B.player) - (p === B.player) || (Math.abs(p.x - O.lct[0].x) - Math.abs(q.x - O.lct[0].x)) || q.y - p.y);
+    const n = Math.min(O.lct.length, Math.ceil(all.length / 4)); for (let k = 0; k < n; k++) this.crafts.push({ x: O.lct[k].x, yb: O.lct[k].yb, k, t: 0, riders: [], grounded: false, open: false, bob: k * 2.1 });
+    all.forEach((v, i) => { const C = this.crafts[Math.floor(i / 4)]; if (!C) { v.x = O.lct[0].x + (i % 2 ? 14 : -14); v.y = O.lct[0].yb + 12 + i * 3; v._ph = null; v.z3 = undefined; return; } C.riders.push({ v, dy: -5.5 - (i % 4) * 7.3 }); v._lc = C; });
+    this.on = this.crafts.length > 0; if (this.on) for (const C of this.crafts) this.hold(C, 0);
+  },
+  off(C) { const k = clamp(C.t / this.T_RUN, 0, 1); return this.D0 * (1 - k) * (1 - k) * (1 + 0.6 * k); }, // metres still to run: fast at first, easing onto the sand
+  floorZ(C) { return this.FLOOR + (C.grounded ? 0 : Math.sin(C.t * 1.7 + C.bob) * 0.07 + 0.1); },
+  rampA(C) { if (!C.grounded) return 1.25; const k = clamp((C.t - this.T_RUN - 0.35) / this.T_RAMP, 0, 1), e = k * k; return lerp(1.25, -0.115, e) + (k >= 1 ? 0 : 0) + (k > 0.98 && C.t - this.T_RUN - 0.35 - this.T_RAMP < 0.25 ? Math.sin((C.t - this.T_RUN - 0.35 - this.T_RAMP) * 25) * 0.02 : 0); },
+  hold(C, dt) { const d = this.off(C), z = this.floorZ(C); for (const r of C.riders) { const v = r.v; if (v._lc !== C) continue; v.x = C.x; v.y = C.yb + r.dy - d; v.ang = Math.PI / 2; v.vel = 0; v.angVel = 0; v.z3 = z; v._ph = null; v._tp = Math.sin(C.t * 1.3 + C.bob) * (C.grounded ? 0 : 0.012); v._tr = Math.sin(C.t * 1.1 + C.bob * 2) * (C.grounded ? 0 : 0.015); v._uq = null; } },
+  update(dt) {
+    if (!this.on) return; const P = B.player;
+    for (const C of this.crafts) { C.t += dt;
+      if (!C.grounded && C.t >= this.T_RUN) { C.grounded = true; const near = P && (P._lc === C || dist(P.x, P.y, C.x, C.yb) < 90); if (near && B.cam) B.cam.shake = Math.max(B.cam.shake || 0, P._lc === C ? 0.32 : 0.16); Sfx.play('ground', C.x, C.yb, 1.4); W3.fxZ = 0.3; for (let i = 0; i < 14; i++) FX.add('dust', C.x + rnd(-5, 5), C.yb + rnd(-2, 2), { r: rnd(0.8, 1.6), gr: 1.5, life: rnd(0.8, 1.6), a: 0.35, wind: 0.5 }); W3.fxZ = undefined;
+        // the grounded hull is solid: its two sides and the front of the deckhouse
+        for (const [x, y, a, hx, hy] of [[C.x - this.BEAM + 0.2, C.yb - 17, Math.PI / 2, 18, 0.35], [C.x + this.BEAM - 0.2, C.yb - 17, Math.PI / 2, 18, 0.35], [C.x, C.yb - 31, 0, this.BEAM, 0.5]]) B.map.addDynWall({ kind: 'lcw', x, y, a, hx, hy, hp: 9999, h3: 2.2, tall: true }); }
+      if (C.grounded && !C.open && C.t >= this.T_RUN + 0.35 + this.T_RAMP) { C.open = true; Sfx.play('ground', C.x, C.yb + 4, 0.9); if (P && P._lc === C && B.cam) B.cam.shake = Math.max(B.cam.shake || 0, 0.12); W3.fxZ = 0.2; for (let i = 0; i < 8; i++) FX.add('dust', C.x + rnd(-3, 3), C.yb + 4 + rnd(-1, 1), { r: rnd(0.5, 1), gr: 1.2, life: rnd(0.6, 1.2), a: 0.3, wind: 0.5 }); W3.fxZ = undefined;
+        for (const r of C.riders) if (r.v._lc === C) { r.v._lc = null; r.v._ph = null; if (r.v !== P && r.v.ai) r.v._lo = C; } if (P && C.riders.some(r => r.v === P)) B.hudMsg('Ramp down — go!', '#9fd18a'); }
+      if (!C.open) { this.hold(C, dt); if (P && P._lc === C) { const left = Math.ceil(this.T_RUN + 0.35 + this.T_RAMP - C.t); if (left !== C._msg && left % 3 === 0 && left > 0) { C._msg = left; B.hudMsg(C.grounded ? 'Lowering the ramp' : `Running in to the beach — ${left} s`, '#cfd8dc'); } }
+        if (!C.grounded) { C.wk = (C.wk || 0) + dt * 14; while (C.wk >= 1) { C.wk -= 1; const yb = C.yb - this.off(C); W3.fxZ = 0.1; FX.add('dust', C.x + rnd(-5, 5), yb + rnd(-1, 2), { r: rnd(0.6, 1.3), gr: 1.6, life: rnd(0.5, 1.1), a: 0.3, wind: 0.3, col: [0.85, 0.88, 0.9] }); W3.fxZ = undefined; } } }
+    }
+  },
+  // what a track stands on aboard a beached craft: the well deck, then the ramp down to the sand
+  deckZ(x, y, z) { for (const C of this.crafts) { if (!C.grounded) continue; const dx = Math.abs(x - C.x); if (dx > this.BEAM - 0.3) continue; const u = y - C.yb; if (u < -31.5 || u > 4.2) continue; if (u <= 0) return Math.max(z, this.FLOOR); if (dx < 3) return Math.max(z, this.FLOOR * (1 - u / 4.2) + 0.03); } return z; },
+  // ---- the craft: hull and well deck, deckhouse and wheelhouse aft, funnel, mast, gun tubs, rails; the ramp is its own piece
+  build() {
+    const o = [], X = [1, 0, 0], Y = [0, 1, 0], Z = [0, 0, 1], GR = [0.44, 0.47, 0.5], GD = [0.33, 0.36, 0.39], DK = [0.27, 0.28, 0.29], RED = [0.36, 0.13, 0.11], BLK = [0.07, 0.07, 0.07], Bm = this.BEAM, L2 = this.L / 2, bx = (c, hx, hy, hz, col) => Phys.obox(o, c, X, Y, Z, hx, hy, hz, col), tb = (a, b, r, col, n = 5) => Phys.tube(o, a, b, r, r, col, n, false);
+    const x0 = -L2, x1 = L2 - 2.5; // the well runs from the deckhouse to the bow
+    bx([(x0 + x1) / 2, 0, -0.75], (x1 - x0) / 2, Bm, 0.3, RED); bx([(x0 + x1) / 2, 0, -0.25], (x1 - x0) / 2, Bm, 0.2, GD); bx([(x0 + x1) / 2, 0, -0.03], (x1 - x0) / 2, Bm - 0.5, 0.03, DK);
+    for (const s of [-1, 1]) { bx([(x0 + x1) / 2, s * (Bm - 0.25), 0.95], (x1 - x0) / 2, 0.25, 1.0, GR); bx([(x0 + x1) / 2, s * (Bm + 0.02), 0.2], (x1 - x0) / 2, 0.04, 0.09, BLK); bx([(x0 + x1) / 2, s * (Bm - 0.25), 1.98], (x1 - x0) / 2, 0.32, 0.04, GD);
+      // the bow: sides drawing in to the ramp, the ramp posts and their winch gear
+      { const dx = L2 - x1, dy = s * (3.05 - (Bm - 0.25)), l = Math.hypot(dx, dy), ax = [dx / l, dy / l, 0], ay = [-dy / l, dx / l, 0], cx = (x1 + L2) / 2, cy = s * (Bm - 0.25 + 3.05) / 2; Phys.obox(o, [cx, cy, 0.95], ax, ay, Z, l / 2, 0.25, 1.0, GR); Phys.obox(o, [cx, cy, -0.25], ax, ay, Z, l / 2, 0.27, 0.2, GD); Phys.obox(o, [cx, cy, -0.75], ax, ay, Z, l / 2, 0.27, 0.3, RED); }
+      bx([L2 - 0.1, s * 3.05, 1.6], 0.14, 0.16, 1.9, GD); bx([L2 - 0.5, s * 3.3, 2.2], 0.3, 0.25, 0.25, DK); tb([L2 - 0.1, s * 3.05, 3.4], [L2 + 0.2, s * 2.6, 3.5], 0.05, DK);
+      for (let k = 0; k < 9; k++) { const x = x0 + 2 + k * 3.3; bx([x, s * (Bm + 0.03), 0.9], 0.07, 0.04, 1.0, GD); bx([x, s * (Bm - 0.52), 0.9], 0.06, 0.03, 0.95, GD); }
+      for (let k = 0; k < 6; k++) bx([x0 + 4 + k * 4.6, s * (Bm - 0.25), 2.1], 0.22, 0.12, 0.1, DK); }
+    bx([x1 + 1.25, 0, -0.75], 1.25, 3.2, 0.3, RED); bx([x1 + 1.25, 0, -0.25], 1.25, 3.2, 0.2, GD); bx([x1 + 1.25, 0, -0.03], 1.25, 2.9, 0.03, DK);
+    for (let k = 0; k < 16; k++) bx([x0 + 9.5 + k * 1.75, 0, 0.012], 0.05, Bm - 0.6, 0.012, GD); // the deck's tread bars
+    // the stern: deckhouse across the full beam, the wheelhouse on it, funnel, vents, mast, the two gun tubs
+    const hx0 = x0 - 7; bx([(hx0 + x0) / 2, 0, -0.75], 3.5, Bm, 0.3, RED); bx([(hx0 + x0) / 2, 0, -0.2], 3.5, Bm, 0.25, GD); bx([(hx0 + x0) / 2, 0, 1.15], 3.5, Bm - 0.1, 1.1, GR); bx([(hx0 + x0) / 2, 0, 2.28], 3.6, Bm, 0.04, GD);
+    for (const s of [-1, 1]) { bx([(hx0 + x0) / 2, s * (Bm + 0.02), 0.2], 3.5, 0.04, 0.09, BLK); for (const x of [x0 - 1.2, x0 - 3.4, x0 - 5.6]) { bx([x, s * (Bm - 0.08), 1.5], 0.22, 0.03, 0.22, BLK); } bx([x0 + 0.02, s * 2.6, 1.0], 0.03, 0.45, 0.95, DK);
+      Phys.tube(o, [x0 - 1.8, s * 3.2, 2.3], [x0 - 1.8, s * 3.2, 3.2], 1.1, 1.15, GD, 12, false); Phys.tube(o, [x0 - 1.8, s * 3.2, 3.2], [x0 - 1.8, s * 3.2, 3.24], 1.15, 1.15, DK, 12, true); tb([x0 - 1.8, s * 3.2, 2.3], [x0 - 1.8, s * 3.2, 3.5], 0.09, DK, 6); tb([x0 - 1.8, s * 3.2, 3.6], [x0 - 0.2, s * 3.2, 3.95], 0.035, BLK, 5); bx([x0 - 1.9, s * 3.2, 3.6], 0.3, 0.12, 0.14, DK); bx([x0 - 1.75, s * 3.2, 3.75], 0.04, 0.45, 0.3, GD);
+      for (let k = 0; k < 4; k++) { const x = hx0 + 0.3 + k * 1.6; tb([x, s * (Bm - 0.1), 2.3], [x, s * (Bm - 0.1), 3.2], 0.025, GD, 4); } for (const z of [2.75, 3.2]) tb([hx0 + 0.3, s * (Bm - 0.1), z], [hx0 + 5.1, s * (Bm - 0.1), z], 0.02, GD, 4); }
+    for (const z of [2.75, 3.2]) tb([hx0 + 0.3, -Bm + 0.1, z], [hx0 + 0.3, Bm - 0.1, z], 0.02, GD, 4);
+    bx([x0 - 4.6, 0, 3.3], 1.5, 1.7, 1.0, GR); bx([x0 - 4.6, 0, 4.34], 1.65, 1.85, 0.04, GD); for (const y of [-1.0, 0, 1.0]) bx([x0 - 3.08, y, 3.7], 0.02, 0.36, 0.22, BLK); for (const s of [-1, 1]) for (const x of [x0 - 4.0, x0 - 5.2]) bx([x, s * 1.71, 3.7], 0.36, 0.02, 0.22, BLK);
+    Phys.tube(o, [x0 - 6.3, 1.4, 2.3], [x0 - 6.4, 1.4, 4.4], 0.42, 0.36, DK, 10, true); for (const y of [-2.6, -1.2]) { Phys.tube(o, [x0 - 6.2, y, 2.3], [x0 - 6.2, y, 3.3], 0.18, 0.18, GD, 8, false); Phys.tube(o, [x0 - 6.2, y, 3.3], [x0 - 5.85, y, 3.5], 0.18, 0.26, GD, 8, true); }
+    tb([x0 - 4.6, 0, 4.38], [x0 - 4.6, 0, 8.2], 0.06, GD, 6); tb([x0 - 4.6, -1.3, 7.2], [x0 - 4.6, 1.3, 7.2], 0.035, GD, 5); tb([x0 - 4.6, 0, 6.2], [x0 - 5.6, 0, 4.4], 0.02, DK, 4); bx([x0 - 5.0, 0, 7.7], 0.4, 0.01, 0.24, [0.6, 0.6, 0.62]);
+    return new Float32Array(o);
+  },
+  buildRamp() { const o = [], X = [1, 0, 0], Y = [0, 1, 0], Z = [0, 0, 1], GD = [0.33, 0.36, 0.39], DK = [0.24, 0.25, 0.26]; Phys.obox(o, [2.1, 0, -0.06], X, Y, Z, 2.1, 2.85, 0.06, GD); for (let k = 0; k < 10; k++) Phys.obox(o, [0.3 + k * 0.4, 0, 0.02], X, Y, Z, 0.04, 2.7, 0.02, DK); for (const s of [-1, 1]) { Phys.obox(o, [2.1, s * 2.8, 0.1], X, Y, Z, 2.1, 0.06, 0.14, GD); for (let k = 0; k < 4; k++) Phys.obox(o, [0.5 + k * 1.1, s * 2.2, -0.14], X, Y, Z, 0.05, 0.5, 0.05, DK); } return new Float32Array(o); },
+  draw(shadow) {
+    if (!this.on || !this.crafts.length || typeof Phys === 'undefined' || !Phys.prep0) return; const gl = W3.gl, WT = W3.WT, U = Phys.prep0(shadow);
+    if (!this.mesh) { this.mesh = this.build(); this.ramp = this.buildRamp(); }
+    for (const C of this.crafts) { const yb = C.yb - this.off(C), z = this.floorZ(C), cy = yb - this.L / 2, roll = C.grounded ? 0 : Math.sin(C.t * 1.1 + C.bob * 2) * 0.015;
+      // local +x is the bow, which points inland (+y); a little roll while afloat
+      const M = [0, 1, 0, 0, -Math.cos(roll), 0, Math.sin(roll), 0, Math.sin(roll), 0, Math.cos(roll), 0, C.x, cy, z, 1]; gl.uniformMatrix4fv(U.uM, false, M); WT.draw(gl, Phys.buf('lct', this.mesh));
+      const a = this.rampA(C), ca = Math.cos(a), sa = Math.sin(a), R = [0, ca, sa, 0, -1, 0, 0, 0, 0, -sa, ca, 0, C.x, yb, z, 1]; gl.uniformMatrix4fv(U.uM, false, R); WT.draw(gl, Phys.buf('lctr', this.ramp)); }
+  },
+};
+{
+  const up0 = Vehicle.prototype.update; Vehicle.prototype.update = function (dt) { if (this._lc) { if (!this.alive) this._lc = null; else return; }
+    // a crew that is not the player's drives straight down the well deck and off the ramp, in turn, before it starts thinking for itself
+    if (this._lo) { const C = this._lo; if (!this.alive || !Landing.on || this.y > C.yb + 7.5) this._lo = null; else { const ahead = B.vehicles.some(v => v !== this && v.alive && Math.abs(v.x - C.x) < 3.2 && v.y > this.y + 1 && v.y < this.y + 8.8); this.vel = ahead ? 0 : Math.min(4.5, (this.vel || 0) + dt * 3); this.y += this.vel * dt; this.x = lerp(this.x, C.x, Math.min(1, dt * 2)); this.ang = Math.PI / 2; this.angVel = 0; this._ph = null; this.z3 = W3.gz(this.x, this.y); if (this.ctrl) { this.ctrl.throttle = 0; this.ctrl.steer = 0; } return; } } return up0.apply(this, arguments); };
+  const bu0 = Battle.prototype.update; Battle.prototype.update = function (dt) { if (this._landed === undefined && this.vehicles && this.vehicles.length && ((this.player && this.player.alive) || this.time > 1.2)) { this._landed = true; try { Landing.begin(); } catch (e) { console.error(e); Landing.reset(); } } try { Landing.update(dt); } catch (e) { if (!Landing._e) { Landing._e = 1; console.error(e); } } return bu0.apply(this, arguments); };
+  // the well deck is a floor, though the sea is under it
+  Landing.onDeck = function (x, y) { for (const C of this.crafts) if (C.grounded && Math.abs(x - C.x) < this.BEAM && y > C.yb - 32 && y < C.yb + 4.5) return true; return false; };
+  const bv0 = GameMap.prototype.blocksVehicle; GameMap.prototype.blocksVehicle = function (x, y) { if (Landing.on && Landing.onDeck(x, y)) return false; return bv0.call(this, x, y); };
+  const sa0 = GameMap.prototype.speedAt; GameMap.prototype.speedAt = function (x, y) { if (Landing.on && Landing.onDeck(x, y)) return 1; return sa0.call(this, x, y); };
+  const gz0 = W3.gz; W3.gz = function (x, y) { const z = gz0.call(this, x, y); return Landing.on ? Landing.deckZ(x, y, z) : z; };
+  const d0 = W3.drawTankList; W3.drawTankList = function (list, shadow) { const r = d0.apply(this, arguments); try { Landing.draw(shadow); } catch (e) { if (!Landing._e2) { Landing._e2 = 1; console.error(e); } } return r; };
+  const st0 = App.startBattle; App.startBattle = function () { Landing.reset(); return st0.apply(this, arguments); };
+}
+
+// ---------------------------------------------------------------- Israel: the tanks of the IDF Armoured Corps, 1948 to today.
+// Almost every Israeli tank before the Merkava was somebody else's, bought, captured or rebuilt, so each of these stands on the vehicle it really was:
+// the Hotchkisses and Cromwells of 1948, the up-gunned Shermans, the Centurion and Pattons with the 105 mm, the captured T-55s and T-62s.
+NATIONS.il = { name: 'Israel', color: '#0038b8', accent: '#ffffff' };
+Object.assign(CAMOS, {
+  il_od: { base: [84, 84, 56], patches: [], grain: 7 },                 // 1948-56: whatever olive drab came with the vehicle
+  il_sinai: { base: [122, 116, 94], patches: [], grain: 7 },             // "Sinai grey", the grey-sand of the 1960s-2000s
+});
+{
+  const mk = (base, o, mg) => {
+    const b = TANKS[base]; if (!b || TANKS[o.id]) return; const d = Object.assign({}, b); for (const T_ of mk.T) if (T_ && T_[base] !== undefined && T_[o.id] === undefined) T_[o.id] = T_[base];
+    if (d.turret && !d.soft) { d.tl = b.tl / 1.1; d.tw = b.tw / 1.18; } delete d.maxAmmo; delete d.acc; delete d.arcPivot;
+    Object.assign(d, { nation: 'il' }, o); tank(d); for (const k of ['arcPivot', 'turnR', 'rearAt']) if (b[k] !== undefined) TANKS[o.id][k] = b[k];
+    TREE_ORDER[Math.max(0, d.era - 1)].push(d.id);
+    if (TANK_GEAR[base]) TANK_GEAR[d.id] = Object.assign({}, TANK_GEAR[base]);
+    if (MG_SPECS[base] || mg) MG_SPECS[d.id] = Object.assign({}, MG_SPECS[base], mg || {});
+    if (typeof TANK_EXTRAS !== 'undefined' && TANK_EXTRAS[base]) TANK_EXTRAS[d.id] = TANK_EXTRAS[base];
+    if (typeof CASE_NONE !== 'undefined' && CASE_NONE.has(base)) CASE_NONE.add(d.id);
+  };
+  mk.T = []; for (const T_ of [typeof TUR3D !== 'undefined' && TUR3D, typeof GUN_STYLE !== 'undefined' && GUN_STYLE, typeof HULL_H !== 'undefined' && HULL_H, typeof TUR_H !== 'undefined' && TUR_H, typeof TUR_TAPER !== 'undefined' && TUR_TAPER]) mk.T.push(T_);
+  // (tables keyed by vehicle id are copied for each clone as it is made)
+  const MAG = { name: 'FN MAG coaxial', g: 'nato762' }, B19 = { name: 'Browning M1919A4 coaxial' };
+  // ---- 1948
+  mk('h39', { id: 'il_h39', name: 'Hotchkiss H39', year: 1948, camo: 'il_od',
+    desc: 'Ten Hotchkiss light tanks bought in France in 1948 were the first tanks of the 82nd Tank Battalion. Slow, worn out and two-man, but armour all the same.' });
+  mk('cromwell', { id: 'il_cromwell', name: 'Cromwell', year: 1948, camo: 'il_od',
+    desc: 'Two Cromwells driven out of a British depot near Haifa in June 1948 by their own crews. With one Sherman they made up the "English" company of the 82nd.' });
+  mk('m4a1', { id: 'il_m3', name: 'Sherman M-3', year: 1948, camo: 'il_od',
+    desc: 'Israeli name for any Sherman with the 75 mm M3 gun. The first were rebuilt from scrap hulls; by 1956 they were the backbone of the armoured brigades.' }, B19);
+  // ---- 1956-67: the up-gunned Shermans and the AMX-13
+  { const g = TANKS.amx13; mk('m4a3e8', { id: 'il_m50', name: 'M-50 Sherman', year: 1956, camo: 'il_sinai', cal: 75, gunL: g ? g.gunL : 4.6, reload: 7.5, sp: 185, rp: 2400,
+    shells: [S('POT51il', 'POT-51 APCBC', 'APCBC', [170, 145], 1000, 30, 0), S('OE75il', 'OE-75 HE', 'HE', 10, 750, 25, 600)],
+    desc: 'A Sherman with the French 75 mm CN-75-50 of the AMX-13, a gun descended from the Panther\'s, in a turret with a counterweight welded on behind. Built with French help from 1956.' }, B19); }
+  mk('amx13', { id: 'il_amx13', name: 'AMX-13', year: 1956, camo: 'il_sinai',
+    desc: 'Bought from France in 1956 and used in Sinai that year and again in 1967. Fast, with an oscillating turret and a drum autoloader, but too thin-skinned for the Golan.' });
+  mk('m4a3e8', { id: 'il_m51', name: 'M-51 Sherman', era: 3, tier: 3, year: 1962, camo: 'il_sinai', cal: 105, gunL: 5.0, reload: 9, mass: 39, speed: 45, aimTime: 2.4, sp: 235, rp: 4800,
+    shells: [S('OCC105il', 'OCC-105 F1 HEAT', 'HEATFS', 360, 800, 28), S('OE105il', 'OE-105 F1 HE', 'HE', 24, 640, 19, 2800)],
+    desc: 'An M4A1 on HVSS suspension with a Cummins diesel and a shortened French 105 mm firing HEAT, with a big muzzle brake to make it bearable. It killed T-54s and T-62s in 1967 and 1973.' }, B19);
+  // ---- the 105 mm generation
+  mk('centurion', { id: 'il_shot', name: 'Sho\'t Kal', year: 1970, camo: 'il_sinai', speed: 43, hpt: 14.2, rev: 12, engine: 'diesel', sp: 265, rp: 5800,
+    shells: [S('M111shot', 'M111 Hetz APFSDS', 'APFSDS', [360, 340], 1455, 20), S('L28il', 'L28A1 APDS', 'APDS', [330, 310], 1478, 22), S('L35il', 'L35 HESH', 'HESH', 120, 731, 22, 2700)],
+    desc: 'The Centurion ("Sho\'t", whip) rebuilt with the 105 mm L7 and the Continental diesel and Allison gearbox of the Patton. The tank of the Valley of Tears, October 1973.' }, { name: 'Browning M1919A4 coaxial', g: 'nato762' });
+  mk('kr_m48a5k', { id: 'il_magach3', name: 'Magach 3', era: 3, tier: 3, year: 1968, camo: 'il_sinai', sp: 260, rp: 5600,
+    shells: [S('M392il', 'M392A2 APDS', 'APDS', [300, 285], 1478, 26), S('M456il', 'M456 HEAT', 'HEATFS', 400, 1174, 20), S('M393il', 'M393 HESH', 'HESH', 120, 732, 8, 2700)],
+    desc: 'M48A1 and A2 Pattons rebuilt in Israel to M48A3 standard and beyond: the 105 mm L7, a diesel engine, a low Urdan cupola in place of the American machine-gun turret.' }, MAG);
+  mk('m60a1', { id: 'il_magach6', name: 'Magach 6', year: 1971, camo: 'il_sinai', sp: 275, rp: 6400,
+    shells: [S('M111mg6', 'M111 Hetz APFSDS', 'APFSDS', [360, 340], 1455, 24), S('M456mg6', 'M456 HEAT', 'HEATFS', 400, 1173, 21), S('M393mg6', 'M393 HESH', 'HESH', 120, 731, 18, 2700)],
+    desc: 'The M60A1 in Israeli service from 1971. It crossed the Suez Canal in 1973, and later versions carried Blazer reactive armour into Lebanon.' }, MAG);
+  mk('t55a', { id: 'il_tiran5', name: 'Tiran 5', year: 1968, camo: 'il_sinai',
+    desc: 'T-55s captured in their hundreds in 1967 and 1973, overhauled and issued to Israeli reserve brigades with Western radios and machine guns. The later Tiran 5Sh was re-gunned with the 105 mm.' }, { name: 'Browning M1919A4 coaxial', g: 'nato762' });
+  mk('t62', { id: 'il_tiran6', name: 'Tiran 6', year: 1974, camo: 'il_sinai',
+    desc: 'T-62s taken in 1973, most of them on the Golan. About a hundred were put back into service with their 115 mm smoothbore guns.' }, { name: 'Browning M1919A4 coaxial', g: 'nato762' });
+  mk('m113a1', { id: 'il_m113', name: 'M113 Bardelas', year: 1972, camo: 'il_sinai',
+    desc: 'The M113 ("Bardelas", cheetah, or simply "Zelda") replaced the old half-tracks from 1972 and has carried Israeli infantry ever since.' });
+  // ---- the Merkava (stand-in hulls for now: the stats are the Merkava's, the shape is borrowed)
+  mk('leo2a4', { id: 'il_merk1', name: 'Merkava Mk 1', era: 3, tier: 3, year: 1979, camo: 'il_sinai', cal: 105, gunL: 5.6, mass: 63, speed: 46, rev: 20, hpt: 14.3, reload: 7.5, traverse: 30, hullTurn: 30, stab: 2, aimTime: 1.7, sp: 290, rp: 7200,
+    armor: { hull: { front: [420, 0, 1.3], side: [90, 0, 1.6], rear: [60, 0] }, turret: { front: [430, 0, 1.3], side: [120, 0, 1.4], rear: [50, 0] } },
+    shells: [S('M111mk1', 'M111 Hetz APFSDS', 'APFSDS', [360, 340], 1455, 30), S('M456mk1', 'M456 HEAT', 'HEATFS', 400, 1173, 20), S('M393mk1', 'M393 HESH', 'HESH', 120, 731, 12, 2700)],
+    desc: 'Israel\'s own tank, designed under General Israel Tal around one idea: bring the crew home. The engine sits in front of them as extra protection and a door in the rear lets them out under cover. First fought in Lebanon in 1982.' }, MAG);
+  mk('leo2a4', { id: 'il_merk3', name: 'Merkava Mk 3', year: 1989, camo: 'il_sinai', mass: 65, speed: 60, hpt: 18.5, reload: 7, sp: 350, rp: 13500,
+    shells: [S('M711mk3', 'M711 (CL 3254) APFSDS', 'APFSDS', [470, 450], 1700, 26), S('M325mk3', 'M325 HEAT-MP', 'HEATFS', 480, 1078, 16), S('M322mk3', 'M322 APFSDS', 'APFSDS', [560, 540], 1705, 8)],
+    desc: 'A new hull and turret with bolt-on modular armour, a 1,200 hp engine and the Israeli 120 mm MG251 smoothbore. The Baz fire control of the later Mk 3 can track a moving target by itself.' }, MAG);
+  mk('leo2a6', { id: 'il_merk4', name: 'Merkava Mk 4', year: 2004, camo: 'il_sinai', mass: 65, speed: 64, hpt: 23, reload: 6, sp: 390, rp: 16500,
+    shells: [S('M338mk4', 'M338 APFSDS', 'APFSDS', [640, 620], 1680, 26), S('M325mk4', 'M325 HEAT-MP', 'HEATFS', 480, 1078, 12), S('M329mk4', 'M329 APAM', 'HE', 38, 900, 10, 3000)],
+    desc: 'The current Merkava: a 1,500 hp diesel, modular armour all round including the roof, the MG253 gun fed from a ten-round revolving magazine, and on the Mk 4M the Trophy active protection system.' }, MAG);
+}
+
+// The models built by hand carry their paint in a texture made once per model, in the colours of the army it was built for. An Israeli vehicle on the
+// same model gets its own copy of that texture, pulled toward its own paint: the pattern underneath fades to faint staining, markings and metal stay.
+{
+  const sh0 = W3.shrink; W3.shrink = function (cv) {
+    const T = W3._tint; if (T && cv && cv.width > 300) { try { const c = cv.getContext('2d'), im = c.getImageData(0, 0, cv.width, cv.height), d = im.data, tl = (T[0] * 0.3 + T[1] * 0.59 + T[2] * 0.11);
+      let sum = 0, n = 0; for (let i = 0; i < d.length; i += 4 * 97) { const mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]); if (mx > 40 && mx < 215) { sum += d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11; n++; } } const mean = n ? sum / n : 100;
+      for (let i = 0; i < d.length; i += 4) { const r = d[i], g = d[i + 1], b = d[i + 2], mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = r * 0.3 + g * 0.59 + b * 0.11;
+        if (mx < 20 || (mn > 190 && mx - mn < 28)) continue; // black openings and rubber, white markings
+        if (r > 120 && r > g * 1.7 && r > b * 1.7) continue;   // red markings and lamps
+        const k = l < mean ? clamp(1 + (l - mean) / mean * 0.22, 0.62, 1) * (mx < 44 ? lerp(0.35, 1, (mx - 20) / 24) : 1) : clamp(1 + (l - mean) / mean * 0.3, 1, 1.3); d[i] = Math.min(255, T[0] * k); d[i + 1] = Math.min(255, T[1] * k); d[i + 2] = Math.min(255, T[2] * k); }
+      c.putImageData(im, 0, 0); } catch (e) { } }
+    return sh0.call(this, cv); };
+  const m0 = Tank3D.mesh; Tank3D.mesh = function (d) {
+    if (d.nation !== 'il' || this.meshes[d.id]) return m0.call(this, d);
+    const G = TANK_GEAR[d.id] || {}, key = G.leo ? 'leo_' + G.leo : G.ww2; if (!key) return m0.call(this, d);
+    const S_ = this.skins || (this.skins = {}), keep = S_[key]; delete S_[key]; W3._tint = (CAMOS[d.camo] || CAMOS.il_sinai).base; { const T = W3._tint, memo = new Map(); W3._tintV = col => { const r = col[0], g = col[1], b = col[2], mx = Math.max(r, g, b), mn = Math.min(r, g, b); if (mx < 0.13 || mx - mn < 0.035 || g < r * 0.93 || g < b * 1.08 || mx > 0.8) return col; const key = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0) | ((col[3] * 15 | 0) << 24); let o = memo.get(key); if (!o) { const k = clamp((r * 0.3 + g * 0.59 + b * 0.11) / 0.31, 0.55, 1.45); o = [T[0] / 255 * k, T[1] / 255 * k, T[2] / 255 * k, col[3]]; memo.set(key, o); } return o; }; }
+    let M; try { M = m0.call(this, d); } finally { W3._tint = null; W3._tintV = null; if (keep) S_[key] = keep; else delete S_[key]; } return M; };
+}
 
 window.addEventListener('load', () => { App.start(); Lock3.init(); });
 
