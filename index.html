@@ -578,7 +578,7 @@ body.nolock canvas#game,body.gate canvas#game{cursor:crosshair}
 const CAP_SLOW = 2.8;
 const MATCH_MINUTES = 10;         // point-capture battles always run to this clock           // capture-time multiplier (higher = slower captures)
 const GAME_BUILD = '149d73583570';  // stamped by the build; changing it resets saved progress
-const GAME_VERSION = '1.32';
+const GAME_VERSION = '1.33';
 const DEBUG = false;            // debug/test flag — keep false for release
 const VERSION = '1.0';
 
@@ -4788,7 +4788,7 @@ Object.assign(GameMap.prototype, {
     }
     // cliffs and rock massifs: raised rugged blocks with steep edges
     const rockB = blurGrid(rock, w, h, 3, 2);
-    for (let i = 0; i < N; i++) if (rockB[i] > 0.01) { const x = (i % w) * cs, y = ((i / w) | 0) * cs; d[i] += Math.pow(rockB[i], 0.6) * (7 + n3(x / 14, y / 14) * 3 + n3(x / 4, y / 4) * 1.2) * relief; }
+    const RKD = this.theme && this.theme() && this.theme().rockDrive, RK = RKD ? this.theme().rockDrive : 1; for (let i = 0; i < N; i++) if (rockB[i] > 0.01) { const x = (i % w) * cs, y = ((i / w) | 0) * cs; d[i] += Math.pow(rockB[i], RKD ? 1 : 0.6) * (7 + n3(x / 14, y / 14) * 3 + n3(x / 4, y / 4) * 1.2) * relief * RK; }
     // water: lake and river beds below the banks
     const waterB = blurGrid(water, w, h, 4, 2), waterW = blurGrid(water, w, h, 22, 2);
     for (let i = 0; i < N; i++) if (waterW[i] > 0) d[i] = lerp(d[i], 0.5, clamp(waterW[i] * 3.2, 0, 1));
@@ -4802,7 +4802,7 @@ Object.assign(GameMap.prototype, {
     for (let i = 0; i < N; i++) if (flatB[i] > 0) d[i] = lerp(d[i], sm[i], clamp(flatB[i] * 1.8, 0, 1));
     // keep slopes drivable outside rock: a couple of relaxation passes where it gets too steep
     const d2 = blurGrid(d, w, h, 1, 1);
-    for (let i = 0; i < N; i++) if (rockB[i] < 0.2) d[i] = lerp(d[i], d2[i], 0.5);
+    for (let i = 0; i < N; i++) if (rockB[i] < 0.2 || RKD) d[i] = lerp(d[i], d2[i], 0.5); if (RKD) for (let pass = 0; pass < 2; pass++) { const d3 = blurGrid(d, w, h, 1, 1); for (let i = 0; i < N; i++) if (rockB[i] > 0.01) d[i] = lerp(d[i], d3[i], 0.6); }
     { const TC = this.theme(); if (TC && TC.carve) TC.carve(this, d, w, h, cs); }
     this.hf = { cs, w, h, d };
     this.bakeLight();
@@ -5886,7 +5886,9 @@ function resolveVehicleHit(p, v, part, h, wx, wy) {
     const [cx, cy] = toWorld(cp.x, cp.y, cwx, cwy, frameAng);
     if (h.cupola) { partKey = 'cupola'; ev.part = 'cupola'; }
   }
-  if (partKey === 'cupola') { plate = [d.cupolaArmor, 0, 1]; cosH = 0.75 + Math.random() * 0.25; }
+  if ((part === 'turret' || part === 'hull') && partKey !== 'cupola' && typeof W3Case !== 'undefined' && W3Case.weakHit && W3Case.weakHit(v, part, p, wx, wy)) { partKey = 'hatch'; v._weakT = B.time; }
+  if (partKey === 'hatch') { plate = [5, 0, 1]; cosH = 1; }
+  else if (partKey === 'cupola') { plate = [d.cupolaArmor, 0, 1]; cosH = 0.75 + Math.random() * 0.25; v._weakT = B.time; }
   else if (part === 'barrel') plate = [Math.max(15, d.cal * 0.35), 0, 1];
   else if (h.top) plate = [Math.max(10, d.armor[part].side[0] * 0.42), 0, 1]; else plate = d.armor[part][faceKey];
   const notes = ev.notes;
@@ -5902,6 +5904,7 @@ function resolveVehicleHit(p, v, part, h, wx, wy) {
     const trk = v.mod(h.face === 'left' ? 'trackL' : 'trackR');
     if (Math.abs(h.lx) < d.L / 2 - 0.3) { extra += T.chem ? 20 : 15; if (d.eraArmor === null && d.era >= 3) extra += T.chem ? 40 : 10; v.damageModule(trk, T.he ? 60 : 35 + Math.random() * 30, p.owner, false, ev); }
   }
+  if (partKey === 'hatch') { t = 5; extra = 0; }
   const cosI = Math.cos(slope * DEG) * cosH;
   const impact = Math.acos(clamp(cosI, 0, 1)) / DEG;
   ev.angle = impact;
@@ -5944,13 +5947,14 @@ function resolveVehicleHit(p, v, part, h, wx, wy) {
   if (T.chem) eff *= ce;
   eff += extra;
   // explosive reactive armor
-  if (v.era && !T.tandem && (T.chem || (d.eraArmor === 'k5' && (sh.type === 'APFSDS' || sh.type === 'APDS'))) && faceKey !== 'rear' && partKey !== 'cupola') {
+  if (v.era && sh.tandem && T.chem && faceKey !== 'rear' && partKey !== 'cupola') { const key = part + '_' + faceKey; if (v.era[key] > 0) { v.era[key]--; notes.push('Precursor charge set off an ERA block'); ev.era = true; B.fxExplosion(wx, wy, 0.25, false); if (sh.eraPen) eff += Math.max(0, sh.pen[0] - sh.eraPen); } }
+  if (v.era && !T.tandem && !sh.tandem && (T.chem || (d.eraArmor === 'k5' && (sh.type === 'APFSDS' || sh.type === 'APDS'))) && faceKey !== 'rear' && partKey !== 'cupola') {
     const key = part + '_' + faceKey;
     if (v.era[key] > 0 && Math.random() < 0.8) {
       v.era[key]--;
       const add = T.chem ? (d.eraArmor === 'k5' ? 520 : 420) : 230;
-      eff += add; notes.push(`ERA block detonated (+${add} mm)`);
-      B.fxExplosion(wx, wy, 0.25, false);
+      eff += add; notes.push(`ERA block detonated (+${add} mm)`); ev.era = true;
+      B.fxExplosion(wx, wy, 0.25, false); try { W3.fxZ = (v.z3 || 0) + hullHeight(d) * (part === 'turret' ? 1.1 : 0.7); FX.add('flash', wx, wy, { r: 1.6, life: 0.09, add: true }); for (let i = 0; i < 6; i++) FX.add('white', wx + rnd(-0.4, 0.4), wy + rnd(-0.4, 0.4), { r: rnd(0.5, 1), gr: 1.6, life: rnd(1.2, 2), a: 0.5, wind: 1 }); W3.fxZ = undefined; Sfx.play('vhit', wx, wy, 0.6); } catch (e) { } makeMark(v, part, h, 'he', p, sh);
     }
   }
   if (T.he) {
@@ -5996,7 +6000,7 @@ function resolveVehicleHit(p, v, part, h, wx, wy) {
     p.alive = false; finishEvent(ev, p); return;
   }
   if (T.he && !T.hesh) postPenHE(p, v, ev, [ex + ddx * 0.3, ey + ddy * 0.3], 1);
-  else if (T.hesh) spallCone(p, v, ev, ex, ey, ddx, ddy, 18, 75, [20, 38], 2.4, 25);
+  else if (T.hesh) { ev.hesh = true; notes.push('No hole: a scab broke off the inside face'); spallCone(p, v, ev, ex, ey, ddx, ddy, 18, 75, [20, 38], 2.4, 25); }
   else postPenKE(p, v, ev, ex, ey, ddx, ddy, resid, eff);
   p.alive = false;
   finishEvent(ev, p);
@@ -6153,7 +6157,7 @@ function markKind(sh, result) {
   const T = SHELL_TYPES[sh.type] || {};
   if (sh.type === 'MG') return 'mg';
   if (result === 'ric') return 'ric';
-  if (T.hesh) return result === 'pen' ? 'pen' : 'hesh';
+  if (T.hesh) return 'hesh';
   if (T.chem) return result === 'pen' ? 'heat' : 'he';
   if (T.he) return 'he';
   return result === 'pen' ? 'pen' : 'dent';
@@ -8876,7 +8880,7 @@ Object.assign(Battle.prototype, {
       if (!(typeof GSfx !== 'undefined' && GSfx.mgShot(v, 0, x, y, mgSoundOf(v))) && Math.random() < 0.5) Sfx.play('mg', x, y);
       return;
     }
-    const k = clamp((sh.v > 1300 ? 1.1 : 0.9) * (v.def.cal / 90), 0.6, 1.5);
+    const cal0 = sh.cal || v.def.cal, k = clamp((sh.v > 1300 ? 1.1 : 0.9) * (cal0 / 90), 0.6, 1.5);
     const c = Math.cos(a), s = Math.sin(a);
     FX.add('flash', x + c * 0.8, y + s * 0.8, { r: 2.6 * k, life: 0.07, add: true });
     FX.add('fire', x + c * 1.2, y + s * 1.2, { r: 1.4 * k, life: 0.09, add: true, vx: c * 30, vy: s * 30 });
@@ -8884,7 +8888,7 @@ Object.assign(Battle.prototype, {
     for (let i = 0; i < 9; i++) { const sp = rnd(4, 22), aa = a + gauss() * 0.35; FX.add('smoke', x, y, { vx: Math.cos(aa) * sp, vy: Math.sin(aa) * sp, r: rnd(0.8, 1.4) * k, gr: rnd(1.2, 2.4), life: rnd(1.5, 3.2), a: 0.5, drag: 0.08, wind: 1 }); }
     // ground blast dust around the muzzle
     for (let i = 0; i < 12; i++) { const aa = rnd(TAU), sp = rnd(4, 10); FX.add('dust', x - c * 1.5, y - s * 1.5, { vx: Math.cos(aa) * sp, vy: Math.sin(aa) * sp, r: rnd(1, 1.8) * k, gr: 1.5, life: rnd(1, 2), a: 0.4, drag: 0.1, wind: 1 }); }
-    Sfx.play('cannon', x, y, v.id * 1000 + Math.round(v.def.cal)); // shooter id + calibre (each tank model keeps its own sound)
+    Sfx.play('cannon', x, y, v.id * 1000 + Math.round(cal0)); // shooter id + calibre (each tank model keeps its own sound)
     if (v.isPlayer) this.cam.shake = Math.max(this.cam.shake, 0.35 * k);
   },
   fxDust(v) {
@@ -10389,7 +10393,7 @@ const Tank3D = {
     const hullUV = (x, y) => [(x * SPR + sp.hull.width / 2) / sp.hull.width, (y * SPR + sp.hull.height / 2) / sp.hull.height];
     const turUV = sp.turret ? (x, y) => [(x * SPR + sp.turret.width / 2) / sp.turret.width, (y * SPR + sp.turret.height / 2) / sp.turret.height] : hullUV;
     // one vertex: pos, uv, normal, colour (a = texture weight), side flag
-    const push = (arr, p, uv, n, col, side) => { if (W3._tintV) col = W3._tintV(col); arr.push(p[0], p[1], p[2], uv[0], uv[1], n[0], n[1], n[2], col[0], col[1], col[2], col[3], side); };
+    const push = (arr, p, uv, n, col, side) => { if (W3._tintV) col = W3._tintV(col, p); arr.push(p[0], p[1], p[2], uv[0], uv[1], n[0], n[1], n[2], col[0], col[1], col[2], col[3], side); };
     const normal = (a, b, e, ctr) => {
       const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = e[0] - a[0], vy = e[1] - a[1], vz = e[2] - a[2];
       let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
@@ -10950,7 +10954,7 @@ const Tank3D = {
       const crewman = (g, p, yaw, o = {}) => { if (o.role && this._crew) { this._crew.push({ g, p: p.slice(), yaw, o: Object.assign({ seed: p[0] * 31 + p[1] * 17 + p[2] * 7 }, o) }); return; } CrewGeo.build(poly, C, g, p, yaw, o); };
             if (G.ww2 === 'm4') {
         // ---- the Sherman, from four views: front drive, three-piece transmission nose, vertical volute bogies, rounded cast turret
-        const H0 = 2.0, IW = 0.9, OW = 1.3, WL = 0.26, zGl = x => lerp(1.22, H0, (2.62 - x) / 1.24);
+        const LEE = d.id === 'm3lee' || d.id === 'grant', H0 = 2.0, IW = 0.9, OW = 1.3, WL = 0.26, zGl = x => lerp(1.22, H0, (2.62 - x) / 1.24);
         const fx = 2.5, fz = 0.7, fr = 0.47, rx = -2.45, rz0 = 0.86, rr0 = 0.36;
         for (const sy of [-1, 1]) {
           const side = sy < 0 ? -1 : 1, loop = [], arc = (cx, cz, r, a0, a1, n) => { for (let i = 0; i <= n; i++) { const a = lerp(a0, a1, i / n); loop.push([cx + Math.cos(a) * r, cz + Math.sin(a) * r]); } };
@@ -10984,6 +10988,43 @@ const Tank3D = {
           ext(HL, [[2.62, 1.235], [2.86, 1.16], [2.87, 1.13], [2.6, 1.2]], sy * 0.97, sy * OW);
         }
         poly(HL, [[2.45, -IW, 0.42], [-2.42, -IW, 0.5], [-2.42, IW, 0.5], [2.45, IW, 0.42]], C([0.08, 0.08, 0.07]), [0, 0, 1]);
+        if (LEE) {
+          // ---- M3 Lee and Grant: the Sherman's running gear under a tall riveted box; the 75 mm M2 low in a cast sponson at the right
+          //      front (the main gun here, swinging 15 degrees each way), the 37 mm in a small cast turret up on the roof, offset to the left.
+          //      Lee: the turret with the commander's cupola and its .30 on top. Grant: a longer turret with a bustle for the radio, a low hatch.
+          const GR = d.id === 'grant', RZ = 2.22, YS = 1.33, RV = OD.map(q => q * 1.18), DKL = OD.map(q => q * 0.5);
+          const st = [[2.62, 1.22, 1.17], [2.34, 1.44, 1.24], [2.12, RZ, YS], [-0.75, RZ, YS], [-2.88, 1.74, 1.26]];
+          const sec = ([x, zt, ys]) => { const ch = Math.min(0.03, (zt - 1.235) * 0.3), zb = 1.235; return [[x, -ys, zb], [x, -ys, zt - ch], [x, -ys + ch, zt], [x, ys - ch, zt], [x, ys, zt - ch], [x, ys, zb]]; };
+          loft(HL, st.map(sec), [0, 0, 1.6], true, false);
+          { const P = [[-2.88, 1.235], [-2.88, 1.74], [-3.0, 1.66], [-3.0, 0.62], [-2.42, 0.5]]; ext(HL, P, -1.0, 1.0); } // the tail plate
+          // the cast nose over the transmission: three pieces joined by flanged seams
+          for (const y of [-0.42, 0.42]) tube(HL, [[[2.42, y, 0.56], 0.025], [[2.66, y, 0.95], 0.025], [[2.62, y, 1.22], 0.025]], C(OD, 1.05));
+          // the 75 mm sponson: a cast box on the right front with its rounded face, rivets along the joints
+          box(HL, 1.5, 2.1, 0.12, 1.31, 1.24, 1.98, C(OD, 1.02)); cyl(HL, [2.02, 0.68, 1.24], 'z', 0.74, 0.5, C(OD, 1.04), 18, 0, 0.44, true, C(OD, 1.06));
+          // the driver's visor, the two fixed .30s in the front plate, the hull's rivet lines, the side doors and the vision slits
+          { const n = V3.norm([RZ - 1.44, 0, 0.22]); box(HL, 2.15, 2.2, -0.62, -0.18, 1.86, 2.02, C(OD, 0.92)); box(HL, 2.2, 2.205, -0.56, -0.24, 1.92, 1.96, C(BLK)); for (const y of [-0.95, -0.85]) cyl(HL, [2.16, y, 1.72], 'x', 0.14, 0.02, C(BLK), 6, 0, 0.02, true, C(BLK)); }
+          for (const s of [-1, 1]) { rivs(HL, [2.1, s * (YS + 0.004), RZ - 0.04], [-0.7, s * (YS + 0.004), RZ - 0.04], 22, [0, s, 0], RV, 0.014); rivs(HL, [2.1, s * (YS + 0.004), 1.3], [-2.8, s * (YS + 0.004), 1.3], 26, [0, s, 0], RV, 0.014);
+            plate(HL, [0.1, s * (YS + 0.004), 1.72], ex, ez, [0, s, 0], 0.34, 0.32, 0.12, 0.02); box(HL, 0.38, 0.42, Math.min(s * YS, s * (YS + 0.05)), Math.max(s * YS, s * (YS + 0.05)), 1.62, 1.82, C(STL)); box(HL, -0.45, -0.4, Math.min(s * YS, s * (YS + 0.03)), Math.max(s * YS, s * (YS + 0.03)), 1.9, 2.05, C(BLK)); }
+          rivs(HL, [2.13, -1.2, RZ - 0.05], [2.13, 1.2, RZ - 0.05], 16, ex, RV, 0.014);
+          // engine deck: two grilles and the filler caps; the turret ring
+          { const zA = x => lerp(RZ, 1.74, (-0.75 - x) / 2.13); for (const x of [-1.3, -2.2]) for (let k = 0; k < 6; k++) { const xx = x - 0.34 + k * 0.12; box(HL, xx, xx + 0.06, -0.7, 0.7, zA(xx) - 0.01, zA(xx) + 0.02, C(DKL)); } }
+          // ---- the 37 mm turret: its own small mesh ('mini'), built round its ring at (0.12, -0.22) on the roof, offset to the left; it turns
+          //      all the way round and its gun elevates on its own (side 2 = the parts that elevate)
+          { const AX = 0.12, AY = -0.22, rx = GR ? 0.72 : 0.62, ry = GR ? 0.6 : 0.6, back = GR ? 0.2 : 0, cx = 0, cy = 0, Z = 0, MI = 'mini', R0 = (k, z) => circle(1, 28).map(([a, b]) => [cx + a * (a < 0 ? rx + back : rx) * k, cy + b * ry * k, Z + z]);
+            groups.mini.length = 0;
+            cyl(HL, [AX, AY, RZ - 0.01], 'z', 0.03, 0.6, C(OD, 0.85), 24, 0, 0.6, true, C(OD, 0.8)); // the ring on the roof
+            sLoft(MI, [R0(1.02, -0.02), R0(1.0, 0.06), R0(0.98, 0.34), R0(0.86, 0.48), R0(0.6, 0.53)], [cx, cy, Z + 0.2]); poly(MI, R0(0.6, 0.53), C(OD, 1.04), [cx, cy, Z]);
+            box(MI, cx + rx - 0.08, cx + rx + 0.12, cy - 0.16, cy + 0.16, Z + 0.12, Z + 0.38, C(OD, 0.98), null, 2); cyl(MI, [cx + rx + 0.1, cy, Z + 0.25], 'x', 1.55, 0.03, C(OD, 0.9), 10, 2, 0.027, true, C(BLK)); cyl(MI, [cx + rx + 0.1, cy + 0.12, Z + 0.3], 'x', 0.3, 0.018, C(BLK), 6, 2, 0.018, true, C(BLK));
+            if (!GR) { const zc = Z + 0.52; cyl(MI, [cx - 0.12, cy, zc], 'z', 0.24, 0.28, C(OD, 0.96), 18, 0, 0.27, true, C(OD, 1.02)); for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; box(MI, cx - 0.12 + Math.cos(a) * 0.27 - 0.03, cx - 0.12 + Math.cos(a) * 0.27 + 0.03, cy + Math.sin(a) * 0.27 - 0.03, cy + Math.sin(a) * 0.27 + 0.03, zc + 0.1, zc + 0.15, C(BLK)); } cyl(MI, [cx + 0.1, cy, zc + 0.12], 'x', 0.5, 0.016, C(BLK), 6, 0, 0.016, true, C(BLK)); } // the Lee's cupola and its .30
+            else { box(MI, cx - 0.4, cx - 0.04, cy - 0.2, cy + 0.2, Z + 0.53, Z + 0.6, C(OD, 1.0)); box(MI, cx - 0.1, cx - 0.06, cy - 0.16, cy + 0.16, Z + 0.6, Z + 0.66, C(STL)); for (const s of [-1, 1]) box(MI, cx - 0.2, cx - 0.06, cy + s * (ry - 0.02) - 0.04, cy + s * (ry - 0.02) + 0.04, Z + 0.36, Z + 0.44, C(BLK)); } // the Grant's low hatch and periscopes
+            this._aux = { x: AX, y: AY, z: RZ, gx: cx + rx + 0.02, gz: Z + 0.25, L: 1.65 }; }
+          whip(HL, [-0.9, 1.15, RZ], 2.2, 0.012, 0.004, C(BLK));
+          // ---- the 75 mm M2 in its sponson mount (the turret group: it swings with the sight)
+          const gz = 0.42, pivX = 0.05, YG = 0.66;
+          { const R_ = [[0.0, 0.24], [0.06, 0.24], [0.14, 0.2], [0.2, 0.15]].map(([u, r]) => circle(r, 16).map(([a, b]) => [u, YG + a, gz + b])); sLoft(TUR, R_, [-0.2, YG, gz], 2); poly(TUR, R_[3], C(OD, 0.95), [-0.2, YG, gz], 2); }
+          barrel([[0.18, 0.075], [0.4, 0.07], [1.9, 0.06], [1.92, 0.085], [2.12, 0.085], [2.14, 0.06], [2.2, 0.06]], YG, gz); poly(TUR, circle(0.045, 12).map(([a, b]) => [2.201, YG + a, gz + b]), C(BLK), [2, YG, gz], 2); // with the counterweight at the muzzle of the short M2
+          this._ww2 = { H: 1.24, gz, gx: pivX, gr: 0.06, ge: 2.2, c: [0.38, 0.38, 0.3] };
+        } else {
         // ---- upper hull: glacis, level roof, sloping engine deck, flat sides
         const st = [[2.62, 1.22, 1.17], [2.3, 1.42, 1.25], [1.38, H0, 1.3], [-0.98, H0, 1.3], [-2.92, 1.58, 1.24]];
         const sec = ([x, zt, ys]) => { const ch = Math.min(0.03, (zt - 1.235) * 0.3), zb = 1.235; return [[x, -ys, zb], [x, -ys, zt - ch], [x, -ys + ch, zt], [x, ys - ch, zt], [x, ys, zt - ch], [x, ys, zb]]; };
@@ -11055,6 +11096,7 @@ const Tank3D = {
           box(TUR, px0 - 0.1, px0 + 0.08, py0 - 0.05, py0 + 0.05, zp - 0.14, zp - 0.04, C(OD, 0.95), null, K); box(TUR, px0 - 0.46, px0 + 0.13, py0 - 0.05, py0 + 0.05, zp - 0.05, zp + 0.06, C(DKM), null, K); box(TUR, px0 - 0.34, px0 - 0.03, py0 + 0.05, py0 + 0.2, zp - 0.14, zp + 0.05, C(grn), null, K); box(TUR, px0 - 0.33, px0 - 0.04, py0 + 0.05, py0 + 0.21, zp + 0.05, zp + 0.07, C([0.2, 0.23, 0.13]), null, K); box(TUR, px0 - 0.06, px0 + 0.0, py0, py0 + 0.1, zp + 0.05, zp + 0.08, C([0.3, 0.26, 0.12]), null, K);
           cyl(TUR, [px0 + 0.13, py0, zp], 'x', 0.3, 0.036, C(DKM), 8, K); cyl(TUR, [px0 + 0.43, py0, zp], 'x', 0.75, 0.021, C(DKM), 8, K, 0.021, true, C(BLK)); cyl(TUR, [px0 + 1.16, py0, zp], 'x', 0.05, 0.03, C(DKM), 8, K, 0.03, true, C(BLK)); for (const sy of [-1, 1]) box(TUR, px0 - 0.56, px0 - 0.49, py0 + sy * 0.05 - 0.016, py0 + sy * 0.05 + 0.016, zp - 0.04, zp + 0.06, C(tan), null, K); box(TUR, px0 - 0.49, px0 - 0.46, py0 - 0.05, py0 + 0.05, zp - 0.01, zp + 0.02, C(DKM), null, K); box(TUR, px0 + 0.36, px0 + 0.4, py0 - 0.012, py0 + 0.012, zp - 0.13, zp - 0.04, C(DKM), null, K); box(TUR, px0 + 0.3, px0 + 0.46, py0 - 0.009, py0 + 0.009, zp - 0.14, zp - 0.12, C(DKM), null, K); roofG = { x: px0, y: py0, z: zp, L: 1.21 }; }
         this._ww2 = { H: H0, gz, gx: pivX, gr: 0.075, ge: 2.92, c: [0.38, 0.38, 0.3] };
+        }
       }
 
             if (G.ww2 === 't34') {
@@ -11453,7 +11495,7 @@ const Tank3D = {
           { const x = P4 ? 0.38 : 0.34, y = P4 ? -0.32 : 0.22, Rd = [[0.13, TZ - 0.01], [0.13, TZ + 0.04], [0.11, TZ + 0.07], [0.06, TZ + 0.09], [0.01, TZ + 0.095]].map(([q, u]) => circle(q, 14).map(([a, b]) => [x + a, y + b, u])); sLoft(TUR, Rd, [x, y, 0.3]); } eye(TUR, [0.05, 0.46, TZ], ez, ex, 0.05, 0.05, 0.012, C(GRY, 1.1)); }
         // ---- gun mount and gun
         const gz = P4 ? 0.3 : 0.3, pivX = P4 ? 0.9 : 0.8, gs = (x, w, h, r) => rrect(w, h, r).map(([a, b]) => [x, a, gz + b]);
-        if (P4) { const R = [gs(0.9, 0.46, 0.24, 0.08), gs(0.98, 0.46, 0.24, 0.08), gs(1.0, 0.44, 0.22, 0.08)]; loft(TUR, [R[0], R[1]], [0.8, 0, gz], false, false); GS(R[1], [0.8, 0, gz]); box(TUR, 0.98, 1.2, -0.2, 0.2, gz - 0.13, gz + 0.13, C(GRY, 1.02), null, 2); if (PH) { /* the 7.5 cm KwK 40 L/48 with its two-chamber brake */ barrel([[1.18, 0.1], [1.6, 0.1], [1.62, 0.064], [2.6, 0.057], [4.0, 0.05], [4.03, 0.085], [4.13, 0.085], [4.15, 0.058], [4.21, 0.058], [4.23, 0.085], [4.33, 0.085], [4.35, 0.045], [4.36, 0.04]], 0, gz); poly(TUR, circle(0.035, 10).map(([a, b]) => [4.361, a, gz + b]), C(BLK), [3, 0, gz], 2); for (const x of [4.08, 4.28]) for (const s of [-1, 1]) box(TUR, x - 0.035, x + 0.035, s * 0.085, s * 0.09, gz - 0.045, gz + 0.045, C(BK), null, 2); } else { barrel([[1.18, 0.1], [1.6, 0.1], [1.62, 0.06], [2.7, 0.052], [2.74, 0.058], [2.76, 0.08], [2.84, 0.1], [2.92, 0.1], [2.97, 0.075], [2.98, 0.03]], 0, gz); poly(TUR, circle(0.035, 10).map(([a, b]) => [2.981, a, gz + b]), C(BLK), [2, 0, gz], 2); for (const s of [-1, 1]) box(TUR, 2.82, 2.9, s * 0.09, s * 0.105 + (s < 0 ? 0 : 0), gz - 0.04, gz + 0.04, C(BK), null, 2); } cyl(TUR, [0.98, 0.22, gz + 0.02], 'x', 0.08, 0.04, C(GRY), 8, 2, 0.04, true, C(BK)); cyl(TUR, [0.98, -0.3, gz + 0.03], 'x', 0.05, 0.05, C(GRY), 8, 2, 0.05, true, C(BK)); coax = [1.08, 0.22, gz + 0.02]; }
+        if (P4) { const R = [gs(0.9, 0.46, 0.24, 0.08), gs(0.98, 0.46, 0.24, 0.08), gs(1.0, 0.44, 0.22, 0.08)]; loft(TUR, [R[0], R[1]], [0.8, 0, gz], false, false); GS(R[1], [0.8, 0, gz]); box(TUR, 0.98, 1.2, -0.2, 0.2, gz - 0.13, gz + 0.13, C(GRY, 1.02), null, 2); if (PH) { /* the 7.5 cm KwK 40 L/48 with its two-chamber brake */ barrel([[1.18, 0.1], [1.6, 0.1], [1.62, 0.064], [2.6, 0.057], [4.0, 0.05], [4.03, 0.085], [4.13, 0.085], [4.15, 0.058], [4.21, 0.058], [4.23, 0.085], [4.33, 0.085], [4.35, 0.045], [4.36, 0.04]], 0, gz); poly(TUR, circle(0.035, 10).map(([a, b]) => [4.361, a, gz + b]), C(BLK), [3, 0, gz], 2); for (const x of [4.08, 4.28]) for (const s of [-1, 1]) box(TUR, x - 0.035, x + 0.035, s * 0.085, s * 0.09, gz - 0.045, gz + 0.045, C(BK), null, 2); } else if (d.id === 'pz4e') { /* Ausf. E: the short 7.5 cm KwK 37 L/24, no muzzle brake */ barrel([[1.18, 0.11], [1.38, 0.105], [1.42, 0.085], [2.36, 0.078], [2.38, 0.088], [2.44, 0.088]], 0, gz); poly(TUR, circle(0.05, 12).map(([a, b]) => [2.441, a, gz + b]), C(BLK), [2, 0, gz], 2); } else { barrel([[1.18, 0.1], [1.6, 0.1], [1.62, 0.06], [2.7, 0.052], [2.74, 0.058], [2.76, 0.08], [2.84, 0.1], [2.92, 0.1], [2.97, 0.075], [2.98, 0.03]], 0, gz); poly(TUR, circle(0.035, 10).map(([a, b]) => [2.981, a, gz + b]), C(BLK), [2, 0, gz], 2); for (const s of [-1, 1]) box(TUR, 2.82, 2.9, s * 0.09, s * 0.105 + (s < 0 ? 0 : 0), gz - 0.04, gz + 0.04, C(BK), null, 2); } cyl(TUR, [0.98, 0.22, gz + 0.02], 'x', 0.08, 0.04, C(GRY), 8, 2, 0.04, true, C(BK)); cyl(TUR, [0.98, -0.3, gz + 0.03], 'x', 0.05, 0.05, C(GRY), 8, 2, 0.05, true, C(BK)); coax = [1.08, 0.22, gz + 0.02]; }
         else { const R = [gs(0.84, 0.5, 0.26, 0.1), gs(0.92, 0.48, 0.25, 0.1)]; loft(TUR, R, [0.8, 0, gz], false, false); GS(R[1], [0.8, 0, gz]); { const o = []; for (const [u, q] of [[0.9, 0.2], [0.98, 0.22], [1.06, 0.21], [1.12, 0.16]]) o.push(circle(q, 16).map(([a, b]) => [u, a, gz + b])); sLoft(TUR, o, [0.8, 0, gz], 2); GS(o[3], [0.8, 0, gz]); }
           if (PQ) { /* the short 7.5 cm KwK 37 L/24, with the 20 mm spaced plate bolted in front of the mantlet */ barrel([[1.1, 0.11], [1.3, 0.105], [1.34, 0.085], [2.18, 0.078], [2.2, 0.088], [2.26, 0.088]], 0, gz); poly(TUR, circle(0.05, 12).map(([a, b]) => [2.261, a, gz + b]), C(BLK), [2, 0, gz], 2); { const sp = rrect(0.48, 0.26, 0.06).map(([a, b]) => [1.14, a, gz + b]); poly(TUR, sp, C(GRY, 1.0), [0.8, 0, gz], 2); const sp2 = sp.map(([x, a, b]) => [1.1, a, b]); for (let k = 0; k < sp.length; k++) { const q = (k + 1) % sp.length; poly(TUR, [sp2[k], sp2[q], sp[q], sp[k]], C(GRY, 0.9), [1.0, 0, gz], 2); } for (const y of [-0.16, 0.16]) cyl(TUR, [1.0, y, gz - 0.2], 'x', 0.11, 0.02, C(STL), 6, 2); } } else { barrel([[1.1, 0.085], [1.34, 0.08], [1.38, 0.056], [2.2, 0.05], [3.2, 0.043], [3.22, 0.05], [3.3, 0.05]], 0, gz); poly(TUR, circle(0.028, 10).map(([a, b]) => [3.301, a, gz + b]), C(BLK), [2, 0, gz], 2); } { const y = -0.3, z = gz; cyl(TUR, [0.91, y, z], 'x', 0.05, 0.085, C(GRY, 1.05), 12, 2, 0.07, true, C(GRY, 1.1)); cyl(TUR, [0.96, y, z], 'x', 0.08, 0.05, C(GRY, 0.95), 10, 2, 0.04, true, C(GRY)); cyl(TUR, [1.04, y, z], 'x', 0.12, 0.016, C(BK), 6, 2, 0.016, true, C(BK)); coax = [1.16, y, z]; cyl(TUR, [0.92, 0.3, gz + 0.04], 'x', 0.03, 0.05, C(GRY, 1.05), 10, 2, 0.05, true, C(BK)); } }
         if (PH || PQ) {
@@ -11471,7 +11513,7 @@ const Tank3D = {
             for (const [x, y] of [[TF - 0.25, -TW], [TC + 0.38, -TW], [TF - 0.25, TW], [TC + 0.38, TW], [TC - TR * 0.7, -TW * 0.66], [TC - TR * 0.7, TW * 0.66], [TC - TR, 0]]) { const r = Math.hypot(x + 0.3, y) || 1, ux = (x + 0.3) / r, uy = y / r; for (const z of [z0 + 0.08, z1 - 0.05]) tube(TUR, [[[x - ux * 0.3, y - uy * 0.3, z], 0.014], [[x, y, z], 0.014]], C(STL)); tube(TUR, [[[x - ux * 0.3, y - uy * 0.3, z1 - 0.05], 0.012], [[x, y, z0 + 0.12], 0.012]], C(STL)); }
             for (const s of [-1, 1]) { const y = s * (TW + 0.014); box(TUR, TC + 0.18, TC + 0.58, Math.min(y, y + s * 0.006), Math.max(y, y + s * 0.006), z0 + 0.05, z1 - 0.05, C(GRY, 0.92)); box(TUR, TC + 0.16, TC + 0.18, Math.min(y, y + s * 0.012), Math.max(y, y + s * 0.012), z0 + 0.1, z1 - 0.1, C(STL)); } }
         }
-        this._ww2 = { H: H0, gz, gx: pivX, gr: 0.06, ge: PH ? 4.36 : PQ ? 2.26 : P4 ? 2.98 : 3.3, c: OD.map(q => q * 1.05) };
+        this._ww2 = { H: H0, gz, gx: pivX, gr: 0.06, ge: PH ? 4.36 : PQ ? 2.26 : d.id === 'pz4e' ? 2.44 : P4 ? 2.98 : 3.3, c: OD.map(q => q * 1.05) };
       }
 
             if (G.ww2 === 'cr' || G.ww2 === 'ma') {
@@ -15239,7 +15281,7 @@ const Tank3D = {
                 for (const s of [-1, 1]) lamp(rear - 0.02, s * 1.3, deck - 0.2, false);
               } else { // ZTZ99A: FY bricks over the glacis, the driver's hatch, stowage on the fenders, the grilles and the tail
                 for (let r = 0; r < 2; r++) for (let c = 0; c < 6; c++) { const y = (c - 2.5) * 0.52; brick(HL, V3.add(G_.at(0.16 + r * 0.26, y), V3.mul(G_.n, 0.004)), ey, G_.e1, G_.n, 0.24, 0.13, 0.08, PA.map(q => q * 0.97)); }
-                hatch(HL, 2.25, 0.0, 1.42, 0.28, 0.26); box(HL, 2.5, 2.6, -0.16, 0.16, 1.36, 1.43, C(GLS, 0.6)); for (const s of [-1, 1]) lamp(3.55, s * 1.4, 1.08, true);
+                hatch(HL, 2.25, 0.0, 1.42, 0.28, 0.26); box(HL, 2.5, 2.6, -0.16, 0.16, 1.36, 1.43, C(GLS, 0.6)); for (const s of [-1, 1]) { const y0 = s * (W2 - 0.02), y1 = s * (W2 - 0.72); extS(HL, [[2.55, 1.0], [3.55, 1.0], [3.78, 0.92], [3.85, 0.72], [3.78, 0.6], [3.6, 0.56], [2.55, 0.56]], Math.min(y0, y1), Math.max(y0, y1), PA.map(q => q * 0.96)); for (const t of [0.25, 0.5, 0.75]) box(HL, lerp(2.6, 3.5, t) - 0.01, lerp(2.6, 3.5, t) + 0.01, Math.min(y0, y1) - 0.003, Math.max(y0, y1) + 0.003, 0.995, 1.005, C(PA, 0.8)); lamp(3.6, s * (W2 - 0.82), 1.06, false); }
                 for (const x of [-1.8, -2.9]) louv(HL, x - 0.5, x + 0.5, -1.0, 1.0, deck + 0.005, 10); for (let k = 0; k < 6; k++) box(HL, rear - 0.03, rear + 0.01, -1.0, 1.0, 0.85 + k * 0.08, 0.88 + k * 0.08, C(DK));
                 for (const s of [-1, 1]) { for (let k = 0; k < 3; k++) box(HL, 0.9 - k * 1.1, 1.8 - k * 1.1, s > 0 ? W2 - 0.42 : -W2 + 0.03, s > 0 ? W2 - 0.03 : -W2 + 0.42, deck, deck + 0.28, C(PA, 0.9 + k * 0.03)); lamp(rear - 0.02, s * 1.35, deck - 0.2, false); }
               }
@@ -15273,8 +15315,9 @@ const Tank3D = {
               prism(TUR, B0, 0.02, B1, H, [-0.6, 0, 0.35]); gz = 0.36; X0 = 1.62; box(TUR, X0 - 0.12, X0 + 0.22, -0.34, 0.34, gz - 0.22, gz + 0.22, C(PA, 0.9), null, 2);
               for (const s of [-1, 1]) { box(TUR, 1.6, 1.8, s * 0.35, s * 0.42, 0.06, H - 0.04, C(BLK)); bolts(TUR, 1.0, 1.65, s * 1.62, 0.6, 4, s); }
               // the gunner's HL-60 sight: a big box on the left front of the roof; the commander's HL-70 head on its pedestal on the right
-              box(TUR, 0.92, 1.58, -1.18, -0.6, H, H + 0.42, C(PA, 0.94)); box(TUR, 1.58, 1.6, -1.1, -0.68, H + 0.12, H + 0.34, C(GLS, 0.5)); box(TUR, 0.9, 1.6, -1.2, -0.58, H + 0.42, H + 0.45, C(PA, 0.98));
-              cyl(TUR, [0.15, 0.72, H], 'z', 0.32, 0.18, C(PA, 0.9), 14); box(TUR, -0.05, 0.35, 0.52, 0.92, H + 0.32, H + 0.62, C(PA, 0.95)); box(TUR, 0.35, 0.37, 0.58, 0.86, H + 0.38, H + 0.56, C(GLS, 0.5));
+              for (const s2 of [-1, 1]) { box(TUR, 1.6, 1.98, Math.min(s2 * 0.44, s2 * 1.02), Math.max(s2 * 0.44, s2 * 1.02), 0.04, H - 0.03, C(PA, 0.95), C(PA, 1.0), 0, 0.02); box(TUR, 1.98, 2.0, Math.min(s2 * 0.48, s2 * 0.98), Math.max(s2 * 0.48, s2 * 0.98), 0.08, H - 0.07, C(PA, 0.88)); } // the cheek blocks, the gun in its recess between them
+              box(TUR, 0.98, 1.32, -1.02, -0.72, H, H + 0.22, C(PA, 0.9)); box(TUR, 0.88, 1.52, -1.16, -0.58, H + 0.22, H + 0.68, C(PA, 0.95)); box(TUR, 1.52, 1.54, -1.06, -0.68, H + 0.3, H + 0.6, C([0.3, 0.22, 0.38])); box(TUR, 0.86, 1.6, -1.18, -0.56, H + 0.68, H + 0.71, C(PA, 0.98)); // the gunner's HL-60, high on its pedestal
+              box(TUR, 0.92, 1.42, 0.55, 0.98, H, H + 0.34, C(PA, 0.94)); box(TUR, 1.42, 1.44, 0.62, 0.9, H + 0.06, H + 0.28, C([0.3, 0.22, 0.38])); box(TUR, 0.9, 1.5, 0.53, 1.0, H + 0.34, H + 0.37, C(PA, 0.98)); // the commander's HL-70 head at the right front
               hatch(TUR, -0.55, 0.72, H, 0.36, 0.34); hatch(TUR, -0.55, -0.72, H, 0.34, 0.32); cyl(TUR, [-0.75, -0.72, H + 0.32], 'x', 0.9, 0.03, C(BLK), 8, 0, 0.03, true, C(BLK)); tube(TUR, [[[-0.4, -0.72, H + 0.02], 0.02], [[-0.4, -0.72, H + 0.3], 0.02]], C(STL));
               // GALIX: nine launchers at the back of each side, pointing up and out
               for (const s of [-1, 1]) { box(TUR, -2.55, -1.95, s > 0 ? 1.36 : -1.56, s > 0 ? 1.56 : -1.36, 0.36, 0.56, C(PA, 0.88)); for (let k = 0; k < 9; k++) { const x = -2.48 + (k % 5) * 0.13, z = 0.6 + Math.floor(k / 5) * 0.09, el = 0.55, az = s * (1.3 - (k % 5) * 0.12), p = [x, s * 1.46, z]; tube(TUR, [[p, 0.04], [V3.add(p, [Math.cos(az) * Math.cos(el) * 0.2, Math.sin(az) * Math.cos(el) * 0.2, Math.sin(el) * 0.2]), 0.04]], C(PA, 0.75)); } }
@@ -15284,12 +15327,14 @@ const Tank3D = {
               const B0 = mir([[1.62, 0.38], [1.5, 1.22], [1.1, 1.48], [-1.9, 1.48], [-2.5, 1.28], [-2.62, 0.5]]), B1 = mir([[1.48, 0.36], [1.38, 1.12], [1.0, 1.36], [-1.9, 1.38], [-2.45, 1.2], [-2.52, 0.46]]), H = 0.74;
               prism(TUR, B0, 0.02, B1, H, [-0.4, 0, 0.35]); gz = 0.36; X0 = 1.5; box(TUR, X0 - 0.1, X0 + 0.26, -0.32, 0.32, gz - 0.22, gz + 0.22, C(PA, 0.9), null, 2);
               // the wedge modules over the front, raked back both ways; bolted modules along the sides
-              for (const s of [-1, 1]) { const P0 = [[2.28, s * 0.38], [1.62, s * 1.46], [1.48, s * 1.42], [1.6, s * 0.38]], P1 = [[2.0, s * 0.38], [1.5, s * 1.36], [1.38, s * 1.32], [1.5, s * 0.38]]; prism(TUR, P0, 0.1, P1, H + 0.02, [1.5, s * 0.8, 0.35]);
+              for (const s of [-1, 1]) { const A = [2.36, s * 0.38, 0.1], Bq = [1.66, s * 1.48, 0.1], Cq = [1.36, s * 1.42, 0.1], Dq = [1.5, s * 0.38, 0.1], A2 = [2.22, s * 0.38, 0.34], B2 = [1.6, s * 1.42, 0.36], C2 = [1.3, s * 1.38, H + 0.03], D2 = [1.42, s * 0.38, H + 0.03], ctr = [1.75, s * 0.85, 0.3];
+                for (const q of [[A, Bq, Cq, Dq], [A2, B2, C2, D2], [A, Bq, B2, A2], [Bq, Cq, C2, B2], [Cq, Dq, D2, C2], [Dq, A, A2, D2]]) TP(TUR, q, ctr); // the wedge: low at its point, rising back to the roof
+                for (let k = 0; k < 3; k++) { const t = (k + 0.5) / 3; const p = V3.add(V3.lerp ? V3.lerp(A2, C2, t) : [lerp(A2[0], C2[0], t), lerp(A2[1], C2[1], t), lerp(A2[2], C2[2], t)], [0, 0, 0.012]); box(TUR, p[0] - 0.03, p[0] + 0.03, p[1] - 0.03, p[1] + 0.03, p[2] - 0.02, p[2] + 0.01, C(PA, 0.7)); }
                 for (let k = 0; k < 3; k++) { const x0 = 1.0 - k * 1.0; box(TUR, x0 - 0.92, x0, s > 0 ? 1.46 : -1.56, s > 0 ? 1.56 : -1.46, 0.1, H - 0.08, C(PA, 0.93 + k * 0.02)); bolts(TUR, x0 - 0.85, x0 - 0.05, s * 1.56, H - 0.14, 5, s); bolts(TUR, x0 - 0.85, x0 - 0.05, s * 1.56, 0.18, 5, s); }
                 smoke(TUR, 0.6, s * 1.5, H - 0.02, 4, s, 0.5, 0.04, 0.2); }
               // the gunner's sight on the left front of the roof, the commander's sight head on the right, the .50 on its mount over the hatch
               box(TUR, 0.7, 1.22, -0.98, -0.58, H, H + 0.3, C(PA, 0.94)); box(TUR, 1.22, 1.24, -0.92, -0.64, H + 0.08, H + 0.24, C(GLS, 0.5));
-              cyl(TUR, [0.2, 0.75, H], 'z', 0.24, 0.16, C(PA, 0.9), 14); box(TUR, 0.02, 0.38, 0.58, 0.92, H + 0.24, H + 0.5, C(PA, 0.95)); box(TUR, 0.38, 0.4, 0.64, 0.86, H + 0.3, H + 0.46, C(GLS, 0.5));
+              cyl(TUR, [-1.0, 0.95, H], 'z', 0.5, 0.07, C(PA, 0.88), 10); box(TUR, -1.18, -0.82, 0.78, 1.12, H + 0.5, H + 0.8, C(PA, 0.95)); box(TUR, -0.82, -0.8, 0.84, 1.06, H + 0.56, H + 0.74, C(GLS, 0.5)); box(TUR, -1.2, -0.8, 0.76, 1.14, H + 0.8, H + 0.83, C(PA, 0.98)); // the commander's panoramic sight, high on its post at the back
               hatch(TUR, -0.45, 0.72, H, 0.34, 0.32); hatch(TUR, -0.45, -0.7, H, 0.32, 0.3); mg50(-0.45, -0.25, H + 0.12, H + 0.58);
               basket(TUR, -3.05, -2.55, -1.3, 1.3, 0.2, 0.62); for (const y of [-1.1, 1.1]) whip(TUR, [-2.2, y, H], 2.4, 0.012, 0.004, C(BLK)); cyl(TUR, [-1.6, 0.9, H], 'z', 0.4, 0.025, C(STL), 6);
               st = [[X0 + 0.26, 0.13], [X0 + 0.5, 0.125], [X0 + 0.55, 0.11], [X0 + 1.3, 0.108], [X0 + 1.38, 0.09], [X0 + 2.6, 0.088], [X0 + 2.62, 0.096], [X0 + 2.7, 0.096], [X0 + 2.72, 0.088], [ge - 0.28, 0.085], [ge - 0.26, 0.094], [ge, 0.094]];
@@ -15301,7 +15346,7 @@ const Tank3D = {
               for (const s of [-1, 1]) { const tip = Z9 ? 2.35 : 2.12, P0 = [[tip, s * 0.4], [1.42, s * 1.38], [1.28, s * 1.32], [1.38, s * 0.4]], P1 = [[tip - 0.3, s * 0.4], [1.3, s * 1.28], [1.18, s * 1.24], [1.3, s * 0.4]]; prism(TUR, P0, 0.1, P1, H + 0.02, [1.5, s * 0.8, 0.35]);
                 if (Z9) { for (let k = 0; k < 4; k++) { const t = (k + 0.5) / 4, x = lerp(tip - 0.32, 1.36, t), y = s * lerp(0.46, 1.25, t); plate(TUR, [x, y, H + 0.03], ex, ey, ez, 0.12, 0.12, 0.012, 0.004); }
                   for (let r = 0; r < 2; r++) for (let c = 0; c < 5; c++) brick(TUR, [0.9 - c * 0.5, s * 1.4, 0.2 + r * 0.24], ex, ez, [0, s, 0], 0.22, 0.1, 0.06); }
-                smoke(TUR, Z9 ? 0.1 : 0.4, s * (Z9 ? 1.42 : 1.36), H - 0.02, 4, s, 0.6, 0.04, 0.2); }
+                if (Z9) { for (let k = 0; k < 4; k++) { const p = [1.3 - (k % 2) * 0.12, s * (1.3 + Math.floor(k / 2) * 0.1), H - 0.06 + (k % 2) * 0.1]; tube(TUR, [[p, 0.045], [[p[0] + 0.2, p[1] + s * 0.05, p[2] + 0.1], 0.045]], C(PA, 0.75)); } } else smoke(TUR, 0.4, s * 1.36, H - 0.02, 4, s, 0.6, 0.04, 0.2); }
               // the gunner's sight on the left, the commander's cupola on the right with the 12.7 mm; on the 99A the panoramic sight and the active-protection box
               box(TUR, 0.6, 1.1, -0.92, -0.55, H, H + 0.3, C(PA, 0.94)); box(TUR, 1.1, 1.12, -0.88, -0.6, H + 0.08, H + 0.24, C(GLS, 0.5)); hatch(TUR, -0.3, -0.6, H, 0.32, 0.3);
               cupola(-0.3, 0.62, H, 0.4, 6, 0.2); mg50(-0.35, 0.62, H + 0.2, H + 0.55);
@@ -15581,7 +15626,7 @@ const Tank3D = {
               for (const s of [-1, 1]) box(TUR, -2.13, -0.57, s > 0 ? (M4 ? 1.7 : 1.63) : (M4 ? -1.76 : -1.69), s > 0 ? (M4 ? 1.76 : 1.69) : (M4 ? -1.7 : -1.63), gz - 0.06, gz - 0.02, C(STL, 0.9));
             }
             barrel(st, 0, gz); muzzle(ge, gz, M1 ? 0.05 : 0.058);
-            if (M4) box(TUR, ge - 0.22, ge - 0.08, -0.04, 0.04, gz + 0.1, gz + 0.16, C(PA, 0.8)); // the muzzle reference sensor
+            if (M4) box(TUR, ge - 0.22, ge - 0.08, -0.04, 0.04, gz + 0.1, gz + 0.16, C(PA, 0.8), null, 2); // the muzzle reference sensor
             coax = [X0 + 0.1, 0.3, gz + 0.02];
             this._ww2 = { H: RZ, gz, gx: X0, gr: M1 ? 0.075 : 0.088, ge, c: [0.12, 0.12, 0.11] };
           }
@@ -16099,7 +16144,8 @@ const Tank3D = {
     if (typeof FloatFix !== 'undefined' && !window.NOFLOAT) try { const ff = FloatFix.run(groups, d.id); if (ff.roof && roofG) { roofG.x += ff.roof[0]; roofG.y += ff.roof[1]; roofG.z += ff.roof[2]; } } catch (e) { console.error(e); }
     const bow = this._bow; this._bow = null;
     { let any = false; const tt = groups.tur; for (let i = 12; i < tt.length; i += 13) if (tt[i] >= 2.6 && tt[i] < 2.8) { any = true; break; } if (!any) roofG = null; }
-    const M = { z0: W3Perf.z0, port: port3, roof: roofG, coax, bow, H: U && d.tx >= ux0 + (U.rs || 0) && d.tx <= ux1 - (U.fs || 0) ? Htop : H, buf: {}, tur, col: hcol, tcol };
+    const aux3 = this._aux; this._aux = null; const cmd3 = typeof CmdrUp !== 'undefined' ? CmdrUp.spot(d, groups) : null; const M = { aux: aux3, cmdr: cmd3, z0: W3Perf.z0, port: port3, roof: roofG, coax, bow, H: U && d.tx >= ux0 + (U.rs || 0) && d.tx <= ux1 - (U.fs || 0) ? Htop : H, buf: {}, tur, col: hcol, tcol };
+    { const W2 = (G.ww2 && this._ww2) || (G.leo && this._leo ? { gx: this._leo.g0, gz: this._leo.gz } : null), A = groups.tur; if (W2 && A && A.length) { let sy = 0, n = 0, mx = -1e9; for (let i = 0; i < A.length; i += 13) if (A[i + 12] > 1.5 && A[i + 12] < 2.2) { sy += A[i + 1]; n++; mx = Math.max(mx, A[i]); } if (n) { const gy = sy / n, x0 = W2.gx + 1.2; for (let i = 0; i + 38 < A.length; i += 39) { let ok = true; for (let k = 0; k < 3; k++) { const j = i + k * 13; if (Math.abs(A[j + 12]) > 0.5 || A[j] < x0 || A[j] > mx + 0.1 || Math.abs(A[j + 1] - gy) > 0.22 || Math.abs(A[j + 2] - W2.gz) > 0.32) { ok = false; break; } } if (ok) for (let k = 0; k < 3; k++) A[i + k * 13 + 12] = 2; } } } }
     M.crew = this._crew; this._crew = null;
     for (const [k, arr] of Object.entries(groups)) { if (!arr.length) continue; const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr), gl.STATIC_DRAW); M.buf[k] = { b, n: arr.length / this.STRIDE }; if (k === 'hull' || k === 'tur') { const S = this.STRIDE, o = []; for (let i = 0; i + S * 3 <= arr.length; i += S * 3) { const ax = arr[i + S] - arr[i], ay = arr[i + S + 1] - arr[i + 1], az = arr[i + S + 2] - arr[i + 2], bx = arr[i + S * 2] - arr[i], by = arr[i + S * 2 + 1] - arr[i + 1], bz = arr[i + S * 2 + 2] - arr[i + 2], cx = ay * bz - az * by, cy = az * bx - ax * bz, cz = ax * by - ay * bx; if (cx * cx + cy * cy + cz * cz > 0.000064 || (arr[i + 12] > 1.5 && arr[i + 12] < 3) || (arr[i + 11] < 0.5 && arr[i + 8] > 0.6)) for (let q = 0; q < S * 3; q++) o.push(arr[i + q]); } if (o.length < arr.length * 0.85) { const c = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, c); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(o), gl.STATIC_DRAW); M.buf[k + 'L'] = { b: c, n: o.length / S }; } } }
     { let gx = 1e9, zs = 0, n = 0; const tt = groups.tur; for (let i = 0; i < tt.length; i += 13) if (tt[i + 12] > 1.5 && tt[i + 12] < 2.6) { gx = Math.min(gx, tt[i]); zs += tt[i + 2]; n++; } M.gunX = n ? gx : 0; M.gunZ = n ? zs / n : 0.4; let xe = -1e9; for (let i = 0; i < tt.length; i += 13) if (tt[i + 12] > 1.5 && tt[i + 12] < 2.6) xe = Math.max(xe, tt[i]); M.gunXE = xe; const x0 = gx + (xe - gx) * 0.45, pts = []; let sy = 0, sz = 0; for (let i = 0; i < tt.length; i += 13) if (tt[i + 12] > 1.5 && tt[i + 12] < 2.6 && tt[i] > x0) { pts.push(tt[i + 1], tt[i + 2]); sy += tt[i + 1]; sz += tt[i + 2]; } const c = pts.length / 2; if (c) { sy /= c; sz /= c; const rr = []; for (let i = 0; i < pts.length; i += 2) rr.push(Math.hypot(pts[i] - sy, pts[i + 1] - sz)); rr.sort((a, b) => a - b); M.gunR = rr[Math.floor(c * 0.3)]; M.gunY = sy; M.gunZ2 = sz; } }
@@ -16796,7 +16842,7 @@ const HUD = {
     this.panel(c, x, y, w, h, 0.82);
     c.fillStyle = 'rgba(40,70,90,0.25)'; c.fillRect(x + 1, y + 1, w - 2, h - 2);
     this.text(c, `HIT CAMERA — ${d.name}`, x + 10, y + 13, '#e4edf3', 12, 'left', 700);
-    const res = ev.result === 'pen' ? (sn.killed ? 'DESTROYED' : 'PENETRATION') : ev.result === 'ricochet' ? 'RICOCHET' : ev.result === 'nonpen' ? 'NON-PENETRATION' : ev.result === 'module' ? 'MODULE HIT' : ev.result.toUpperCase();
+    const res = ev.result === 'pen' ? (sn.killed ? 'DESTROYED' : ev.hesh ? 'SCAB SPALL' : 'PENETRATION') : ev.result === 'ricochet' ? 'RICOCHET' : ev.result === 'nonpen' ? 'NON-PENETRATION' : ev.result === 'module' ? 'MODULE HIT' : ev.result.toUpperCase();
     this.text(c, res, x + w - 10, y + 13, sn.killed ? '#ff6b6b' : ev.result === 'pen' ? '#ff9a52' : '#9ab', 12, 'right', 800);
     const sc = Math.min((w - 40) / (d.L + 3.2), (h - 92) / (d.W + 3.2)), cx = x + w / 2 - 10, cy = y + 32 + (h - 92) / 2 + 4;
     c.save(); c.beginPath(); c.rect(x + 2, y + 24, w - 4, h - 82); c.clip(); c.translate(cx, cy); c.scale(sc, sc);
@@ -17927,7 +17973,10 @@ const W3 = {
         vL = aPos; vLN = aN; vec4 w = uM * vec4(a, 1.0); vW = w.xyz; vN = mat3(uM) * n; vUV = aUV; vCol = aCol; vSide = aSide; vX = aPos.x; vMZ = aPos.z;
         if (aSide < -0.5) vUV.x += uTrk.x; else if (aSide > 0.5 && aSide < 1.5) vUV.x += uTrk.y;
         gl_Position = uVP * w; }`,
-      `in vec2 vUV; in vec3 vW, vN, vL, vLN; in vec4 vCol; in float vSide, vX, vMZ; out vec4 o; uniform mediump sampler2DShadow uShT; uniform mat4 uShTM; uniform float uShTOn; uniform sampler2D uTex, uPt; uniform float uDim, uMid, uFlash, uCut, uSnow, uWash; uniform vec2 uBroken, uSprS; uniform vec3 uAvg, uPaint; uniform float uWreck; uniform int uMkC; uniform vec4 uMkP[12], uMkN[12], uMkT[12]; uniform sampler2D uDA; ${SH_COMMON}
+      `in vec2 vUV; in vec3 vW, vN, vL, vLN; in vec4 vCol; in float vSide, vX, vMZ; out vec4 o; uniform mediump sampler2DShadow uShT; uniform mat4 uShTM; uniform float uShTOn; uniform sampler2D uTex, uPt; uniform float uDim, uMid, uFlash, uCut, uSnow, uWash; uniform vec2 uBroken, uSprS; uniform vec3 uAvg, uPaint; uniform vec4 uSkK; uniform vec3 uSkB, uSkC[3]; uniform float uWreck; uniform int uMkC; uniform vec4 uMkP[12], uMkN[12], uMkT[12]; uniform sampler2D uDA; ${SH_COMMON}
+      float skH(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+      float skN(vec3 x) { vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(skH(i), skH(i + vec3(1, 0, 0)), f.x), mix(skH(i + vec3(0, 1, 0)), skH(i + vec3(1, 1, 0)), f.x), f.y), mix(mix(skH(i + vec3(0, 0, 1)), skH(i + vec3(1, 0, 1)), f.x), mix(skH(i + vec3(0, 1, 1)), skH(i + vec3(1, 1, 1)), f.x), f.y), f.z); }
+      float skF(vec3 p) { return skN(p) * 0.55 + skN(p * 2.03 + 3.1) * 0.3 + skN(p * 4.1 + 7.7) * 0.15; }
       float shadeT(vec3 wp, out float inT) { vec4 q = uShTM * vec4(wp, 1.0); vec3 p = q.xyz * 0.5 + 0.5; inT = 0.0; if (uShTOn < 0.5 || p.x < 0.02 || p.y < 0.02 || p.x > 0.98 || p.y > 0.98) return 1.0; inT = 1.0; float e = 1.0 / float(textureSize(uShT, 0).x), z = p.z - 0.0012, s = 0.0; s += texture(uShT, vec3(p.xy + vec2(-0.7, -0.5) * e, z)); s += texture(uShT, vec3(p.xy + vec2(0.6, -0.7) * e, z)); s += texture(uShT, vec3(p.xy + vec2(-0.5, 0.7) * e, z)); s += texture(uShT, vec3(p.xy + vec2(0.7, 0.5) * e, z)); return s * 0.25; }
       void main(){
         if (vSide > 1.5 && vSide < 2.2 && vX > uCut) discard;
@@ -17939,6 +17988,20 @@ const W3 = {
         if (uAvg.x >= 0.0 && abs(vSide) < 0.5) {
           float lc = dot(c, vec3(0.333)), la = dot(uAvg, vec3(0.333)); vec3 hu = c / max(lc, 0.01) - uAvg / max(la, 0.01);
           if (dot(hu, hu) < 0.05 && lc > la * 0.35) { float dz = max(0.0, uPaint.x - vL.z); vec2 pu = vec2(vL.x + clamp(vL.x / 0.7, -1.0, 1.0) * dz * 0.32, vL.y + clamp(vL.y / 0.7, -1.0, 1.0) * dz) + uPaint.yz; c = texture(uPt, pu / 14.0 + 0.5).rgb * (lc / la); }
+        }
+        // a painted scheme on a hand-built model, laid out in the model's own space so every model shows it at the same size, whatever its
+        // texture: the parts painted in the base colour take the scheme's colour at that point, keeping their light and shade
+        if (uSkK.z > 0.5 && (abs(vSide) < 0.5 || (vSide > 1.5 && vSide < 2.2))) {
+          float lc = dot(c, vec3(0.3, 0.59, 0.11)), lb = dot(uSkB, vec3(0.3, 0.59, 0.11)); vec3 hu = c / max(lc, 0.01) - uSkB / max(lb, 0.01);
+          if (dot(hu, hu) < 0.03 && lc > lb * 0.3 && lc < lb * 2.0) {
+            vec3 P = vL / uSkK.y, col = uSkB; float k = uSkK.x;
+            if (k < 1.5) { for (int i = 2; i >= 0; i--) { if (dot(uSkC[i], uSkC[i]) < 1e-6) continue; if (skF(P * 1.1 + float(i) * 17.3) > (i == 0 ? 0.53 : 0.56)) { col = uSkC[i]; break; } } }
+            else if (k < 2.5) { float u = (vL.x * 0.8 + vL.z * 0.9 + vL.y * 0.35) / uSkK.y + skF(vL * 0.4) * 1.2, b = fract(u); col = b < 0.42 ? uSkB : b < 0.7 ? uSkC[0] : uSkC[1]; }
+            else if (k < 3.5) { if (skF(P * 1.1 + 3.0) > 0.55) col = uSkC[0]; else { float u = (vL.x * 0.3 + vL.z + vL.y * 0.2) / (uSkK.y * 1.3) + skF(vL * 0.35) * 0.7, b = fract(u); if (b < 0.08) col = uSkC[1]; } }
+            else if (k < 4.5) { vec2 q = vec2(vL.x + vL.z * 0.35, vL.y + vL.z * 0.6); for (int j = 0; j < 2; j++) { float a = j == 0 ? 0.5 : 1.25, cs = cos(a), sn = sin(a); vec2 r = vec2(q.x * cs + q.y * sn, -q.x * sn + q.y * cs); float h = fract(sin(floor(r.x / uSkK.y) * 12.9898 + floor(r.y / (uSkK.y * 0.6)) * 78.233 + float(j) * 7.1) * 43758.5453); if (h < 0.3) { col = uSkC[j]; break; } } }
+            else { vec3 Q = floor(vL / 0.09) * 0.09 / uSkK.y; for (int i = 2; i >= 0; i--) { if (dot(uSkC[i], uSkC[i]) < 1e-6) continue; if (skF(Q * 1.5 + float(i) * 11.1) > 0.55) { col = uSkC[i]; break; } } }
+            c = col * (lc / max(lb, 0.01));
+          }
         }
         if (uWreck > 0.0) { // burnt out: paint gone, soot and heat scale over bare rusting steel, last embers in the seams
           vec3 w3 = vL * vec3(0.33, 0.5, 0.42); float bl = texture(uDA, w3.xy + w3.z).r, b2 = texture(uDA, w3.yx * 2.3 + w3.z * 1.7).g, b3 = texture(uDA, w3.xy * 0.37 + w3.z * 0.6).a;
@@ -18330,7 +18393,9 @@ const W3 = {
       gl.uniformMatrix4fv(U.uM, false, this.tankMatrix(v));
       if (shadow && (brL || brR)) { /* the belt is off: shadow from what is left */ } else { if (!shadow) gl.bindTexture(gl.TEXTURE_2D, M.trackT || WT.trackTex); WT.draw(gl, M.buf.track); }
       if (brL && !(v._chains && v._chains[-1])) WT.draw(gl, W3Dmg.thrown(M, d, -1, v.id % 2)); if (brR && !(v._chains && v._chains[1])) WT.draw(gl, W3Dmg.thrown(M, d, 1, (v.id >> 1) % 2));
+      if (!shadow && U.uSkK) { const SP = M.skinPat; if (SP) { gl.uniform4f(U.uSkK, SP.k, SP.s, 1, 0); gl.uniform3fv(U.uSkB, SP.base); gl.uniform3fv(U.uSkC, SP.cols); } else gl.uniform4f(U.uSkK, 0, 1, 0, 0); }
       if (!shadow) { gl.uniform2f(U.uBroken, 0, 0); gl.bindTexture(gl.TEXTURE_2D, M.skin || tex.hull); const sp = getSprites(d); if (M.skin) gl.uniform3f(U.uAvg, -1, 0, 0); else { gl.uniform3fv(U.uAvg, M.col); gl.uniform1i(U.uPt, 12); gl.activeTexture(gl.TEXTURE12); gl.bindTexture(gl.TEXTURE_2D, W3Perf.paint(d)); gl.activeTexture(gl.TEXTURE0); gl.uniform3f(U.uPaint, M.H, 0, 0); } gl.uniform2f(U.uSprS, SPR / sp.hull.width, SPR / sp.hull.height); put(v, 'hull'); if (typeof Crash !== 'undefined') Crash.dentU(gl, U, v); } WT.draw(gl, (lodF(v) && M.buf.hullL) || M.buf.hull); if (!shadow && U.uDnC) gl.uniform1i(U.uDnC, 0); if (!shadow) { gl.uniform1i(U.uMkC, 0); gl.uniform3f(U.uAvg, -1, 0, 0); if (near(v) && v.marks.length) WT.draw(gl, W3Dmg.petals(v, 'hull', M)); }
+      if (M.buf.mini && M.aux) { const A = M.aux, X = v.ax3; gl.uniformMatrix4fv(U.uM, false, this.tankMatrix(v, A.x, A.z, X ? X.ta : 0, A.y)); gl.uniform1f(U.uElev, X ? X.el : 0); gl.uniform2f(U.uPiv, A.gx, A.gz); if (!shadow) gl.uniform1f(U.uRecoil, X ? X.rc * 0.12 : 0); WT.draw(gl, M.buf.mini); gl.uniform1f(U.uElev, 0); gl.uniform2f(U.uPiv, 0, 0); if (!shadow) gl.uniform1f(U.uRecoil, 0); }
       if (M.buf.mini && v.mini) for (let i = 0; i < v.mini.length; i++) { if (v.mini[i].dead) continue; const q = RATTE_MINI[i]; gl.uniformMatrix4fv(U.uM, false, this.tankMatrix(v, q[0], M.H, v.mini[i].a - v.ang, q[1])); WT.draw(gl, M.buf.mini); }
       if (d.turret && v.turretOff && M.buf.hole) { gl.uniformMatrix4fv(U.uM, false, this.tankMatrix(v, d.tx, M.H, 0)); WT.draw(gl, M.buf.hole); }
       if (d.turret && !v.turretOff && M.buf.tur) {
@@ -18427,7 +18492,7 @@ const W3Scene = {
     for (const b of map.buildings) put(b, b.x, b.y, 'b');
     for (const w of map.walls) put(w, w.x, w.y, 'w');
     for (const b of map.ruins3 || []) put(b, b.x, b.y, 'rf');
-    if (map.rail) for (const ty of map.rail.tracks) for (let x = 0; x < map.W; x += 44) { const o = { x: x + 22, y: ty, a: 0 }; put(o, o.x, o.y, 'rl'); }
+    if (map.rail) for (const ty of map.rail.tracks) for (let x = 0; x < (map.rail.x1 || map.W); x += 44) { const o = { x: x + 22, y: ty, a: 0 }; put(o, o.x, o.y, 'rl'); }
     for (const k of map.rocks) put(k, k.x, k.y, 'k');
     for (const b of map.bridges || []) put(b, b.x, b.y, 'br');
     for (const b of map.tBridges || []) put(b, b.x, b.y, 'br');
@@ -19805,7 +19870,7 @@ const S3 = {
     const k = this.KS / (N * 2), c = 2 * this.ZETA * Math.sqrt(this.KS) / (N * 2), Ip = L * L / 11, Ir = W * W / 7, hcg = hullHeight(d) * 0.45, n = dt > 0.009 ? 2 : 1, h = dt / n;
     let maxFront = 0, touch = false;
     for (let s = 0; s < n; s++) {
-      let Fz = 0, Tp = 0, Tr = 0; const sp = Math.sin(ph.p), sr = Math.sin(ph.r);
+      let Fz = 0, Tp = 0, Tr = 0, em = 0; const sp = Math.sin(ph.p), sr = Math.sin(ph.r);
       let si = 0; const up = (Math.abs(v.vel || 0) * 0.62 + 0.35) * h; // a track walks up onto a step like a ramp: its height can only rise as fast as the tank rolls forward
       for (const side of [-1, 1]) for (let i = 0; i < N; i++, si++) {
         const u = (i + 0.5) / N * 2 - 1, x = u * L * 0.46, y = side * off, wx = v.x + ca * x - sa * y, wy = v.y + sa * x + ca * y;
@@ -19813,13 +19878,14 @@ const S3 = {
         const lift = Math.max(0, Math.abs(u) - 0.45) / 0.55 * Math.min(0.42, hullHeight(d) * 0.22);
         const sp2 = L * 0.3 / N, oz = has ? Math.max(this.obsZ(obs, wx, wy), this.obsZ(obs, wx + ca * sp2, wy + sa * sp2), this.obsZ(obs, wx - ca * sp2, wy - sa * sp2)) : 0, gs = ph.gs[si] = oz > ph.gs[si] ? Math.min(oz, ph.gs[si] + up) : oz, g = W3.gz(wx, wy) + gs, e = g - (ph.z + x * sp + y * sr + lift);
         if (e <= 0) continue;
-        touch = true;
+        touch = true; if (e > em) em = e;
         if (u * Math.sign(v.vel || 1) > 0.5) maxFront = Math.max(maxFront, e);
         const vs = ph.vz + x * ph.vp + y * ph.vr, F = Math.max(0, k * Math.min(e, 0.3) * (1 + Math.min(e, 0.3) * 3) - c * vs);
         Fz += F; Tp += x * F; Tr += y * F;
       }
       const az = Fz - GRAV * Math.cos(ph.p) * Math.cos(ph.r), ap = Tp / Ip + clamp(acc, -5, 5) * hcg / Ip * 0.55, ar = Tr / Ir + clamp((v.angVel || 0) * (v.vel || 0), -5, 5) * hcg / Ir * 0.5;
       ph.vz = clamp(ph.vz + clamp(az, -GRAV * 1.2, GRAV * 2.2) * h, B.map.decks ? -34 : -14, 2.6); ph.vp = clamp(ph.vp + ap * h, -1.1, 1.1); ph.vr = clamp(ph.vr + ar * h, -1.1, 1.1); ph.z += ph.vz * h; ph.p += ph.vp * h; ph.r += ph.vr * h;
+      if (em > 0.34) { ph.z += em - 0.3; if (ph.vz < 0) ph.vz *= -0.12; } // the ground is hard: a tank landing from a height stops on it, it does not sink in and climb back out
       ph.p = clamp(ph.p, -0.75, 0.75); ph.r = clamp(ph.r, -0.75, 0.75);
     }
     if (maxFront > 0.3) v.vel *= Math.pow(0.35, dt); // shouldering up onto something costs speed
@@ -25267,6 +25333,12 @@ const Exhaust = {
   };
 }
 
+// the coral knolls on the ridge can be driven over: lower, rounded, and no barrier to the tracks (or to the drivers' route-finding)
+MAP_THEMES.island.rockDrive = 0.45;
+{ const bv = GameMap.prototype.blocksVehicle; GameMap.prototype.blocksVehicle = function (x, y) { const T = this.theme && this.theme(); if (T && T.rockDrive && this.groundAt(x, y) === G_CLIFF) return false; return bv.call(this, x, y); };
+  const bn = GameMap.prototype.buildNav; GameMap.prototype.buildNav = function () { const r = bn.apply(this, arguments); const T = this.theme && this.theme(); if (T && T.rockDrive) for (let gy = 1; gy < this.nh - 1; gy++) for (let gx = 1; gx < this.nw - 1; gx++) { const i = gy * this.nw + gx; if (this.nav[i] && this.groundAt(gx * NC + NC / 2, gy * NC + NC / 2) === G_CLIFF) { let wall = false; for (const w of this.walls) { const [lx, ly] = toLocal(gx * NC + NC / 2, gy * NC + NC / 2, w.x, w.y, w.a); if (Math.abs(lx) <= w.hx + 3 && Math.abs(ly) <= w.hy + 3) { wall = true; break; } } if (!wall) { this.nav[i] = 0; this.navCost[i] = 2.2; } } } return r; }; }
+{ const sa = GameMap.prototype.speedAt; GameMap.prototype.speedAt = function (x, y) { const g = this.groundAt(x, y); if (g === G_CLIFF) { const T = this.theme && this.theme(); if (T && T.rockDrive) return 0.62; } return sa.call(this, x, y); }; }
+
 // ---------------------------------------------------------------- roadside scenery shared by the historical maps
 // Telegraph poles along the main roads (a tank knocks them flat without a jolt), columns of wrecked vehicles pushed into the ditches,
 // and helpers for village houses: the whitewashed, thatched cottages of the Ukrainian countryside and the dark log izbas of Russia.
@@ -25867,29 +25939,807 @@ const Scenery = {
   }
 }
 
+// ---------------------------------------------------------------- Stalingrad, 23 November 1942: the Tractor Works
+// The Dzerzhinsky Tractor Works (STZ) stood on the west bank of the Volga in the north of the city: a huge complex of concrete-and-glass
+// assembly halls that had been building T-34s, now gutted by weeks of bombing and shelling into skeletal cages of steel girders, collapsed
+// roofs and shattered brick, with gantry cranes, lathes and presses, half-built hulls and scrap heaped inside. Behind it the steep clay bluff
+// drops to the Volga, where ice floes were starting to clog the river; to the north the Mokraya Mechetka ravine cuts across to the river;
+// west and south lie the workers' settlement, rows of brick blocks, most of them burnt-out shells and a few still standing. Snow dusts the
+// blackened rubble. The Germans (14th Panzer and 305th Infantry Divisions) took the works on 14-16 October; on 23 November, the day the ring
+// closed at Kalach, Chuikov's 62nd Army attacked into the ruins from the riverbank and from the north to pin them there.
+// The map: the ravine across the north with the Soviet side of it beyond, the works' halls in the centre and east, the railway with its wagons
+// and gantry along the south of the works, the settlement in the west, warehouses south of the line, the bluff and the river in the east,
+// and a second gully running down to the ferry landing.
+{
+  const STZ = 'stz';
+  BIOMES.stz = { grass: [[214, 216, 218], [204, 206, 210]], forest: [196, 198, 200], dirt: [104, 92, 80], fields: [[210, 212, 214]], road: '#6e6c68', roof: ['#3e3a36', '#4a4440', '#2e2a28'], tree: [[52, 56, 48], [60, 62, 52], [44, 48, 42]] };
+  SKY.stz = { top: [0.52, 0.55, 0.6], hor: [0.78, 0.79, 0.8], fog: [0.74, 0.75, 0.77], sun: [0.7, 0.7, 0.72], amb: [0.68, 0.69, 0.72], fogD: 0.0019, cloud: 1.0 };
+  const SG = (W, H) => {
+    const bY = x => H * 0.12 + Math.sin(x / 140) * 10 + Math.sin(x / 47) * 3;          // the Mokraya Mechetka ravine
+    const cX = y => W * 0.885 + Math.sin(y / 110) * 8 + Math.sin(y / 31) * 3;          // the top of the bluff
+    const fY = x => H * 0.8 + Math.sin(x / 60) * 5;                                    // the gully down to the ferry landing
+    const ry = H * 0.64;                                                               // the railway along the south of the works
+    return { bY, cX, fY, ry, vX: W * 0.925, wx0: W * 0.4, wx1: W * 0.84, wy0: H * 0.21, wy1: H * 0.58, sx0: 40, sx1: W * 0.35,
+      A: { x: W * 0.6, y: H * 0.36 }, Bp: { x: W * 0.66, y: ry + 30 }, C: { x: W * 0.3, y: H * 0.47 }, start: { x: W * 0.72, y: H * 0.05 } };
+  };
+  MAP_THEMES.stz = {
+    name: 'Stalingrad: the Tractor Works', sub: 'Factory halls · settlement · Volga', desc: 'The Tractor Works on 23 November 1942: gutted assembly halls, the railway yard, the workers\' settlement, the Mechetka ravine and the bluff over the Volga, under the first snow.',
+    base: G_SNOW, lone: 0, grade: 'rgba(170,180,200,0.08)', snow: true, mist: true, dark: 0.07,
+    layout(W, H, r, j) {
+      const S = SG(W, H);
+      const roads = [
+        { pts: [[S.start.x - 30, 0], [S.start.x - 40, S.bY(S.start.x - 40)], [W * 0.66, S.wy0 - 6], [W * 0.62, S.ry - 10], [W * 0.6, H]], w: 8, paved: true },  // the works' main road, south from the ravine bridge
+        { pts: [[0, H * 0.3], [S.sx1, H * 0.3], [S.wx0 - 6, H * 0.3]], w: 9, paved: true }, { pts: [[0, H * 0.5], [S.wx0 - 6, H * 0.5], [W * 0.84, H * 0.5]], w: 9, paved: true },
+        { pts: [[W * 0.13, H * 0.18], [W * 0.13, H]], w: 8, paved: true }, { pts: [[W * 0.25, H * 0.18], [W * 0.25, H]], w: 8, paved: true }, { pts: [[S.wx0 - 6, H * 0.16], [S.wx0 - 6, H]], w: 9, paved: true },
+        { pts: [[0, H * 0.76], [W * 0.8, H * 0.76]], w: 8, paved: true }, { pts: [[W * 0.8, H * 0.76], [S.cX(H * 0.8) - 6, S.fY(S.cX(H * 0.8)) - 2], [S.vX + 2, S.fY(S.vX) + 1]], w: 7 },
+      ];
+      return { biome: STZ, points: [], forest: 0, fields: 0, rocks: 0, roads, villages: [], bridges: [{ x: S.start.x - 40, y: S.bY(S.start.x - 40), a: Math.PI / 2 + 0.06, hx: 22, hy: 5 }], spawn: [{ x: S.start.x, y: S.start.y }, { x: W * 0.08, y: H * 0.6 }], clear: [{ x: S.start.x, y: S.start.y, r: 40 }] };
+    },
+    forestOn: () => false,
+    treeKind: R => R < 0.7 ? 3 : 1,
+    layers: [
+      { type: G_SNOW, col: (x, y, n, n3) => { const k = n(x / 10, y / 10) * 0.6 + n3(x / 2, y / 2) * 0.4, soot = n(x / 37 + 9, y / 37) > 0.35; return soot ? [120 + k * 30, 116 + k * 28, 112 + k * 26] : [206 + k * 20, 210 + k * 18, 216 + k * 14]; }, edge: 0.5 },
+      { type: G_CONCRETE, col: (x, y, n, n3) => { const k = n(x / 6, y / 6), s = n(x / 5 + 3, y / 5) + n3(x / 1.2, y / 1.2) * 0.15 > 0.12; return s ? [196 + k * 14, 198 + k * 12, 202 + k * 10] : [112 + k * 16, 110 + k * 14, 104 + k * 12]; }, edge: 0.3 },
+      { type: G_RUBBLE, col: (x, y, n, n3) => { const k = n3(x / 1.2, y / 1.2), s = n(x / 3, y / 3) > 0.25; return s ? [200 + k * 18, 200 + k * 16, 204 + k * 14] : [92 + k * 30, 70 + k * 20, 60 + k * 16]; }, edge: 0.45 },
+      { type: G_STONE, col: (x, y, n, n3) => { const k = n3(x / 0.8, y / 0.8); return [84 + k * 22, 80 + k * 20, 74 + k * 18]; }, sharp: true },
+      { type: G_CLIFF, col: (x, y, n, n3) => { const k = n3(x / 1.5, y / 1.5), s = n(x / 4, y / 4) > 0.2; return s ? [196 + k * 16, 196 + k * 14, 198 + k * 12] : [122 + k * 26, 98 + k * 20, 74 + k * 14]; }, edge: 0.4 },
+      { type: G_EARTH, col: (x, y, n, n3) => { const k = n3(x / 1.4, y / 1.4), s = n(x / 3, y / 3) > 0.05; return s ? [212, 214, 218] : [96 + k * 18, 84 + k * 14, 70 + k * 10]; }, edge: 0.45 },
+      { type: G_DITCH, col: (x, y, n) => { const k = n(x / 5, y / 5); return [186 + k * 12, 204 + k * 10, 214 + k * 8]; }, sharp: true }, // the frozen stream in the ravine
+      { type: G_WATER, col: () => [46, 56, 62], edge: 0.15 },
+      { type: G_CRATER, col: () => [70, 62, 54], a: 0.85 },
+    ],
+    terrain(m, R) {
+      const W = m.W, H = m.H, S = SG(W, H); m.stz = S;
+      // the river and the bluff over it, the ravine and the ferry gully with their frozen streams
+      for (let gy = 0; gy < m.gh; gy++) for (let gx = 0; gx < m.gw; gx++) {
+        const x = gx * GC + 2, y = gy * GC + 2, i = gy * m.gw + gx; if (m.ground[i] === G_ROAD || m.ground[i] === G_BRIDGE) continue;
+        if (x > S.vX + m.noise(y / 40, 3) * 5) { m.ground[i] = G_WATER; continue; }
+        const inB = Math.abs(y - S.bY(x)) < 2.6 && x < S.vX, inF = x > W * 0.8 && Math.abs(y - S.fY(x)) < 2.2;
+        if (inB || inF) { m.ground[i] = G_DITCH; continue; }
+        if (x > S.cX(y) && x < S.vX - 6 && Math.abs(y - S.fY(x)) > 16 && Math.abs(y - S.bY(x)) > 18) m.ground[i] = G_CLIFF;
+        else if (x > S.vX - 6) m.ground[i] = G_EARTH; // the strip of shore under the bluff
+      }
+      // the works' yards: concrete, rubble and soot; the settlement's broken streets
+      for (let i = 0; i < 34; i++) m.paintEllipse(S.wx0 + R() * (S.wx1 - S.wx0), S.wy0 + R() * (S.ry + 40 - S.wy0), 16 + R() * 40, 12 + R() * 24, G_CONCRETE, g => g === G_SNOW, 0.3);
+      for (let i = 0; i < 70; i++) m.paintDisc(40 + R() * (S.cX(H / 2) - 60), S.bY(0) + 30 + R() * (H - S.bY(0) - 40), 4 + R() * 11, G_RUBBLE, g => g === G_SNOW || g === G_CONCRETE);
+      // the railway along the south of the works, and the spur from it into the halls
+      m.rail = { y: S.ry, tracks: [S.ry - 2.6, S.ry + 2.6], x1: W * 0.86 }; m.rasterPolyline([[0, S.ry], [W * 0.86, S.ry]], 5.2, G_STONE);
+      m.craters = [];
+      for (let i = 0; i < 46; i++) {
+        const x = 40 + R() * (S.cX(H / 2) - 80), y = S.bY(0) + 26 + R() * (H - S.bY(0) - 40), r = 2.2 + Math.pow(R(), 2) * 5;
+        if (m.inClear(x, y, r + 4) || m.groundAt(x, y) === G_ROAD || m.groundAt(x, y) === G_STONE || !craterRoom(m.craters, x, y, r)) continue;
+        const cr = { x, y, r, p: [R() * TAU, R() * TAU, R() * TAU], wet: false, seed: Math.floor(R() * 1e6) }; paintCrater(m, cr, G_CRATER, 1); m.craters.push(cr);
+      }
+      m.zFn = (x, y) => {
+        let z = 11 + fbm(m.noise, x / 260, y / 260, 3) * 2.5 + fbm(m.noise, x / 60 + 3, y / 60, 2) * 0.5;
+        const db = y - S.bY(x), wb = 20 + clamp((x - W * 0.5) / (W * 0.4), 0, 1) * 10; z -= (8 + clamp(x / W, 0, 1) * 5) * Math.exp(-(db / wb) * (db / wb)); // the ravine, deeper towards the river
+        if (x > W * 0.78) { const df = y - S.fY(x), wf = 14; z -= clamp((x - W * 0.78) / (W * 0.1), 0, 1) * 9 * Math.exp(-(df / wf) * (df / wf)); } // the ferry gully
+        const c = S.cX(y), t = clamp((x - c) / 22, 0, 1); z = lerp(z, -1.5, t * t * (3 - 2 * t)); // the bluff down to the shore
+        return z;
+      };
+    },
+    build(m, R) {
+      const W = m.W, H = m.H, S = m.stz;
+      const free = (x, y, a, w, h, pad = 3) => {
+        const c = Math.cos(a), s = Math.sin(a), su = Math.max(1.4, (w + 2 * pad) / 7), sv = Math.max(1.4, (h + 2 * pad) / 7);
+        for (let u = -w / 2 - pad; u <= w / 2 + pad + 0.01; u += su) for (let v = -h / 2 - pad; v <= h / 2 + pad + 0.01; v += sv) { const g = m.groundAt(x + u * c - v * s, y + u * s + v * c); if (g === G_ROAD || g === G_STONE || g === G_CLIFF || g === G_WATER || g === G_DITCH) return false; }
+        return !m.inClear(x, y, Math.max(w, h) / 2 + 4);
+      };
+      // ---- the works: long assembly halls east-west, some still standing as steel-framed shells, most gutted to their brick walls
+      m.bGap = 9;
+      for (let gy = S.wy0 + 6; gy < S.ry - 26; gy += 44 + R() * 8) for (let gx = S.wx0 + 8; gx < S.wx1 - 30; gx += 96 + R() * 30) {
+        if (R() < 0.08) continue; const w = 62 + R() * 50, h = 20 + R() * 12, x = gx + w / 2, y = gy + h / 2; if (x + w / 2 > S.wx1 || !free(x, y, 0, w, h)) continue;
+        const kind = R() < 0.3 ? 'warehouse' : 'ruin', b = m.addB(x, y, 0, w, h, kind); if (!b) continue;
+        if (kind === 'ruin') { b.tint = 'brick'; b.h = 6 + R() * 5; } else b.h = 11 + R() * 4;
+        if (R() < 0.35) { const cx = x + (R() < 0.5 ? -1 : 1) * (w / 2 + 3.5), cy = y + (R() - 0.5) * h * 0.5; m.bGap = 0.5; if (free(cx, cy, 0, 5, 5, 1)) m.addB(cx, cy, 0, 4.5, 4.5, 'chimney'); m.bGap = 9; }
+      }
+      // ---- the settlement: brick blocks along the streets; most are burnt-out shells, a few still stand
+      m.bGap = 2.5;
+      for (const xs of [[40, W * 0.13 - 8], [W * 0.13 + 8, W * 0.25 - 8], [W * 0.25 + 8, S.wx0 - 14]]) for (let y = S.bY(xs[0]) + 34; y < H - 30; y += 26 + R() * 8) {
+        if (Math.abs(y - S.ry) < 12) continue; const w = Math.min(xs[1] - xs[0] - 6, 26 + R() * 18), h = 11 + R() * 4, x = (xs[0] + xs[1]) / 2 + (R() - 0.5) * 6; if (!free(x, y, 0, w, h, 2)) continue;
+        if (R() < 0.12) { m.paintDisc(x, y, Math.max(w, h) * 0.5, G_RUBBLE, g => g === G_SNOW || g === G_CONCRETE); continue; }
+        const stand = R() < 0.24, b = m.addB(x, y, (R() - 0.5) * 0.04, w, h, stand ? 'flat' : 'ruin', stand ? pick2(R, m.biome.roof) : null); if (!b) continue;
+        b.tint = 'brick'; b.h = stand ? 12 + R() * 6 : 4 + R() * 7;
+      }
+      // ---- warehouses south of the railway
+      m.bGap = 6;
+      for (let gx = S.wx0 + 6; gx < S.cX(H * 0.75) - 40; gx += 40 + R() * 14) for (const yb of [S.ry + 14, H * 0.76 + 10]) {
+        const w = 24 + R() * 16, h = 13 + R() * 8, x = gx + w / 2, y = yb + h / 2 + R() * 4; if (!free(x, y, 0, w, h)) continue;
+        const b = m.addB(x, y, 0, w, h, R() < 0.5 ? 'warehouse' : 'ruin'); if (b) { if (b.kind === 'ruin') { b.tint = 'brick'; b.h = 4 + R() * 4; } else b.h = 7 + R() * 3; }
+      }
+      m.bGap = undefined;
+      // ---- goods wagons on the line, some derailed and slewed across, burnt out
+      for (const ty of m.rail.tracks) { let x = 30 + R() * 40; while (x < W * 0.8) { if (R() < 0.45) { x += 30 + R() * 50; continue; } const n = 2 + Math.floor(R() * 4), der = R() < 0.3;
+        for (let k = 0; k < n && x < W * 0.8; k++) { const L = 11 + R() * 3, cx = x + L / 2, a = der ? (R() - 0.5) * 0.7 : 0, cy = ty + (der ? (R() - 0.5) * 3 : 0); if (!m.inClear(cx, cy, 8) && !m.collidesStatic(cx, cy, 2)) m.walls.push({ kind: 'railcar', x: cx, y: cy, a, hx: L / 2, hy: 1.5, hp: 9999, tall: true, car: pick2(R, ['box', 'box', 'gondola', 'flat', 'tank']), burnt: R() < 0.55, seed: Math.floor(R() * 1e6) }); x += L + 1.1; }
+        x += 34 + R() * 60; } }
+      // ---- cranes: gantries over the line and inside the halls' yards, tower cranes over the works
+      m.cranes = [];
+      for (const x of [W * 0.5, W * 0.74]) { const span = 22, legs = [[-3, -span / 2], [3, -span / 2], [-3, span / 2], [3, span / 2]]; if (legs.some(([dx, dy]) => m.collidesStatic(x + dx, S.ry + dy, 1.2))) continue; for (const [dx, dy] of legs) m.walls.push({ kind: 'craneleg', x: x + dx, y: S.ry + dy, a: 0, hx: 0.7, hy: 0.7, hp: 9999, tall: true }); m.cranes.push({ type: 'gantry', x, y: S.ry, span, trolley: (R() - 0.5) * 14 }); }
+      for (let k = 0, t = 0; k < 3 && t < 80; t++) { const x = S.wx0 + R() * (S.wx1 - S.wx0), y = S.wy0 + R() * (S.ry - S.wy0 - 30); if (m.collidesStatic(x, y, 3) || m.groundAt(x, y) === G_ROAD || m.cranes.some(q => dist(q.x, q.y, x, y) < 120)) continue; m.walls.push({ kind: 'craneleg', x, y, a: 0, hx: 1.3, hy: 1.3, hp: 9999, tall: true }); m.cranes.push({ type: 'tower', x, y, a: R() * TAU, L: 24 + R() * 10 }); k++; }
+      // ---- inside and round the halls: collapsed walls, brick heaps, scrap, half-built hulls straight off the line
+      for (let i = 0, t = 0; i < 150 && t < 1600; t++) {
+        const inWorks = R() < 0.6, x = inWorks ? S.wx0 + R() * (S.wx1 - S.wx0) : 40 + R() * (S.wx0 - 60), y = inWorks ? S.wy0 + R() * (S.ry + 50 - S.wy0) : S.bY(x) + 30 + R() * (H - S.bY(x) - 40);
+        if (m.collidesStatic(x, y, 4.5) || m.inClear(x, y, 6) || [G_ROAD, G_STONE, G_CLIFF, G_WATER, G_DITCH].includes(m.groundAt(x, y))) continue;
+        const r = R();
+        if (r < 0.45) m.walls.push({ kind: 'rubble', x, y, a: R() * TAU, hx: 2.2 + R() * 2.6, hy: 1.4 + R() * 1.6, hp: 9999, seed: Math.floor(R() * 1e6), tone: ['#9a6a54', '#6e4a3c', '#4a3a32'] });
+        else if (r < 0.8) m.walls.push({ kind: 'ruin', x, y, a: R() < 0.5 ? 0 : Math.PI / 2, hx: 3 + R() * 5, hy: 0.6, hp: 9999, tall: R() < 0.6, brick: true, seed: Math.floor(R() * 1e6) });
+        else if (inWorks && r < 0.9 && TANKS.t34_76) Scenery.wreck(m, x, y, R() * TAU, 't34_76', false);
+        else m.walls.push({ kind: 'logs', x, y, a: R() * TAU, hx: 2 + R() * 2, hy: 0.9, hp: 9999 });
+        i++;
+      }
+      // ---- the Soviet side north of the ravine: dugouts and log-covered firing points along its lip, a few wooden houses of Spartanovka
+      for (let k = 0; k < 9; k++) { const x = W * 0.08 + k * W * 0.09 + R() * 20, y = S.bY(x) - 26 - R() * 8; if (!m.collidesStatic(x, y, 3) && m.groundAt(x, y) !== G_ROAD) m.walls.push({ kind: 'sandbag', x, y, a: (R() - 0.5) * 0.3, hx: 2.4 + R() * 1.2, hy: 0.7, hp: 9999 }); }
+      for (let k = 0; k < 8; k++) { const x = W * 0.06 + k * W * 0.07 + R() * 10, y = S.bY(x) - 50 - R() * 30; if (y > 14 && !m.collidesStatic(x, y, 8) && !m.inClear(x, y, 12)) Scenery.izba(m, x, y, (R() - 0.5) * 0.2, R); }
+      // ---- wrecks of the October fighting in the streets, some still burning
+      addWrecks(m, R, 9, 0.35);
+      for (const w of m.walls) if (w.kind === 'railcar' && w.burnt && R() < 0.35) m.fxSources.push({ x: w.x, y: w.y, kind: 'smoke' });
+      for (const b of m.buildings) if ((b.kind === 'warehouse' || b.kind === 'ruin') && R() < 0.14) m.fxSources.push({ x: b.x, y: b.y, kind: 'smoke' });
+    },
+    trees(m, R) {
+      const S = m.stz; if (!S) return;
+      // shattered stumps in the works and settlement; bare trees along the ravine and in the yards of Spartanovka
+      m.forceKind = 3; for (let i = 0; i < 70; i++) m.tryTree(40 + R() * (S.cX(m.H / 2) - 80), S.bY(0) + 30 + R() * (m.H - S.bY(0) - 40), 1.3 + R());
+      m.forceKind = 1; for (let i = 0; i < 60; i++) { const x = R() * S.vX * 0.95, y = S.bY(x) + (R() < 0.5 ? -1 : 1) * (12 + R() * 16); m.tryTree(x, y, 1.6 + R() * 1.4); }
+      m.forceKind = undefined;
+    },
+  };
+  const dma0 = drawMapArt; drawMapArt = function (cv, key) { if (key !== STZ) return dma0(cv, key); return dma0(cv, 'leningrad'); };
+  // ---- the mission: the pinning attack into the works
+  TPL.stz = (o = {}) => ({
+    map(seed) { return missionMap(STZ, seed, this.k); },
+    init() {
+      const W = B.map.W, H = B.map.H, S = B.map.stz || SG(W, H), A = [S.A, S.Bp, S.C];
+      this.setPoints([]); this.start = { x: S.start.x, y: S.start.y, a: Math.PI / 2 };
+      [[-30, 6], [24, 10], [-6, -16]].forEach(([dx, dy]) => { const [x, y] = this.free(S.start.x + dx, S.start.y + dy, 12); this.ally(x, y, Math.PI / 2, 'attack'); });
+      // three strongpoints, each held by a few panzers dug in among the ruins, and a couple more moving between them
+      for (const a of A) for (let k = 0; k < 3; k++) { const [x, y] = this.free(a.x + rnd(-36, 36), a.y + rnd(-30, 30), 26); this.enemy(x, y, -Math.PI / 2 + rnd(-0.6, 0.6), 'hold', [x, y, 8], k === 0 && o.heavy ? 'heavy' : null); }
+      for (let k = 0; k < 2; k++) { const [x, y] = this.free(W * 0.5 + rnd(-80, 80), H * 0.7, 40); this.enemy(x, y, -Math.PI / 2, 'attack'); }
+      // the infantry: German anti-tank rifle teams in the ruins by each strongpoint; Soviet anti-tank riflemen in the ravine with you
+      if (typeof Inf !== 'undefined') {
+        B.inf = B.inf || [];
+        for (const a of A) for (let k = 0; k < 2; k++) { for (let t = 0; t < 30; t++) { const x = a.x + rnd(-60, 60), y = a.y - rnd(20, 70); if (!Inf.freeAt(x, y)) continue; Inf.place(1, 'pzb', x, y, -Math.PI / 2 + rnd(-0.5, 0.5)); break; } }
+        for (const dx of [-70, 60]) { for (let t = 0; t < 30; t++) { const x = S.start.x + dx + rnd(-30, 30), y = S.bY(S.start.x + dx) - rnd(14, 26); if (!Inf.freeAt(x, y)) continue; Inf.place(0, 'ptrd', x, y, Math.PI / 2 + rnd(-0.3, 0.3), { kit: 'snow' }); break; } }
+      }
+      this.goalFor = v => { if (v.team !== 0) return null; const live = A.filter(a => B.vehicles.some(e => e.alive && e.team === 1 && dist(e.x, e.y, a.x, a.y) < 110)); const t = (live.length ? live : A).slice().sort((p, q) => dist(v.x, v.y, p.x, p.y) - dist(v.x, v.y, q.x, q.y))[0]; return [t.x, t.y, 40]; };
+      this.fireT = 0;
+    },
+    update(dt) {
+      // the smoke of the burning works hangs over everything
+      this.fireT += dt; if (this.fireT > 0.25 && !B.preview) { this.fireT = 0; const f = B.map.fxSources && B.map.fxSources[Math.floor(Math.random() * B.map.fxSources.length)]; if (f) { W3.fxZ = W3.gz(f.x, f.y) + 6; FX.add('smoke', f.x + rnd(-6, 6), f.y + rnd(-6, 6), { r: rnd(2, 3.5), gr: 2.6, life: rnd(10, 16), a: 0.4, wind: 1.4, col: [0.12, 0.12, 0.12] }); W3.fxZ = undefined; } }
+    },
+    check(en) { return en === 0 ? 'win' : null; },
+    obj(en) { return `Clear the Tractor Works — ${en} enemy tanks left`; },
+  });
+  const i = MISSIONS.findIndex(q => q.id === 'c2m4');
+  if (i >= 0) {
+    const M0 = MISSIONS[i];
+    MISSIONS[i] = Object.assign({}, M0, { x: TPL.stz(), side: { friend: ['t34_76'], foe: ['pz3j', 'pz4f2', 'pz3j'] }, place: 'the Tractor Works, Stalingrad',
+      sit: 'The ring closed at Kalach this morning. The Germans in the Tractor Works are now trapped, and the 62nd Army attacks to keep them there.',
+      tip: 'Short sightlines everywhere: halls, wagons and rubble block shots both ways. German anti-tank riflemen hide in the ruins: rake anything that fires with the machine gun (E) or put a high-explosive round on it.',
+      brief: '23 November 1942. Four days ago Operation Uranus broke through north and south of the city; this morning the pincers met at Kalach and the German army in Stalingrad is surrounded. The Tractor Works, taken by the 14th Panzer and 305th Infantry Divisions in October, is a labyrinth of gutted assembly halls, wagons and scrap under the first snow. Cross the Mechetka ravine from the north and clear the three strongpoints: the assembly halls, the railway yard and the edge of the workers\' settlement. Your anti-tank riflemen hold the ravine behind you.',
+      radio: [[2, 'Front HQ', 'The ring is closed. Now we pin them where they stand: into the works.'], [22, 'Lt. Petrova', 'Every hall could hide a gun. Watch the gaps between the wagons.'], ['firstKill', 'Front HQ', 'Good. Keep them pinned in the ruins.'], ['half', 'Lt. Petrova', 'Half their armour is burning. The rest are trapped.'], ['last', 'Front HQ', 'One tank left in the works.']],
+      win: 'The Tractor Works is clear. Within ten weeks the encircled army surrenders — the tide in the east has turned.', lose: 'The attack has stalled in the ruins of the works.' });
+  }
+}
+
+// ---------------------------------------------------------------- 1.33: the M3 medium (Lee and Grant), the Panzer IV with the short gun
+{
+  const add = (o, src, mg, era = 0) => { if (TANKS[o.id]) return; const d = tank(o); TREE_ORDER[era].push(o.id); if (TANK_GEAR[src]) TANK_GEAR[o.id] = Object.assign({}, TANK_GEAR[src]); if (mg) MG_SPECS[o.id] = mg; return d; };
+  const M2 = s => [S('M72' + s, 'M72 shot', 'AP', [84, 62], 588, 20), S('M61' + s, 'M61 shot', 'APCBC', [97, 78], 588, 26, 64), S('M48' + s, 'M48 shell', 'HE', 10, 448, 20, 666)];
+  // M3 Lee (US) and Grant I (built for Britain): the 75 mm M2 in the right sponson with 15 degrees of traverse either way, the 37 mm and
+  // its coaxial .30 in the turret up top. Riveted hull, 51 mm at the front, 38 mm sides; 27 t and 340 hp.
+  const base = { nation: 'us', era: 1, tier: 1, role: 'Medium', year: 1941, crewN: 5, L: 5.64, W: 2.72, tx: 2.0, tl: 0.5, tw: 0.5, gunL: 2.2, cal: 75, mantlet: 38, mantletW: 0.45, cupolaArmor: 51,
+    armor: { hull: { front: [51, 25], side: [38, 0], rear: [38, 10] }, turret: { front: [51, 0], side: [38, 0], rear: [38, 0] } },
+    speed: 39, rev: 7, hpt: 12.5, mass: 27.2, hullTurn: 26, traverse: 8, reload: 6.2, disp: 0.8, stab: 1, aimTime: 2.6, arcs: [[0, 0.26]],
+    engine: 'petrol', layout: 'frontTrans', camo: 'us_od', turretShape: 'mount', hullShape: 'sherman' };
+  add(Object.assign({}, base, { id: 'm3lee', name: 'M3 Lee', shells: M2('l'), sp: 110, rp: 380,
+    desc: 'America\'s stop-gap medium of 1941: a 75 mm in a sponson with a narrow traverse, because no turret ring yet built could take it, and a 37 mm turret on top with the commander\'s cupola. Tall, but the first Allied tank in the desert that could fire both shot and a real high-explosive shell.' }), 'm4a1', { name: 'M1919A4 (37 mm turret)', g: 'rifle762', belt: 6000 });
+  add(Object.assign({}, base, { id: 'grant', name: 'Grant I', nation: 'uk', camo: 'uk_green', year: 1942, shells: M2('g'), sp: 110, rp: 380,
+    desc: 'The M3 built for Britain: a longer cast turret with room for the radio in a bustle and no cupola, so a lower silhouette. At Gazala in 1942 its 75 mm was the first British tank gun that could outrange the German anti-tank screens with high explosive.' }), 'm4a1', { name: 'M1919A4 (37 mm turret)', g: 'rifle762', belt: 6000 });
+  for (const id of ['m3lee', 'grant']) if (TANK_GEAR[id]) TANK_GEAR[id].mg = false;
+  // Pz.Kpfw. IV Ausf. E (1940-41): the short 7.5 cm KwK 37 L/24, 30 mm plate bolted over the 30 mm front, 20 + 20 mm sides
+  if (TANKS.pz4f2 && !TANKS.pz4e) { const b = TANKS.pz4f2, d = Object.assign({}, b, { id: 'pz4e', name: 'Pz.Kpfw. IV E', year: 1940, gunL: 1.9, mantlet: 35,
+      armor: { hull: { front: [60, 10], side: [40, 0], rear: [20, 10] }, turret: { front: [30, 10], side: [20, 25], rear: [20, 15] } }, speed: 42, hpt: 14.3, mass: 21, reload: 4.3, traverse: 14, camo: 'de_grey',
+      shells: [S('KGrRotPz_e', 'K.Gr.rot Pz.', 'APCBC', [52, 39], 385, 40, 102), S('Sprgr34_e', 'Sprgr. 34', 'HE', 10, 420, 40, 686)], sp: 95, rp: 300,
+      desc: 'The Panzer IV as it went into Russia: built to support the other tanks with the short 7.5 cm, firing high explosive at guns and infantry. Its armour-piercing shell was slow; against a T-34 or a KV it could do little.' });
+    delete d.maxAmmo; delete d.acc; const n = tank(d); n.tl = b.tl; n.tw = b.tw; TREE_ORDER[0].push('pz4e');
+    for (const T_ of ['TUR3D', 'GUN_STYLE', 'HULL_H', 'TUR_H', 'TUR_TAPER', 'MG_SPECS', 'TANK_EXTRAS', 'FEAT_ID']) { let T = null; try { T = eval(T_); } catch (e) { } if (T && T.pz4f2 !== undefined) T.pz4e = typeof T.pz4f2 === 'object' && !Array.isArray(T.pz4f2) ? Object.assign({}, T.pz4f2) : T.pz4f2; }
+    if (TANK_GEAR.pz4f2) TANK_GEAR.pz4e = Object.assign({}, TANK_GEAR.pz4f2); }
+  // Dubno, June 1941: the German side had the short Panzer IV in its battalions; the Soviet tank divisions were full of BT-7s
+  const Mi = MISSIONS.find(q => q.id === 'c2m1'); if (Mi && Mi.x) { const i0 = Mi.x.init; Mi.x.init = function () { const r = i0.apply(this, arguments);
+      try { const W = B.map.W, H = B.map.H, D = B.map.dub; if (D && TANKS.pz4e) { const [x, y] = this.free(D.hold.x - 30, D.hold.y - 70, 10), v = B.addVehicle('pz4e', 0, x, y, 0, { ai: true, diff: 'regular', role: 'hold', goal: [x, y, 12] }); v.ai.diffKey = 'regular'; }
+        if (this.waves && TANKS.bt7) this.waves = this.waves.map(([t, l], k) => [t, l.map((id, j) => id === 'su_t26' && (j + k) % 2 ? 'bt7' : id)]); } catch (e) { console.error(e); } return r; };
+    if (Mi.side) { Mi.side.friend = ['pz3j', 'pz4e']; Mi.side.foe = ['su_t26', 'bt7', 't34_76', 'kv1']; } Mi.only = ['pz3j', 'pz4e']; }
+}
+
+// ---------------------------------------------------------------- a second gun in its own turret: the M3 Lee's and Grant's 37 mm
+// The M3 medium carried two guns: the 75 mm M2 low in the right sponson with 15 degrees of traverse either way (the main gun here) and
+// the 37 mm M6 in a small turret on the roof that turned all the way round, elevating from -7 to +60 degrees, with 178 rounds aboard.
+// The 37 mm turret is its own mesh ('mini' in the model, built round its ring) drawn at its own heading. Its gunner keeps it on whatever
+// you are aiming at; Q fires it (Q is the secondary weapon key) and X picks its next shell. AI crews fire it at their target as soon as it bears.
+const AuxGun = {
+  ELEV: [-7 * DEG, 60 * DEG],
+  ok(d) { return !!(d && d.aux); },
+  init(v) {
+    const A = v.def.aux; v.rf = null; v.rfSh = null; v.bw = null; v.bwSh = null;
+    v.ax3 = { ta: 0, el: 0, loaded: -1, reloadT: A.reload * 0.5, reloadMax: A.reload, rc: 0, next: 0, ammo: A.shells.map(sh => ({ sh, n: sh.count })) };
+  },
+  mesh(v) { try { const M = W3.WT.mesh(v.def); return M && M.aux ? M : null; } catch (e) { return null; } },
+  // world matrix of the 37 mm turret, the gun pivot and its direction
+  gun(v) {
+    if (v.def.aux.coax) { // a second gun in the main turret beside the main gun: it turns and elevates with it
+      const d = v.def, A = d.aux.coax, M = W3.WT.mesh(d), ap = d.arcPivot ? d.arcPivot[v.arcI || 0] : [0, 0], T = W3.tankMatrix(v, d.tx + ap[0], M.H + (d.mountZ || 0), v.turretAng || 0, ap[1]), e = v.gunElev || 0, c = Math.cos(e), s = Math.sin(e);
+      const R = (x, z) => { const dx = x - M.gunX, dz = z - M.gunZ; return [M.gunX + dx * c - dz * s, M.gunZ + dx * s + dz * c]; }, P = (x, y, z) => [T[0] * x + T[4] * y + T[8] * z + T[12], T[1] * x + T[5] * y + T[9] * z + T[13], T[2] * x + T[6] * y + T[10] * z + T[14]];
+      const pv = R(A.x0, A.z), mz = R(A.x1, A.z), dir = [T[0] * c + T[8] * s, T[1] * c + T[9] * s, T[2] * c + T[10] * s];
+      return { T, piv: P(pv[0], A.y, pv[1]), dir, muz: P(mz[0], A.y, mz[1]), ring: P(0, 0, 0), coax: true };
+    }
+    const M = this.mesh(v); if (!M) return null; const A = M.aux, X = v.ax3, T = W3.tankMatrix(v, A.x, A.z, X.ta, A.y), e = X.el, c = Math.cos(e), s = Math.sin(e);
+    const P = (x, z) => [T[0] * x + T[8] * z + T[12], T[1] * x + T[9] * z + T[13], T[2] * x + T[10] * z + T[14]];
+    const piv = P(A.gx, A.gz), dir = [T[0] * c + T[8] * s, T[1] * c + T[9] * s, T[2] * c + T[10] * s], L = A.L - X.rc * 0.3;
+    return { T, piv, dir, muz: [piv[0] + dir[0] * L, piv[1] + dir[1] * L, piv[2] + dir[2] * L], ring: P(0, 0) };
+  },
+  update(v, dt) {
+    const X = v.ax3, A = v.def.aux, c = v.ctrl; if (!X || !v.alive || v.z3 === undefined) return;
+    X.rc = Math.max(0, X.rc - dt * 2.5);
+    const crew = v.crewAlive() >= 3;
+    // loading
+    if (X.loaded < 0 && crew) {
+      if (!(X.reloadMax > 0)) { X.reloadMax = A.reload * (v.reloadMult ? v.reloadMult() : 1); X.reloadT = X.reloadMax; }
+      X.reloadT -= dt;
+      if (X.reloadT <= 0) { let i = X.next; if (!X.ammo[i] || X.ammo[i].n <= 0) i = X.ammo.findIndex(a => a.n > 0); if (i >= 0) { X.ammo[i].n--; X.loaded = i; } X.reloadT = 0; X.reloadMax = 0; }
+    }
+    // aiming: the player's aim point, or the AI's target
+    let tx, ty, tz; const tg = v.ai && v.ai.target;
+    if (!v.isPlayer && v.human == null && tg && tg.alive) { tx = tg.x; ty = tg.y; tz = (tg.z3 === undefined ? W3.gz(tg.x, tg.y) : tg.z3) + 1.1; }
+    else if (c.ax !== undefined) { tx = c.ax; ty = c.ay; tz = c.az; }
+    if (tx === undefined) return;
+    const G = this.gun(v); if (!G) return;
+    if (G.coax) { // laid with the main gun: it fires where that points
+      const AIc = !v.isPlayer && v.human == null, sh = (X.ammo[X.loaded >= 0 ? X.loaded : X.next] || X.ammo[0]).sh, mainBusy = v.loaded < 0 || (tg && tg.def && (tg.def.soft || tg.def.wheeled || /APC|IFV|Truck/.test(tg.def.role || '')));
+      const laid = tg && tg.alive && Math.abs(angDiff(Math.atan2(G.dir[1], G.dir[0]), Math.atan2(tg.y - v.y, tg.x - v.x))) < 0.02;
+      const shoot = AIc ? (laid && mainBusy && dist(v.x, v.y, tg.x, tg.y) < 700 && !(v.ai && v.ai.holdFire && B.time < v.ai.holdFire)) : !!c.rf;
+      if (shoot && X.loaded >= 0 && crew && !v.repairT) this.fire(v, G); return;
+    }
+    const H = W3.tankMatrix(v), base = Math.atan2(H[1], H[0]), want = angDiff(base + X.ta, Math.atan2(ty - G.ring[1], tx - G.ring[0]));
+    const rate = (A.traverse || 20) * DEG * (crew ? 1 : 0) * (v.modOK && !v.modOK('drive') ? 0.4 : 1);
+    X.ta = angNorm(X.ta + clamp(want, -rate * dt, rate * dt));
+    const sh = (X.ammo[X.loaded >= 0 ? X.loaded : X.next] || X.ammo[0]).sh, w = S3.solve(G.piv, tx, ty, tz, sh.v), hs = Math.hypot(w[0], w[1]) || 1;
+    const tan0 = H[2] * Math.cos(X.ta) + H[6] * Math.sin(X.ta), pitch = Math.atan(tan0), wantE = clamp(Math.atan(w[2] / hs) - pitch, this.ELEV[0], this.ELEV[1]);
+    X.el += clamp(wantE - X.el, -0.5 * dt, 0.5 * dt);
+    // fire: the player holds Q; the AI fires when the gun is laid on its target
+    const AIc = !v.isPlayer && v.human == null, laid = Math.abs(want) < 0.03 && Math.abs(wantE - X.el) < 0.02;
+    const shoot = AIc ? (tg && tg.alive && laid && dist(v.x, v.y, tg.x, tg.y) < 900 && !(v.ai && v.ai.holdFire && B.time < v.ai.holdFire)) : !!c.rf;
+    if (shoot && X.loaded >= 0 && crew && !v.repairT) this.fire(v, G);
+  },
+  fire(v, G) {
+    const X = v.ax3, A = v.def.aux, a0 = X.ammo[X.loaded], sh = a0.sh, hs = Math.hypot(G.dir[0], G.dir[1]) || 1, sp = 0.0012 + (Math.abs(v.vel) > 1 ? 0.004 : 0);
+    const a = Math.atan2(G.dir[1], G.dir[0]) + gauss() * sp;
+    B.spawnProj(v, sh, G.muz[0], G.muz[1], a, 'hull', 0); const p = B.projs[B.projs.length - 1];
+    if (p) { p.x = G.muz[0]; p.y = G.muz[1]; p.z = G.muz[2]; p.dx = Math.cos(a); p.dy = Math.sin(a); p.vz = (G.dir[2] / hs + gauss() * sp) * sh.v; p.aux = true; }
+    X.loaded = -1; X.rc = 1; X.reloadMax = A.reload * (v.reloadMult ? v.reloadMult() : 1); X.reloadT = X.reloadMax; v.revealT = Math.max(v.revealT || 0, 3);
+    if (a0.n <= 0 && X.ammo.every(q => q.n <= 0) && v.isPlayer) v.status(`${A.name}: out of ammunition`, '#ffb35c');
+    W3.fxZ = G.muz[2]; try { B.fxMuzzle(v, G.muz[0], G.muz[1], a, sh); } finally { W3.fxZ = undefined; }
+  },
+  // the player switches the 37 mm's next shell with X
+  cycle(v) { const X = v.ax3; if (!X) return; for (let k = 1; k <= X.ammo.length; k++) { const i = (X.next + k) % X.ammo.length; if (X.ammo[i].n > 0) { X.next = i; v.status(`${v.def.aux.name}: next round ${X.ammo[i].sh.name}`, '#cfd8dc'); return; } } },
+};
+{
+  // the M3's 37 mm M6: the Stuart's gun, firing the same M51 shot and M63 shell (178 rounds carried; how they were split was up to the crew)
+  const M6 = s => ({ name: '37 mm M6', cal: 37, reload: 3.0, traverse: 20, shells: [S('M51' + s, 'M51 APCBC', 'APCBC', [53, 40], 884, 120), S('M63' + s, 'M63 HE', 'HE', 3, 792, 58, 39)].map(q => Object.assign(q, { cal: 37 })) });
+  // the Maus: a 7.5 cm KwK 44 L/36.5 beside the 12.8 cm in the same mantlet, 200 rounds. Its own ammunition is not recorded; the L/24's rounds
+  // could be fired from it, so those are used here (velocities as from the L/24, so on the slow side)
+  if (TANKS.maus) TANKS.maus.aux = { name: '7.5 cm KwK 44', cal: 75, reload: 5.0, coax: { x0: 2.6, x1: 3.96, y: 0.47, z: 0.62 }, shells: [S('KGrRotPz_m', 'K.Gr.rot Pz.', 'APCBC', [52, 39], 385, 100, 102), S('Sprgr34_m', 'Sprgr. 34', 'HE', 10, 420, 100, 686)].map(q => Object.assign(q, { cal: 75 })) };
+  if (TANKS.m3lee) TANKS.m3lee.aux = M6('x');
+  if (TANKS.grant) TANKS.grant.aux = M6('y');
+  const im0 = initMG;
+  initMG = function (v) { im0(v); if (AuxGun.ok(v.def)) AuxGun.init(v); };
+  const up0 = Vehicle.prototype.update;
+  Vehicle.prototype.update = function (dt) {
+    up0.apply(this, arguments);
+    if (this.ax3) { this.rf = null; this.bw = null; if (B && !(B.net === 'client')) { try { AuxGun.update(this, dt); } catch (e) { } } }
+  };
+  // the HUD: the second gun's state under the main gun's
+  if (typeof Render !== 'undefined' && Render.ammoBar) {
+    const ab0 = Render.ammoBar;
+    Render.ammoBar = function (c, v, cx, y) {
+      ab0.apply(this, arguments); const X = v && v.ax3; if (!X) return;
+      const n = X.ammo.reduce((s, q) => s + q.n, 0) + (X.loaded >= 0 ? 1 : 0), nx = X.ammo[X.next];
+      const st = X.loaded >= 0 ? `${X.ammo[X.loaded].sh.name} LOADED` : n > 0 ? `RELOADING ${Math.max(0, X.reloadT).toFixed(1)} s` : 'OUT OF AMMO';
+      this.text(c, `${v.def.aux.name.toUpperCase()}${v.def.aux.coax ? '' : ' TURRET'} · ${st} · NEXT ${nx ? nx.sh.name : '—'} (${n}) · [Q] FIRE · [X] SHELL`, cx, y - 28, X.loaded >= 0 ? '#e8dcae' : '#ffb35c', 12, 'center', 700);
+    };
+  }
+  { const da0 = doAction; doAction = function (v, a, i) { if (a === 'gun' && v && v.ax3) return; if (a === 'auxsh' && v && v.ax3) { AuxGun.cycle(v); return; } return da0.apply(this, arguments); }; }
+  { const pa0 = playerActions; playerActions = function (v) { pa0(v); if (Input.pressed && Input.pressed.KeyX && v && v.ax3) { if (B.net === 'client') Net.toHost({ t: 'act', a: 'auxsh' }); else AuxGun.cycle(v); } }; }
+  if (typeof Binds !== 'undefined') { const g = Binds.groups.find(q => q[0] === 'Weapons'); if (g && !g[1].some(a => a[0] === 'KeyX')) g[1].splice(2, 0, ['KeyX', 'Second gun: next shell (M3 Lee / Grant)']); }
+  // the tank page lists the second gun and its rounds
+  if (typeof TankPage !== 'undefined' && TankPage.secondary) {
+    const sec0 = TankPage.secondary;
+    TankPage.secondary = function (d) { let h = sec0.call(this, d); if (d && d.aux) { h += this.line('Second gun', d.aux.coax ? `${d.aux.name}, beside the main gun` : `${d.aux.name}, own turret, full traverse`); for (const sh of d.aux.shells) h += this.line(sh.name, `${sh.type} · ${sh.pen[0]} mm · ${sh.v} m/s · ${sh.count} rounds`); } return h; };
+  }
+  // AI: the 37 mm takes over the secondary trigger, so the roof-gun logic must not clear it
+  if (typeof AI !== 'undefined') { const au0 = AI.prototype.update; AI.prototype.update = function (dt) { au0.call(this, dt); const v = this.v; if (v && v.ax3) v.ctrl.rf = false; }; }
+}
+
+// ---------------------------------------------------------------- visible crew: the commander up in his hatch
+// Tank commanders of every period spent most of their time with their head and shoulders out of the cupola, because a man looking out
+// sees far more than one looking through vision blocks; under fire they dropped inside and closed up. Every turreted tank now shows its
+// commander standing in the cupola: the spot is found on the model itself (rays down onto the turret roof round the cupola, the
+// highest ring of roof there is the cupola's rim), he wears his country's headgear for the period, and he ducks inside for half a
+// minute after the tank is hit, while its gun fires, and whenever you are in the gunner's sight. Vehicles whose crews already show
+// (open-topped ones) and the M3's sponson mount are left as they were.
+const CmdrUp = {
+  // the spot on the turret roof, found while the model is built (turret-local coordinates)
+  spot(d, groups) {
+    try {
+      if (!d || !d.turret || d.soft || d.turretShape === 'mount' || d.jugg) return null; const A = groups.tur; if (!A || A.length < 39 * 20) return null;
+      const cast = W3Perf.rayGrid(A, i => Math.abs(A[i + 12]) < 0.5), c0 = cupolaPos(d), hits = [];
+      for (let dx = -0.5; dx <= 0.5001; dx += 0.1) for (let dy = -0.45; dy <= 0.4501; dy += 0.09) {
+        const x = c0.x + dx, y = (c0.y || 0) + dy, h = cast([x, y, 9], [0, 0, -1], 12); if (!h || h.n[2] < 0.55) continue; hits.push([x, y, h.p[2]]);
+      }
+      if (hits.length < 6) return null;
+      // the highest patch of roof wide enough to be a hatch (a sight head or a post is only a few rays wide)
+      const zs = hits.map(q => q[2]).sort((a, b) => b - a); let top = null; for (const z of zs) { if (hits.filter(q => Math.abs(q[2] - z) < 0.035).length >= 7) { top = z; break; } } if (top === null) return null;
+      const ring = hits.filter(q => Math.abs(q[2] - top) < 0.035); let sx = 0, sy = 0; for (const q of ring) { sx += q[0]; sy += q[1]; }
+      return { x: sx / ring.length, y: sy / ring.length, z: top };
+    } catch (e) { return null; }
+  },
+  kit(d) {
+    const n = d.nation, e = d.era || 1, K = CrewGeo.KIT;
+    if (n === 'de') return e >= 3 ? { hat: 'tanker', uni: [0.3, 0.33, 0.26], pants: [0.28, 0.3, 0.24] } : K.de;
+    if (n === 'ussr' || n === 'ru') return e >= 3 ? { hat: 'shlem', uni: [0.3, 0.32, 0.24], pants: [0.28, 0.3, 0.22] } : K.ussr;
+    if (n === 'uk') return e >= 3 ? { hat: 'tanker', uni: [0.34, 0.35, 0.26], pants: [0.3, 0.31, 0.23] } : K.uk;
+    if (n === 'jp') return e >= 3 ? { hat: 'tanker', uni: [0.33, 0.36, 0.27], pants: [0.3, 0.32, 0.24] } : K.jp;
+    if (n === 'cn') return { hat: 'shlem', uni: [0.32, 0.36, 0.24], pants: [0.3, 0.33, 0.22] };
+    if (n === 'fr' || n === 'it') return e >= 3 ? { hat: 'tanker', uni: [0.34, 0.35, 0.26], pants: [0.3, 0.31, 0.23] } : { hat: 'beret', uni: [0.4, 0.38, 0.27], pants: [0.36, 0.34, 0.24] };
+    if (n === 'kr') return K.kr; return K.us;
+  },
+  // one mesh per tank type and pose (three ways of looking about), in turret-local coordinates
+  mesh(d, M, k) {
+    const key = 'cmd_' + d.id + '_' + k; if (this._ok && this._ok.has(key)) return Phys.bufs.get(key);
+    const o = [], S = M.cmdr, Ph = Phys, poly = (g, pts, col, ctr) => { const n0 = V3.norm(V3.cross(V3.sub(pts[1], pts[0]), V3.sub(pts[2], pts[0]))), n = ctr && V3.dot(V3.sub(pts[0], ctr), n0) < 0 ? V3.mul(n0, -1) : n0; for (let i = 1; i < pts.length - 1; i++) for (const j of [0, i, i + 1]) Ph.V(o, pts[j], n, col); };
+    const p = [S.x, S.y, S.z - 0.3], look = [0, 0.7, -0.6][k], yaw = [0, 0.25, -0.2][k];
+    // one hand on the hatch rim, the other at his headset or on the rim too
+    const rim = (a, r) => [S.x + Math.cos(a) * r, S.y + Math.sin(a) * r, S.z + 0.02];
+    CrewGeo.build(poly, (c, m = 1) => [c[0] * m, c[1] * m, c[2] * m, 0], 'x', p, yaw, Object.assign({}, this.kit(d), { look, seed: (d.id.length * 7 + k) * 3.1, hands: k === 1 ? [rim(yaw + 0.9, 0.3), [p[0] + 0.06, p[1] + 0.12, p[2] + 0.72]] : [rim(yaw + 0.9, 0.3), rim(yaw - 0.9, 0.3)] }));
+    const b = Ph.buf(key, new Float32Array(o)); (this._ok || (this._ok = new Set())).add(key); return b;
+  },
+  up(v) {
+    if (!v.alive || v.turretOff || v.hidden) return false; if (v.has && !v.has('commander')) return false;
+    if (B.time - (v.lastHitT || -99) < 30) return false;
+    if (v.flashT > 0 || (v.reloadMax > 0 && v.reloadT > v.reloadMax - 1.5)) return false; // the gun has just fired
+    if (v === B.player && B.cam && B.cam.sight) return false;
+    if (v.fire) return false;
+    return true;
+  },
+  draw(list, shadow) {
+    if (!B || !W3.view) return; const gl = W3.gl, WT = W3.WT, eye = W3.view.eye; let set = false; const now = performance.now(), dt = shadow ? 0 : clamp((now - (this._t || now)) / 1000, 0, 0.05); if (!shadow) this._t = now;
+    for (const v of list) {
+      const d = v.def; if (!d || !d.turret || v.turretOff) continue; let M; try { M = WT.mesh(d); } catch (e) { continue; } if (!M || !M.cmdr || (M.crew && M.crew.length)) continue;
+      const dc = Math.hypot(v.x - eye[0], v.y - eye[1]); if (dc > (shadow ? 90 : 230)) continue;
+      const want = this.up(v) ? 1 : 0; if (!shadow) { v._cmU = v._cmU === undefined ? want : clamp(v._cmU + (want - v._cmU < 0 ? -2.5 : 0.8) * dt, 0, 1); }
+      const u = v._cmU || 0; if (u <= 0.02) continue;
+      if (!set) { set = true; Phys.prep0(shadow); }
+      const k = Math.floor(((B.time || 0) * 0.13 + (v.id || 0) * 0.37) % 3), ap = d.arcPivot ? d.arcPivot[v.arcI || 0] : [0, 0], drop = (1 - u * u * (3 - 2 * u)) * 0.95;
+      gl.uniformMatrix4fv((shadow ? W3.P.sTank : W3.P.tank).U.uM, false, W3.tankMatrix(v, d.tx + ap[0], M.H + (d.mountZ || 0) - drop, v.turretAng || 0, ap[1]));
+      WT.draw(gl, this.mesh(d, M, k));
+    }
+  },
+};
+if (typeof W3 !== 'undefined') {
+  const d0 = W3.drawTankList; W3.drawTankList = function (list, shadow) { const r = d0.apply(this, arguments); try { CmdrUp.draw(list, shadow); } catch (e) { if (!CmdrUp._e) { CmdrUp._e = 1; console.error(e); } } return r; };
+}
+
+// ---------------------------------------------------------------- infantry anti-tank teams
+// Two-man teams that hide in cover and fire at enemy armour that comes into range, and that tanks have to hunt with machine guns and
+// high explosive. What they carry follows the side and the period:
+//  Second World War, anti-tank rifles, in a foxhole behind a parapet:
+//   PTRD-41 (Soviet): 14.5 mm B-32, 1,012 m/s, 40 mm at 100 m and about 30 mm at 500 m; single shot, crew of two.
+//   Boys (British): .55 Boys W Mk I, 747 m/s, 23.2 mm at 100 yd and 18.8 mm at 500 yd; five-round magazine, about 10 rounds a minute.
+//   Panzerbuchse 39 (German, 1939-41): 7.92 x 94 mm, 1,265 m/s, 30 mm at 100 m and 25 mm at 300 m; single shot.
+//  Cold War and modern, rocket launchers, kneeling behind cover:
+//   RPG-7 with PG-7V (1961): one 85 mm HEAT charge, 260 mm; 115 m/s off the launcher, about 300 m/s once the rocket motor has burned.
+//   RPG-7 with PG-7VL (1977): one 93 mm charge, 500 mm. And PG-7VR (1988): a tandem charge, 750 mm, or 600 mm behind reactive armour.
+//   RPG-29 with PG-29V (1989): tandem, 750 mm, 650 mm behind reactive armour; 280 m/s, 500 m effective range.
+//   AT4 (Swedish, the US M136; 1987): one 84 mm HEAT charge, 420 mm; 285 m/s, 300 m against a point target; a throwaway tube.
+// A single shaped charge is what explosive reactive armour was built to defeat: a block that goes off breaks up the jet. A tandem
+// warhead's small first charge sets the block off and the main charge goes through the gap.
+SHELL_TYPES.ATR = { label: 'AT rifle', ric: [50, 64], norm: 5, ke: true, frags: 3, cone: 14, fdmg: [8, 16], frange: 1.4, color: '#ffd27a' };
+const Inf = {
+  W: {
+    ptrd: { name: 'PTRD-41 anti-tank rifle', short: 'PTRD team', sh: () => S('i_ptrd', '14.5 mm B-32', 'ATR', [42, 18], 1012, 0), range: 320, reload: 6.5, aim: 2.6, ammo: 24, hole: true, err: 0.0035, kit: 'ussr' },
+    boys: { name: 'Boys anti-tank rifle', short: 'Boys team', sh: () => S('i_boys', '.55 Boys W Mk I', 'ATR', [24, 12], 747, 0), range: 300, reload: 5.5, aim: 2.4, ammo: 30, hole: true, err: 0.0035, kit: 'uk' },
+    pzb: { name: 'Panzerbuchse 39', short: 'PzB 39 team', sh: () => S('i_pzb', '7.92 mm Patrone 318', 'ATR', [32, 8], 1265, 0), range: 300, reload: 6, aim: 2.4, ammo: 30, hole: true, err: 0.0035, kit: 'de' },
+    rpg7: { name: 'RPG-7', short: 'RPG-7 team', sh: () => S('i_pg7v', 'PG-7V', 'HEAT', 260, 240, 0), range: 300, reload: 11, aim: 3.0, ammo: 5, rocket: 1, err: 0.009, kit: 'ru' },
+    rpg7m: { name: 'RPG-7V', short: 'RPG-7 team', sh: () => S('i_pg7vl', 'PG-7VL', 'HEAT', 500, 240, 0), sh2: () => Object.assign(S('i_pg7vr', 'PG-7VR (tandem)', 'HEAT', 750, 200, 0), { tandem: true, eraPen: 600 }), range: 260, reload: 11, aim: 3.0, ammo: 5, rocket: 1, err: 0.009, kit: 'ru' },
+    rpg29: { name: 'RPG-29', short: 'RPG-29 team', sh: () => Object.assign(S('i_pg29v', 'PG-29V (tandem)', 'HEAT', 750, 280, 0), { tandem: true, eraPen: 650 }), range: 480, reload: 22, aim: 3.6, ammo: 3, rocket: 2, err: 0.006, kit: 'ru' },
+    at4: { name: 'AT4', short: 'AT4 team', sh: () => S('i_at4', 'AT4 HEAT', 'HEAT', 420, 285, 0), range: 300, reload: 7, aim: 2.8, ammo: 3, rocket: 3, err: 0.007, kit: 'west' },
+  },
+  // which weapon a side carries in a period (none where its infantry had no such weapon in the game's frame)
+  pick(nat, era) {
+    const east = nat === 'ussr' || nat === 'ru' || nat === 'cn';
+    if (era <= 2) return east ? 'ptrd' : nat === 'uk' && era === 1 ? 'boys' : nat === 'de' && era === 1 ? 'pzb' : null;
+    if (era === 3) return east ? 'rpg7' : 'at4';
+    return east ? 'rpg7m' : 'at4';
+  },
+  KIT: {
+    ussr: { hat: 'm1', uni: [0.42, 0.4, 0.28], pants: [0.36, 0.34, 0.24] }, uk: { hat: 'm1', uni: [0.44, 0.39, 0.27], pants: [0.4, 0.35, 0.24] }, de: { hat: 'stahl', uni: [0.34, 0.36, 0.31], pants: [0.3, 0.32, 0.28] },
+    ru: { hat: 'm1', uni: [0.33, 0.35, 0.26], pants: [0.3, 0.32, 0.24] }, west: { hat: 'm1', uni: [0.42, 0.4, 0.3], pants: [0.4, 0.37, 0.28] }, snow: { hat: 'm1', uni: [0.78, 0.79, 0.78], pants: [0.72, 0.73, 0.72] },
+  },
+  list() { return (B && B.inf) || []; },
+  // a team: two men side by side facing the enemy
+  place(team, kind, x, y, face, o = {}) {
+    const W = this.W[kind]; if (!W || !B) return null; B.inf = B.inf || [];
+    const t = { kind, W, team, x, y, a: face, sh: W.sh(), sh2: W.sh2 ? W.sh2() : null, n: W.ammo, cd: rnd(1, 4), aimT: 0, trk: null, lookT: 0, revealT: -99, supp: 0, duck: 0, fired: 0, id: (this._id = (this._id || 0) + 1), kit: o.kit || W.kit, gone: false,
+      men: [{ s: 0, alive: true }, { s: 1, alive: true }] };
+    const c = Math.cos(face), s = Math.sin(face);
+    t.men[0].x = x; t.men[0].y = y; t.men[1].x = x - c * (W.hole ? 0.2 : 1.1) - s * 1.0; t.men[1].y = y - s * (W.hole ? 0.2 : 1.1) + c * 1.0;
+    t.z = W3.gz(x, y); B.inf.push(t); return t;
+  },
+  // team battles: a few teams for each side, in cover a little way out from where its tanks start
+  autoSpawn() {
+    B.inf = B.inf || []; if (B.net || B.demo || B.preview || !(B.mode instanceof TeamMode) || B.mode.demo || (B.cfg && (B.cfg.testDrive || B.cfg.gm === 'test'))) return;
+    const m = B.map, W = m.W, H = m.H, R = mulberry32(((B.mode && B.mode.seed) || 7) * 31 + 5);
+    for (const team of [0, 1]) {
+      const vs = B.vehicles.filter(v => v.team === team && v.def && !v.hidden); if (!vs.length) continue;
+      const nat = {}; for (const v of vs) nat[v.def.nation] = (nat[v.def.nation] || 0) + 1; let top = Object.keys(nat).sort((a, b) => nat[b] - nat[a])[0]; const era = Math.max(...vs.map(v => v.def.era || 1));
+      // the player's side carries his own country's weapon; the other side is the other bloc's
+      const P = B.player, east = n => n === 'ussr' || n === 'ru' || n === 'cn'; if (P && P.def) { if (P.team === team) top = P.def.nation; else if (east(top) === east(P.def.nation)) top = east(P.def.nation) ? (era <= 2 ? 'de' : 'us') : 'ussr'; }
+      const kind0 = this.pick(top, era); if (!kind0) continue;
+      let cx = 0, cy = 0; for (const v of vs) { cx += v.x; cy += v.y; } cx /= vs.length; cy /= vs.length;
+      const ex = W - cx, ey = H - cy, face = Math.atan2(ey - cy, ex - cx); let k = 0;
+      for (let tries = 0; tries < 400 && k < 3; tries++) {
+        const f = 0.22 + R() * 0.2, x = clamp(lerp(cx, W / 2, f * 2) + (R() - 0.5) * W * 0.35, 40, W - 40), y = clamp(lerp(cy, H / 2, f * 2) + (R() - 0.5) * H * 0.55, 40, H - 40);
+        if (!this.freeAt(x, y) || !this.coverAt(x, y) || this.list().some(q => dist(q.x, q.y, x, y) < 70) || vs.some(v => dist(v.x, v.y, x, y) < 60)) continue;
+        const kind = kind0 === 'rpg7m' && k === 2 ? 'rpg29' : kind0; this.place(team, kind, x, y, face + (R() - 0.5) * 0.6, { kit: m.theme && m.theme() && m.theme().snow && kind0 !== 'at4' ? 'snow' : undefined }); k++;
+      }
+    }
+  },
+  freeAt(x, y) { const m = B.map; if (m.collidesStatic(x, y, 2.2)) return false; const g = m.groundAt(x, y); if (g === G_ROAD || g === G_WATER || (typeof G_BOG !== 'undefined' && g === G_BOG) || g === G_CLIFF) return false; if (typeof W3Water !== 'undefined' && W3Water.at(m, x, y) !== null) return false; return true; },
+  coverAt(x, y) { const m = B.map; for (const r of [5, 8, 11]) for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; if (m.collidesStatic(x + Math.cos(a) * r, y + Math.sin(a) * r, 1)) return true; } return (m.trees || []).some(t => Math.abs(t.x - x) < 9 && Math.abs(t.y - y) < 9); },
+  alive(t) { return t.men.some(q => q.alive); },
+  owner(t) { const L = B.vehicles.filter(v => v.team === t.team && v.alive); return L.find(v => !v.hidden && v !== B.player && v.human == null) || L.find(v => v !== B.player && v.human == null) || L[0] || null; },
+  // ---------------------------------------------------------------- each frame
+  update(dt) {
+    const L = this.list(); if (!L.length || !dt) return;
+    this.passes(dt);
+    for (const t of L) {
+      if (t.gone) continue; if (!this.alive(t)) { t.gone = true; continue; }
+      t.supp = Math.max(0, t.supp - dt); t.duck = Math.max(0, t.duck - dt); t.cd -= dt; t.lookT -= dt;
+      // run over by a tank
+      for (const v of B.vehicles) { if (!v.alive || v.hidden || dist(v.x, v.y, t.x, t.y) > v.def.L + 3) continue; for (const q of t.men) { if (!q.alive) continue; const [lx, ly] = toLocal(q.x, q.y, v.x, v.y, v.ang); if (Math.abs(lx) < v.def.L / 2 + 0.3 && Math.abs(ly) < v.def.W / 2 + 0.2) this.kill(t, q, v, 'crushed'); } }
+      if (!this.alive(t) || t.n <= 0) continue;
+      // pick a target every half second: the nearest enemy they can see inside their range
+      if (t.lookT <= 0) { t.lookT = 0.5; let best = null, bd = t.W.range * 1.1; const z0 = t.z + 1;
+        for (const v of B.vehicles) { if (!v.alive || v.hidden || v.team === t.team) continue; const d = dist(t.x, t.y, v.x, v.y); if (d > bd) continue; if (B.map.los(t.x, t.y, v.x, v.y, B.smokes) < 0.35) continue; best = v; bd = d; }
+        if (best !== t.trk) { t.trk = best; t.aimT = t.W.aim * rnd(0.8, 1.4) * (best && best.isPlayer ? 1.15 : 1); } }
+      const v = t.trk; if (!v || !v.alive) continue; t.a = lerp(t.a, t.a + angDiff(t.a, Math.atan2(v.y - t.y, v.x - t.x)), clamp(dt * 3, 0, 1));
+      if (t.supp > 0) continue; t.aimT -= dt; if (t.aimT > 0 || t.cd > 0) continue;
+      this.fire(t, v);
+    }
+    this.markPasses();
+  },
+  fire(t, v) {
+    const own = this.owner(t); if (!own) { t.cd = 2; return; }
+    const g = t.men.find(q => q.alive && q.s === 0) || t.men.find(q => q.alive); const W = t.W, rocket = !!W.rocket;
+    // the second rocket of an RPG-7 team with both kinds aboard: the tandem round for a tank wearing reactive armour
+    const sh = t.sh2 && v.era ? t.sh2 : t.sh;
+    const z0 = t.z + (W.hole ? 0.75 : 1.15), x0 = g.x + Math.cos(t.a) * 0.9, y0 = g.y + Math.sin(t.a) * 0.9;
+    const vz3 = v.z3 === undefined ? W3.gz(v.x, v.y) : v.z3, tz = vz3 + hullHeight(v.def) * 0.6 + rnd(-0.25, 0.35);
+    let tx = v.x, ty = v.y; const fl = dist(x0, y0, tx, ty) / sh.v; tx += Math.cos(v.ang) * (v.vel || 0) * fl * rnd(0.6, 1.1); ty += Math.sin(v.ang) * (v.vel || 0) * fl * rnd(0.6, 1.1); // lead, roughly judged
+    const sol = S3.solve([x0, y0, z0], tx, ty, tz, sh.v), err = W.err * (1 + (v.vel ? Math.min(1.5, Math.abs(v.vel) / 8) : 0)) * (B.mode && B.mode.dz ? B.mode.dz().err : 1);
+    const a = Math.atan2(sol[1], sol[0]) + gauss() * err;
+    B.spawnProj(own, sh, x0, y0, a, 'hull', 0); const p = B.projs[B.projs.length - 1];
+    if (p) { p.x = x0; p.y = y0; p.z = z0; p.dx = Math.cos(a); p.dy = Math.sin(a); p.vz = (sol[2] + gauss() * err) * sh.v; p.range = rocket ? (W.rocket === 2 ? 900 : 700) : 1200; p.infP = t; p.ignore = null; if (rocket) p.rocketT = 0; }
+    t.n--; t.fired++; t.cd = W.reload * rnd(0.9, 1.25); t.aimT = W.aim * 0.4; t.revealT = B.time + (rocket ? 20 : 12); t.duck = rocket ? 1.6 : 0.6;
+    // the shot: a muzzle flash, and for the rockets the back-blast kicking up a cloud of dust behind the gunner
+    W3.fxZ = z0; try {
+      FX.add('flash', x0, y0, { r: rocket ? 1.4 : 0.9, life: 0.08, add: true });
+      if (rocket) { const bx = g.x - Math.cos(t.a) * 1.4, by = g.y - Math.sin(t.a) * 1.4; for (let i = 0; i < 7; i++) FX.add('smoke', bx - Math.cos(t.a) * rnd(0, 4) + rnd(-1, 1), by - Math.sin(t.a) * rnd(0, 4) + rnd(-1, 1), { r: rnd(0.8, 1.6), gr: 2.2, life: rnd(1.6, 3), a: 0.45, wind: 1 }); }
+      else for (let i = 0; i < 2; i++) FX.add('smoke', x0 + rnd(-0.5, 0.5), y0 + rnd(-0.5, 0.5), { r: rnd(0.4, 0.7), gr: 1.2, life: rnd(1, 1.6), a: 0.3, wind: 1 });
+    } finally { W3.fxZ = undefined; }
+    Sfx.play('cannon', x0, y0, rocket ? 0.5 : 0.3);
+    if (v === B.player && B.time - (this._tip || -99) > 40) { this._tip = B.time; B.hudMsg(rocket ? `${W.name} fired at you from cover` : `Anti-tank rifle fire (${W.name})`, '#ff9f7a'); }
+  },
+  // ---------------------------------------------------------------- what hurts them
+  kill(t, q, by, how) {
+    if (!q.alive) return; q.alive = false; q.t = B.time;
+    if (!this.alive(t) && !t.gone) { t.gone = true; if (by && by === B.player) B.hudMsg(`${t.W.short} knocked out${how === 'crushed' ? ' (run over)' : ''}`, '#9fd18a'); }
+  },
+  blast(p, x, y) {
+    const L = this.list(); if (!L.length || !p || !p.sh) return; const T = p.T || SHELL_TYPES[p.sh.type], mg = p.sh.type === 'MG', he = T && T.he, chem = T && T.chem, by = p.owner;
+    const r0 = he ? 1.6 + Math.sqrt(Math.max(10, p.sh.ex || 30)) * 0.26 : chem ? 2.6 : mg ? 0.9 : 1.1;
+    for (const t of L) {
+      if (t.gone || t === p.infP || dist(t.x, t.y, x, y) > r0 * 3 + 8) continue;
+      for (const q of t.men) {
+        if (!q.alive) continue; const d = dist(q.x, q.y, x, y), r = r0 * (t.W.hole ? 0.6 : 1) * (t.duck > 0 || t.supp > 0 ? 0.8 : 1);
+        if (d < r && Math.random() < (he || chem ? 1.25 : 0.55) * (1 - d / r) + (he ? 0.2 : 0)) this.kill(t, q, by, he || chem ? 'blast' : 'hit');
+        if (d < Math.max(6, r * 3)) t.supp = Math.max(t.supp, he || chem ? 4 : 1.8);
+      }
+    }
+  },
+  // shells and bullets that pass through a man on their way
+  passes() {
+    for (const p of B.projs) {
+      if (!p.alive || p.infP && p.age < 0.15 || p._ix === undefined) continue; const ax = p._ix, ay = p._iy, az = p._iz, bx = p.x, by = p.y, bz = p.z;
+      for (const t of this.list()) {
+        if (t.gone || t === p.infP) continue; const minx = Math.min(ax, bx) - 2, maxx = Math.max(ax, bx) + 2, miny = Math.min(ay, by) - 2, maxy = Math.max(ay, by) + 2; if (t.x < minx || t.x > maxx || t.y < miny || t.y > maxy) continue;
+        for (const q of t.men) {
+          if (!q.alive) continue; const zq = t.z + (t.W.hole ? 0.55 : 0.8), dx = bx - ax, dy = by - ay, dz = bz - az, L2 = dx * dx + dy * dy + dz * dz || 1e-6, u = clamp(((q.x - ax) * dx + (q.y - ay) * dy + (zq - az) * dz) / L2, 0, 1);
+          const cx = ax + dx * u, cy = ay + dy * u, cz = az + dz * u; if (Math.hypot(cx - q.x, cy - q.y, cz - zq) > 0.45) continue;
+          if (p.T.he || p.T.chem) { p.x = cx; p.y = cy; p.z = cz; W3.fxZ = cz; try { impactWorld(p, cx, cy, 'ground'); } finally { W3.fxZ = undefined; } p.alive = false; }
+          else { this.kill(t, q, p.owner, 'hit'); t.supp = Math.max(t.supp, 2); if (p.sh.type !== 'MG') p.penK *= 0.8; }
+          break;
+        }
+        if (!p.alive) break;
+      }
+    }
+  },
+  markPasses() { for (const p of B.projs) { p._ix = p.x; p._iy = p.y; p._iz = p.z; if (p.rocketT !== undefined && p.alive) { p.rocketT += 1; if (p.rocketT % 2 === 0) { W3.fxZ = p.z; try { FX.add('smoke', p.x - p.dx * 1.5, p.y - p.dy * 1.5, { r: 0.35, gr: 0.9, life: 1.1, a: 0.32, wind: 1 }); } finally { W3.fxZ = undefined; } } } } },
+  // ---------------------------------------------------------------- the men
+  meshFor(t) {
+    const o = [], Ph = Phys, poly = (g, pts, col, ctr) => { const n0 = V3.norm(V3.cross(V3.sub(pts[1], pts[0]), V3.sub(pts[2], pts[0]))), n = ctr && V3.dot(V3.sub(pts[0], ctr), n0) < 0 ? V3.mul(n0, -1) : n0; for (let i = 1; i < pts.length - 1; i++) for (const j of [0, i, i + 1]) Ph.V(o, pts[j], n, col); };
+    const K = this.KIT[t.kit] || this.KIT.west, W = t.W, gz = (x, y) => W3.gz(x, y), dark = [0.12, 0.11, 0.1], steel = [0.2, 0.2, 0.19], wood = [0.36, 0.25, 0.15], olive = [0.27, 0.3, 0.2];
+    const fa = t.a, f = [Math.cos(fa), Math.sin(fa)], sd = [-f[1], f[0]];
+    if (W.hole) { // the foxhole: a dark pit and a parapet of earth and sandbags in front and round the sides
+      const z = gz(t.x, t.y), c = [t.x - f[0] * 0.3 + sd[0] * 0.5, t.y - f[1] * 0.3 + sd[1] * 0.5];
+      for (let k = 0; k < 14; k++) { const a0 = k / 14 * TAU, a1 = (k + 1) / 14 * TAU, r = 1.55; poly('x', [[c[0], c[1], z + 0.04], [c[0] + Math.cos(a0) * r, c[1] + Math.sin(a0) * r, gz(c[0] + Math.cos(a0) * r, c[1] + Math.sin(a0) * r) + 0.04], [c[0] + Math.cos(a1) * r, c[1] + Math.sin(a1) * r, gz(c[0] + Math.cos(a1) * r, c[1] + Math.sin(a1) * r) + 0.04]], [0.16, 0.13, 0.1, 0], [c[0], c[1], z - 2]); }
+      for (let row = 0; row < 3; row++) for (let k = 0; k < 18 - row * 2; k++) { const n = 18 - row * 2, a = fa - 1.9 + (k + (row % 2) * 0.5) / n * 3.8, r = 1.7, x = c[0] + Math.cos(a) * r, y = c[1] + Math.sin(a) * r, zz = gz(x, y); Ph.obox(o, [x, y, zz + 0.08 + row * 0.15], [Math.cos(a + Math.PI / 2), Math.sin(a + Math.PI / 2), 0], [Math.cos(a), Math.sin(a), 0], [0, 0, 1], 0.29, 0.15, 0.075, (k + row) % 3 ? [0.44, 0.4, 0.3] : [0.38, 0.33, 0.24]); }
+    }
+    for (const q of t.men) {
+      if (!q.alive) continue; const z = gz(q.x, q.y), gun = q.s === 0, low = t.duck > 0 || t.supp > 0;
+      if (W.hole) { // standing in the pit, the rifle laid over the parapet on its bipod
+        const p = [q.x, q.y, z - (low ? 0.7 : 0.08)], sh = [p[0] + f[0] * 0.12 + sd[0] * 0.1, p[1] + f[1] * 0.12 + sd[1] * 0.1, p[2] + 0.48];
+        if (gun) { const butt = [sh[0] - f[0] * 0.15, sh[1] - f[1] * 0.15, sh[2]], mz = [sh[0] + f[0] * 1.9, sh[1] + f[1] * 1.9, sh[2] + 0.02]; if (!low) { Ph.tube(o, butt, [sh[0] + f[0] * 0.55, sh[1] + f[1] * 0.55, sh[2] + 0.02], 0.045, 0.035, wood, 6); Ph.tube(o, [sh[0] + f[0] * 0.5, sh[1] + f[1] * 0.5, sh[2] + 0.02], mz, 0.022, 0.018, steel, 6); Ph.obox(o, [mz[0] - f[0] * 0.06, mz[1] - f[1] * 0.06, mz[2]], [f[0], f[1], 0], [sd[0], sd[1], 0], [0, 0, 1], 0.07, 0.04, 0.04, dark); const bp = [sh[0] + f[0] * 1.3, sh[1] + f[1] * 1.3, sh[2]]; for (const s of [-1, 1]) Ph.tube(o, bp, [bp[0] + sd[0] * s * 0.18 + f[0] * 0.1, bp[1] + sd[1] * s * 0.18 + f[1] * 0.1, gz(bp[0], bp[1]) + 0.36], 0.012, 0.012, steel, 4); }
+          CrewGeo.build(poly, (c, m = 1) => [c[0] * m, c[1] * m, c[2] * m, 0], 'x', p, fa, Object.assign({}, K, { lean: low ? 0 : 0.5, seed: t.id * 3 + 1, hands: low ? null : [[sh[0] + f[0] * 0.5, sh[1] + f[1] * 0.5, sh[2] - 0.02], [sh[0] + f[0] * 0.05 + sd[0] * 0.02, sh[1] + f[1] * 0.05 + sd[1] * 0.02, sh[2] - 0.05]] })); }
+        else CrewGeo.build(poly, (c, m = 1) => [c[0] * m, c[1] * m, c[2] * m, 0], 'x', [q.x, q.y, z - (low ? 0.75 : 0.12)], fa + 0.2, Object.assign({}, K, { seed: t.id * 3 + 2, look: 0.5, hands: [[q.x + f[0] * 0.5 + sd[0] * 0.2, q.y + f[1] * 0.5 + sd[1] * 0.2, z + 0.1], [q.x + f[0] * 0.5 - sd[0] * 0.2, q.y + f[1] * 0.5 - sd[1] * 0.2, z + 0.1]] }));
+      } else { // kneeling, the launcher on the right shoulder
+        const p = [q.x, q.y, z + 0.55 - (low ? 0.12 : 0)], sh = [p[0] - sd[0] * 0.2 + f[0] * 0.02, p[1] - sd[1] * 0.2 + f[1] * 0.02, p[2] + 0.5];
+        const tubeL = W.rocket === 2 ? 1.85 : W.rocket === 3 ? 1.02 : 0.95, r = W.rocket === 2 ? 0.06 : W.rocket === 3 ? 0.045 : 0.022, back = W.rocket === 3 ? 0.55 : 0.45;
+        if (gun && (!low || t.duck > 0)) {
+          const a0 = [sh[0] - f[0] * back, sh[1] - f[1] * back, sh[2] + 0.06], a1 = [sh[0] + f[0] * (tubeL - back), sh[1] + f[1] * (tubeL - back), sh[2] + 0.08];
+          Ph.tube(o, a0, a1, r, r, W.rocket === 3 ? [0.3, 0.33, 0.24] : W.rocket === 2 ? olive : steel, 8);
+          if (W.rocket === 1) { Ph.tube(o, [a0[0] + f[0] * 0.3, a0[1] + f[1] * 0.3, a0[2]], [a0[0] + f[0] * 0.62, a0[1] + f[1] * 0.62, a0[2] + 0.01], 0.034, 0.034, wood, 6); if (t.cd <= 0.5 || t.aimT > 0) { const w0 = [a1[0], a1[1], a1[2]], w1 = [w0[0] + f[0] * 0.2, w0[1] + f[1] * 0.2, w0[2]], w2 = [w1[0] + f[0] * 0.2, w1[1] + f[1] * 0.2, w1[2]]; Ph.tube(o, w0, w1, 0.03, 0.045, olive, 8); Ph.tube(o, w1, w2, 0.045, 0.012, olive, 8); } }
+          CrewGeo.build(poly, (c, m = 1) => [c[0] * m, c[1] * m, c[2] * m, 0], 'x', p, fa, Object.assign({}, K, { seed: t.id * 3 + 1, hands: [[sh[0] + f[0] * 0.25 + sd[0] * 0.05, sh[1] + f[1] * 0.25 + sd[1] * 0.05, sh[2] - 0.06], [sh[0] + f[0] * 0.5 + sd[0] * 0.08, sh[1] + f[1] * 0.5 + sd[1] * 0.08, sh[2] - 0.02]] }));
+        } else CrewGeo.build(poly, (c, m = 1) => [c[0] * m, c[1] * m, c[2] * m, 0], 'x', [q.x, q.y, z + 0.55 - (low ? 0.15 : 0)], fa + (gun ? 0 : -0.4), Object.assign({}, K, { seed: t.id * 3 + (gun ? 1 : 2), look: gun ? 0 : 0.6 }));
+        this.kneel(o, [q.x, q.y, z], z + 0.55 - (low ? 0.12 : 0), gun ? fa : fa + (gun ? 0 : -0.4), K.pants);
+        if (!gun) { const b = [q.x - f[0] * 0.18, q.y - f[1] * 0.18, z + 0.95]; for (let k = 0; k < (W.rocket === 3 ? 1 : 2); k++) Ph.tube(o, [b[0] + sd[0] * (k * 0.12 - 0.06), b[1] + sd[1] * (k * 0.12 - 0.06), b[2] - 0.3], [b[0] + sd[0] * (k * 0.12 - 0.06), b[1] + sd[1] * (k * 0.12 - 0.06), b[2] + 0.25], W.rocket === 3 ? 0.045 : 0.05, W.rocket === 3 ? 0.045 : 0.05, olive, 6); } // spare rounds on his back
+      }
+    }
+    return new Float32Array(o);
+  },
+  // down on the right knee: the right thigh straight down to the knee on the ground and the shin lying back along it; the left thigh
+  // forward, the left shin straight down to the boot
+  kneel(o, g, hz, a, col) {
+    const Ph = Phys, f = [Math.cos(a), Math.sin(a)], sd = [-f[1], f[0]], at = (u, v, z) => [g[0] + f[0] * u + sd[0] * v, g[1] + f[1] * u + sd[1] * v, z], z0 = g[2], boot = [0.1, 0.09, 0.08];
+    const hR = at(0, -0.09, hz), kR = at(-0.04, -0.11, z0 + 0.08), fR = at(-0.44, -0.11, z0 + 0.07), hL = at(0.02, 0.09, hz), kL = at(0.42, 0.12, hz - 0.02), fL = at(0.46, 0.12, z0 + 0.08);
+    Ph.tube(o, hR, kR, 0.075, 0.06, col, 7); Ph.tube(o, kR, fR, 0.055, 0.045, col, 7); Ph.tube(o, fR, at(-0.58, -0.11, z0 + 0.06), 0.05, 0.045, boot, 6);
+    Ph.tube(o, hL, kL, 0.075, 0.06, col, 7); Ph.tube(o, kL, fL, 0.055, 0.045, col, 7); Ph.tube(o, fL, at(0.62, 0.12, z0 + 0.05), 0.05, 0.045, boot, 6);
+  },
+  draw(shadow) {
+    const L = this.list(); if (!L.length || !W3.view) return; const gl = W3.gl, WT = W3.WT, eye = W3.view.eye, U = (shadow ? W3.P.sTank : W3.P.tank).U; let set = false;
+    const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+    for (const t of L) {
+      if (t.men.every(q => !q.alive) && !t.W.hole) continue; const d = Math.hypot(t.x - eye[0], t.y - eye[1]); if (d > (shadow ? 120 : 420)) continue;
+      const key = t.men.map(q => q.alive ? 1 : 0).join('') + (t.duck > 0 || t.supp > 0 ? 'd' : '') + Math.round(t.a * 20) + (t.cd <= 0.5 || t.aimT > 0 ? 'r' : '');
+      if (!shadow && (t._key !== key || !t._buf)) { t._key = key; t._buf = Phys.buf('inf' + t.id, this.meshFor(t)); }
+      if (!t._buf) continue; if (!set) { set = true; Phys.prep0(shadow); gl.uniformMatrix4fv(U.uM, false, I); }
+      WT.draw(gl, t._buf);
+    }
+  },
+  // the tactical map and minimap show teams that have given themselves away
+  seen(t, team) { return t.team === team || B.time < t.revealT; },
+};
+{
+  // drive them: after the battle's own update; spawn once the tanks are on the field
+  const up0 = Battle.prototype.update;
+  Battle.prototype.update = function (dt) {
+    const r = up0.apply(this, arguments);
+    if (this === B && !this.preview && !this.over) { try { if (this.inf === undefined && this.time > 0.5) Inf.autoSpawn(); if (this.inf && this.inf.length && !(this.net === 'client')) Inf.update(dt); } catch (e) { if (!Inf._e) { Inf._e = 1; console.error(e); } } }
+    return r;
+  };
+  const iw = impactWorld; impactWorld = function (p, x, y, what) { try { if (B && B.inf && B.inf.length) Inf.blast(p, x, y); } catch (e) { } return iw.apply(this, arguments); };
+  const f0 = W3.frame; W3.frame = function (dt) { Inf._fr = true; Inf._frS = true; return f0.apply(this, arguments); };
+  const d0 = W3.drawTankList; W3.drawTankList = function (list, shadow) { const r = d0.apply(this, arguments); if (B && B.inf && B.inf.length) { try { if (!shadow && Inf._fr) { Inf._fr = false; Inf.draw(false); } else if (shadow && Inf._frS) { Inf._frS = false; Inf.draw(true); } } catch (e) { if (!Inf._e2) { Inf._e2 = 1; console.error(e); } } } return r; };
+  // a tandem warhead's first charge sets off the reactive block, and the main charge then meets the plate with what it has left behind ERA
+  // (handled in the hit code: see ui_patch). AI tanks: when no enemy tank needs them, they rake infantry teams that have given themselves away
+  const au0 = AI.prototype.update;
+  AI.prototype.update = function (dt) {
+    au0.call(this, dt); const v = this.v, c = v.ctrl; if (!v.alive || !B.inf || !B.inf.length || !v.def.turret) return;
+    const tg = this.target; if (tg && tg.alive && dist(v.x, v.y, tg.x, tg.y) < 600) return;
+    let best = null, bd = 380; for (const t of B.inf) { if (t.gone || t.team === v.team || !(B.time < t.revealT || dist(v.x, v.y, t.x, t.y) < 90)) continue; const d = dist(v.x, v.y, t.x, t.y); if (d < bd && B.map.los(v.x, v.y, t.x, t.y, B.smokes) > 0.3) { bd = d; best = t; } }
+    if (!best) return; const tz = best.z + 0.8, a = Math.atan2(best.y - v.y, best.x - v.x);
+    c.aim = a; c.aimDist = bd; c.ax = best.x; c.ay = best.y; c.az = tz; c.height = 'hull'; c.mg = !!v.mg; c.fire = false;
+    // with a high-explosive round loaded and the gun on them, the main gun as well
+    const ld = v.loaded >= 0 && v.ammo[v.loaded] && v.ammo[v.loaded].sh; if (ld && SHELL_TYPES[ld.type].he && Math.abs(angDiff(v.ang + (v.turretAng || 0), a)) < 0.03) c.fire = true;
+  };
+}
+
+// ---------------------------------------------------------------- 1.33 [2]: joining a public server goes straight in
+// A guest who picks a public server from the browser no longer stops on a "Room found — pick your name and tank" screen: the room is joined at
+// once with the name and tank already chosen (both can still be changed in the lobby afterwards). While it connects the lobby shows only a
+// "Joining…" panel. If the join fails (full, password, the host gone) the normal screen comes back so the player can try again.
+// (Lobby is defined after the modules: hooked once the page has loaded)
+window.addEventListener('load', () => {
+  const st = document.createElement('style');
+  st.textContent = '#lobby.qjoin .lb-grid,#lobby.qjoin #lbInvite{display:none}#lbQJ{display:none;padding:90px 20px 60px;text-align:center}#lobby.qjoin #lbQJ{display:block}#lbQJ .t{font-size:24px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#e8dcae}#lbQJ .s{margin-top:12px;opacity:.7;font-size:14px;letter-spacing:.04em}#lbQJ .lb-spin{display:inline-block;margin-left:10px;vertical-align:middle}';
+  document.head.appendChild(st);
+  const body = document.querySelector('#lobby .body'); if (body) { const box = document.createElement('div'); box.id = 'lbQJ'; body.insertBefore(box, body.firstChild); }
+  const jr0 = Lobby.joinRoom; Lobby.joinRoom = function (code) { this.quick = typeof UI !== 'undefined' && UI.lobbyFrom === 'srvBrowser'; return jr0.apply(this, arguments); };
+  const sm0 = Lobby.sigMsg; Lobby.sigMsg = function (m) {
+    const first = m && m.type === 'PREVIEW' && !this.preview; const r = sm0.apply(this, arguments);
+    if (first && this.preview && this.preview.pub) this.quick = true;
+    if (m && (m.type === 'DECLINE' || m.type === 'FULL')) this.quick = false;
+    if (first && this.quick) setTimeout(() => { if (this.quick && !this.joined && !this.pending) this.askJoin(); }, 0);
+    return r;
+  };
+  const rd0 = Lobby.render; Lobby.render = function () {
+    const el = document.getElementById('lobby'); if (this.quick && /could not|declined|banned|full|no answer|did not/i.test(this.status || '')) this.quick = false;
+    const q = !!this.quick && !this.isHost && !this.joined; if (el) el.classList.toggle('qjoin', q);
+    if (q) { const b = document.getElementById('lbQJ'), pv = this.preview; if (b) b.innerHTML = `<div class="t">Joining server<span class="lb-spin"></span></div><div class="s">${pv ? esc(pv.name || ((pv.host || 'Host') + "'s server")) : 'Connecting…'}</div>`; }
+    return rd0.apply(this, arguments);
+  };
+});
+
+// ---------------------------------------------------------------- 1.33 [3]: the multiplayer lobby, laid out again
+// The lobby chat sits in its own column down the left of the window, always in view. Nobody picks a tank in the lobby any more: everyone
+// chooses on the spawn screen when the battle starts (and the main tank set in the tank viewer is not pre-chosen there). The battlefield
+// is one large card with a Change battlefield button that opens the same sideways strip of map cards as offline play (Back returns to the
+// lobby). Every game mode the game has is offered. The settings chosen when the server was made (its name, player limit, password,
+// region, era, AI, time of day) are shown, not offered a second time. The same layout serves the host and the guests.
+window.addEventListener('load', () => {
+  const $$ = id => document.getElementById(id);
+  const st = document.createElement('style');
+  st.textContent = `
+#lobby .win{width:1320px}
+#lbMainRow{display:flex;flex:1;min-height:0}
+#lbSide{width:310px;flex:0 0 310px;border-right:1px solid var(--line);padding:14px 14px 12px;display:flex;flex-direction:column;min-height:0;background:rgba(0,0,0,.16)}
+#lbSide .lbl{margin:0 0 6px}
+#lbSide .lb-chat{flex:1;min-height:0}
+#lbSide #lbChatLog{flex:1;height:auto;min-height:0}
+#lbMainRow .body{flex:1}
+#lbTop{display:flex;gap:14px;align-items:stretch;margin:2px 0 12px}
+#lbTop #lbMaps{flex:0 0 46%;margin:0}
+#lbTop #lbModes{flex:1;margin:0;min-width:0}
+#lbTop .gm-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#lbTop .gm{padding:8px 10px}#lbTop .gm span{font-size:11px;line-height:1.3}
+.lbmap{position:relative;height:150px;border:1px solid var(--amber);overflow:hidden;background:#111;box-shadow:0 0 0 1px rgba(242,179,61,.4)}
+.lbmap canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.lbmap::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(0,0,0,.88))}
+.lbmap .t,.lbmap .s{position:absolute;z-index:2;left:14px;right:14px}.lbmap .t{bottom:26px;font-weight:800;font-size:22px;letter-spacing:.08em;text-transform:uppercase}.lbmap .s{bottom:9px;font-size:12px;color:var(--dim)}
+.lbmap-acts{display:flex;gap:8px;margin-top:8px}.lbmap-acts .btn{flex:1;padding:8px 10px;font-size:13px}
+#lbInvite .inv-row:has(#lbSrv){display:none}
+#lobby .lb-mid .lbl.tk-l,#lobby #lbTanks{display:none!important}
+#lbSettings .row b{font-weight:700}
+#lobby .slot .tk{display:none}
+`;
+  document.head.appendChild(st);
+  // ---- the frame: a chat column on the left, everything else beside it
+  const win = document.querySelector('#lobby .win'), body = document.querySelector('#lobby .body'), mid = document.querySelector('#lobby .lb-mid');
+  if (win && body && mid) {
+    const row = document.createElement('div'); row.id = 'lbMainRow'; win.insertBefore(row, body);
+    const side = document.createElement('div'); side.id = 'lbSide'; side.innerHTML = '<div class="lbl">Lobby chat</div>'; row.appendChild(side); row.appendChild(body);
+    const chat = mid.querySelector('.lb-chat'); if (chat) { const lb = chat.previousElementSibling; if (lb && lb.classList.contains('lbl')) lb.remove(); side.appendChild(chat); }
+    const tk = $$('lbTanks'); if (tk && tk.previousElementSibling && tk.previousElementSibling.classList.contains('lbl')) tk.previousElementSibling.classList.add('tk-l');
+    const ms = $$('lbSettings'); if (ms && ms.previousElementSibling && ms.previousElementSibling.classList.contains('lbl')) ms.previousElementSibling.textContent = 'Server';
+    const top = document.createElement('div'); top.id = 'lbTop'; const maps = $$('lbMaps'); if (maps) { maps.parentNode.insertBefore(top, maps); top.appendChild(maps); }
+  }
+  // every game mode (the tank tester is a single-player mode only)
+  try { GM_ORDER.length = 0; for (const k of Object.keys(GAME_MODES)) if (k !== 'test') GM_ORDER.push(k); } catch (e) { }
+  if (typeof Servers !== 'undefined') Servers.modes = function () { return Object.keys(GAME_MODES).filter(k => k !== 'test'); };
+  // ---- the battlefield card and the game modes
+  Lobby.renderMaps = function (S, host) {
+    const box = $$('lbMaps'), cur = S.settings.map || 'random', edit = host && !S.inBattle;
+    if (!box.querySelector('.lbmap')) {
+      box.innerHTML = '<div class="lbl" style="margin:0 0 6px">Battlefield</div><div class="lbmap"><canvas width="640" height="300"></canvas><div class="t"></div><div class="s"></div></div><div class="lbmap-acts"><button class="btn primary" id="lbMapPick">Change battlefield</button><button class="btn" id="lbMapRnd">Random</button></div>';
+      $$('lbMapPick').onclick = () => { if (!this.isHost || this.state.inBattle) return; uiSnd('click'); UI.hide('lobby'); UI.openMapSelect(k => { UI.show('lobby'); this.setSetting('map', k); this.render(); }, () => { UI.show('lobby'); this.render(); }); };
+      $$('lbMapRnd').onclick = () => { if (!this.isHost || this.state.inBattle) return; uiSnd('click'); this.setSetting('map', 'random'); };
+    }
+    if (box._k !== cur) { box._k = cur; const cv = box.querySelector('canvas'), T = MAP_THEMES[cur];
+      if (cur === 'random' || !T) { const c = cv.getContext('2d'), g = c.createLinearGradient(0, 0, 640, 300); g.addColorStop(0, '#3a4a2c'); g.addColorStop(0.5, '#4a4f58'); g.addColorStop(1, '#8a6a40'); c.fillStyle = g; c.fillRect(0, 0, 640, 300); c.fillStyle = 'rgba(255,255,255,0.85)'; c.font = '800 150px "Barlow Condensed", Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', 320, 140); }
+      else drawMapArt(cv, cur);
+      box.querySelector('.t').textContent = cur === 'random' || !T ? 'Random' : T.name; box.querySelector('.s').textContent = cur === 'random' || !T ? 'A different battlefield every battle' : T.sub; }
+    box.querySelector('.lbmap-acts').style.display = edit ? '' : 'none';
+    let gm = $$('lbModes');
+    if (!gm || gm._n !== GM_ORDER.length) {
+      if (gm) gm.remove(); gm = document.createElement('div'); gm.id = 'lbModes'; gm._n = GM_ORDER.length; $$('lbTop').appendChild(gm);
+      gm.innerHTML = '<div class="lbl" style="margin:0 0 6px">Game mode</div><div class="gm-row">' + GM_ORDER.map(k => `<div class="gm" data-k="${k}"><b>${GAME_MODES[k].name}</b><span>${GAME_MODES[k].desc}</span></div>`).join('') + '</div>';
+      gm.querySelectorAll('.gm').forEach(el => { el.onclick = () => { if (this.isHost && !this.state.inBattle) { uiSnd('click'); this.setSetting('gm', el.dataset.k); } }; });
+    }
+    const g = S.settings.gm || 'cap'; gm.classList.toggle('host', edit); gm.querySelectorAll('.gm').forEach(el => el.classList.toggle('sel', el.dataset.k === g));
+  };
+  // ---- the server's settings, as they were made (shown, not offered again)
+  const ERAS = ['I · Early WWII', 'II · Late WWII', 'III · Cold War', 'IV · Modern'];
+  const info = (L, S) => { const s = S.settings || {}, rows = [['Server', esc(L.isHost ? (Save.data.settings.mpName || `${(S.players[0] || {}).name || 'Host'}'s server`) : (L.srvName || `${(S.players[0] || {}).name || 'Host'}'s server`))], ['Players', `up to ${L.isHost && L.maxP ? L.maxP() : (L.srvMaxG || MAX_PLAYERS)}`], ['Highest era', ERAS[(s.era || 1) - 1] || '—'], ['AI fill', s.ai ? 'On' : 'Off'], ['AI difficulty', DIFF[s.diff] ? DIFF[s.diff].name : '—'], ['Time of day', s.night ? 'Night' : 'Day']];
+    if (L.isHost) rows.splice(2, 0, ['Password', L.srvPw ? 'Yes' : 'No'], ['Region', esc(L.srvRegion || '—')]);
+    return rows.map(([a, b]) => `<div class="row"><span>${a}</span><b>${b}</b></div>`).join(''); };
+  const rd0 = Lobby.render;
+  Lobby.render = function () {
+    const r = rd0.apply(this, arguments); const S = this.state;
+    try {
+      if (S && (this.isHost || this.joined) && $$('lbSettings')) { $$('lbSettings').innerHTML = info(this, S) + (this.isHost && this.bans && this.bans.size ? `<div class="row"><span>Banned players: ${this.bans.size}</span><button class="btn small" id="lbUnban">Clear bans</button></div>` : ''); if ($$('lbUnban')) $$('lbUnban').onclick = () => { this.bans.clear(); this.banNames.clear(); this.render(); UI.toast('Bans cleared'); }; }
+      const h = $$('lbHint'); if (h && !this.isHost && !this.joined) h.textContent = h.textContent.replace('Pick your name and tank', 'Pick your name');
+    } catch (e) { console.error(e); }
+    return r;
+  };
+  // the guests learn the server's name and limit from its preview
+  const sm0 = Lobby.sigMsg; Lobby.sigMsg = function (m) { if (m && m.type === 'PREVIEW' && m.payload) { this.srvMaxG = m.payload.max || this.srvMaxG; if (m.payload.name) this.srvName = m.payload.name; } return sm0.apply(this, arguments); };
+  const pd0 = Lobby.previewData; Lobby.previewData = function () { return Object.assign(pd0.apply(this, arguments), { name: Save.data.settings.mpName || '' }); };
+  // no tank comes from the tank viewer's main tank in a multiplayer room: the lobby carries no choice, the spawn screen starts with none picked
+  // (after your first spawn it remembers what you took)
+  const pa0 = Lobby.pickAllowed; if (pa0) Lobby.pickAllowed = function (want, era, list) { const L = (list || []).filter(id => TANKS[id] && TANKS[id].era <= era); return L.includes(want) && want !== Save.data.selected ? want : (L[0] || pa0.apply(this, arguments)); };
+  const ss0 = UI.showSpawn; UI.showSpawn = function () {
+    const r = ss0.apply(this, arguments);
+    if (B && (B.net || B.mp)) { const allowed = B.allowedTanks(B.me), last = B.me._mpPick; this.spawnTank = last && allowed.includes(last) ? last : null; this.renderSpawnList(); this.updateSpawnBtn(); }
+    return r; };
+  const rl0 = UI.renderSpawnList; UI.renderSpawnList = function () { const r = rl0.apply(this, arguments); if (B && (B.net || B.mp)) document.querySelectorAll('#spawnList .tcard').forEach(el => { const c0 = el.onclick; el.onclick = e => { c0 && c0(e); if (this.spawnTank) B.me._mpPick = this.spawnTank; }; }); return r; };
+  const ub0 = UI.updateSpawnBtn; UI.updateSpawnBtn = function () { const r = ub0.apply(this, arguments); if (B && (B.net || B.mp) && !this.spawnTank) { const i = $$('spawnInfo'); if (i) i.textContent = 'Pick a tank from the list'; } return r; };
+  // the multiplayer choice screen: room codes are typed in the server browser, so not here
+  { const st2 = document.createElement('style'); st2.textContent = '#mpChoice .join-code{font-size:0;justify-content:center}#mpChoice #chCode,#mpChoice #chJoin{display:none!important}#mpChoice #chTest{font-size:15px}'; document.head.appendChild(st2); }
+});
+// every small picture of a battlefield is the picture taken in the game itself, where one has been made (the painted card otherwise)
+{
+  const dma = drawMapArt, cache = {};
+  drawMapArt = function (cv, key) {
+    const r = dma.apply(this, arguments); const src = typeof MAP_SHOTS !== 'undefined' && MAP_SHOTS[key]; if (!src || !cv) return r;
+    const put = im => { const c = cv.getContext('2d'), s = Math.max(cv.width / im.width, cv.height / im.height), w = im.width * s, h = im.height * s; c.drawImage(im, (cv.width - w) / 2, (cv.height - h) / 2, w, h); };
+    let im = cache[key]; if (!im) { im = cache[key] = new Image(); im.src = src; }
+    if (im.complete && im.naturalWidth) put(im); else im.addEventListener('load', () => put(im), { once: true });
+    return r;
+  };
+}
+
 // ---------------------------------------------------------------- paint schemes
 // Each tank can be repainted in the colours its own army actually used in its period: chosen on the tank page, kept in the save, worn by
 // your own tank (the computer's tanks keep their usual paint). A hand-built model's paint texture and flat colours are pulled toward the
 // scheme's colour (markings, rubber, glass and metal stay as they are); the older models are rebuilt with the scheme's camouflage.
 // Whitewash is brushed over whatever the tank wears, as in the winter maps.
 const PAINT = {
-  C: { // colour, and the camouflage pattern used on the older generated models
-    od: { n: 'Olive drab', c: [79, 82, 51], camo: 'us_od' }, ustan: { n: 'Desert tan', c: [176, 160, 116], camo: 'us_tan' }, nato: { n: 'NATO green', c: [68, 76, 50], camo: 'nato3' },
+  C: { // a base colour, the camouflage the older generated models are rebuilt with, and for the patterned schemes the colours laid over it
+    od: { n: 'Olive drab', c: [79, 82, 51], camo: 'us_od' }, ustan: { n: 'Desert tan', c: [176, 160, 116], camo: 'us_tan' }, nato: { n: 'Forest green', c: [68, 76, 50], camo: 'nato3' },
     ukg: { n: 'Khaki green', c: [66, 76, 52], camo: 'uk_green' }, stone: { n: 'Light Stone', c: [178, 158, 112], camo: 'it_sand' }, scc15: { n: 'Olive drab (SCC 15)', c: [76, 76, 54], camo: 'us_od' },
     grau: { n: 'Panzergrau', c: [86, 90, 88], camo: 'de_grey' }, gelb: { n: 'Dunkelgelb', c: [184, 163, 106], camo: 'de_dunkel' }, afrika: { n: 'Afrika brown', c: [168, 142, 98], camo: 'it_sand' },
-    rgreen: { n: '4BO green', c: [74, 89, 52], camo: 'ussr_green' }, r3: { n: 'Three-tone', c: [92, 98, 64], camo: 'ru_3tone' },
+    rgreen: { n: '4BO green', c: [74, 89, 52], camo: 'ussr_green' },
     jkh: { n: 'Khaki', c: [98, 94, 60], camo: 'jp_olive' }, sabbia: { n: 'Sabbia (sand)', c: [188, 164, 112], camo: 'it_sand' }, gverde: { n: 'Grigio-verde', c: [86, 88, 58], camo: 'it_green' },
     frg: { n: 'Olive green', c: [84, 90, 60], camo: 'fr_green' }, cng: { n: 'Green', c: [70, 84, 50], camo: 'cn_green' }, sinai: { n: 'Sinai grey', c: [150, 140, 112], camo: 'it_sand' },
     wash: { n: 'Whitewash', wash: true },
+    // patterned schemes
+    hinter: { n: 'Three-tone (1943-45)', c: [184, 163, 106], pat: { k: 'blot', s: 120, cols: [[89, 94, 60], [110, 70, 46]] } },
+    odblk: { n: 'Olive drab and black', c: [79, 82, 51], pat: { k: 'blot', s: 140, cols: [[30, 30, 28]] } },
+    caunter: { n: 'Caunter (1940-41)', c: [190, 172, 130], pat: { k: 'stripe', s: 150, cols: [[122, 126, 118], [72, 82, 88]] } },
+    ija3: { n: 'Army three-tone', c: [128, 104, 64], pat: { k: 'ija', s: 120, cols: [[70, 80, 44], [196, 166, 74]] } },
+    itcont: { n: 'Sabbia with green and brown', c: [188, 164, 112], pat: { k: 'blot', s: 110, cols: [[96, 92, 56], [120, 84, 50]] } },
+    fr40: { n: 'Three-tone (1940)', c: [112, 102, 64], pat: { k: 'blot', s: 130, cols: [[66, 74, 44], [124, 92, 56]] } },
+    nato3: { n: 'NATO three-tone', c: [68, 76, 50], pat: { k: 'blot', s: 120, cols: [[86, 70, 48], [30, 30, 28]] } },
+    ukgb: { n: 'Green and black', c: [66, 76, 52], pat: { k: 'blot', s: 130, cols: [[28, 28, 26]] } },
+    r3: { n: 'Three-tone', c: [92, 98, 64], pat: { k: 'blot', s: 120, cols: [[150, 132, 90], [40, 40, 36]] } },
+    jgsdf: { n: 'Green and brown', c: [80, 84, 56], pat: { k: 'blot', s: 160, cols: [[100, 80, 58]] } },
+    cndig: { n: 'Digital (Type 07)', c: [96, 104, 70], pat: { k: 'digital', s: 70, cols: [[60, 70, 46], [132, 128, 96], [40, 44, 36]] } },
+    m90: { n: 'M90 splinter', c: [96, 110, 74], pat: { k: 'splinter', s: 90, cols: [[58, 70, 46], [30, 32, 28]] } },
+    wood: { n: 'Woodland', c: [70, 80, 52], pat: { k: 'blot', s: 110, cols: [[98, 80, 56], [30, 30, 28]] } },
+    sdig: { n: 'Desert digital', c: [176, 160, 116], pat: { k: 'digital', s: 70, cols: [[150, 126, 90], [196, 182, 140]] } },
   },
-  // which colours each army wore, by period (era 1-2 the Second World War, 3-4 the Cold War and after)
+  // which schemes each army used, by period and year
   list(d) {
-    const n = d.nation, ww2 = (d.era || 1) <= 2, L = {
-      us: ww2 ? ['od', 'wash'] : ['od', 'nato', 'ustan'], uk: ww2 ? ['ukg', 'stone', 'scc15', 'wash'] : ['nato', 'ustan', 'ukg'], de: ww2 ? ['grau', 'gelb', 'afrika', 'wash'] : ['nato', 'ustan'],
-      ussr: ['rgreen', 'wash'], ru: ww2 ? ['rgreen', 'wash'] : ['rgreen', 'r3', 'ustan'], jp: ww2 ? ['jkh'] : ['nato', 'od'], it: ww2 ? ['sabbia', 'gverde'] : ['gverde', 'ustan'],
-      fr: ww2 ? ['frg', 'od'] : ['frg', 'ustan'], cn: ww2 ? ['cng', 'od'] : ['cng', 'ustan'], se: ww2 ? ['frg', 'wash'] : ['nato', 'wash'], kr: ['nato', 'od'], il: ['sinai', 'od'],
+    const n = d.nation, ww2 = (d.era || 1) <= 2, y = d.year || 1940, L = {
+      us: ww2 ? ['od', 'odblk', 'wash'] : ['od', 'nato3', 'ustan'],
+      uk: ww2 ? ['ukg', 'stone', 'scc15', ...(y <= 1942 ? ['caunter'] : []), 'wash'] : ['nato', 'ukgb', 'ustan'],
+      de: ww2 ? [...(y <= 1943 ? ['grau'] : []), ...(y >= 1943 ? ['gelb'] : []), ...(y <= 1943 ? ['afrika'] : []), ...(y >= 1943 ? ['hinter'] : []), 'wash'] : ['nato', 'nato3', 'ustan'],
+      ussr: ['rgreen', 'wash'], ru: ww2 ? ['rgreen', 'wash'] : ['rgreen', 'r3', 'ustan'],
+      jp: ww2 ? ['jkh', 'ija3'] : ['nato', 'jgsdf'], it: ww2 ? ['sabbia', 'gverde', ...(y >= 1942 ? ['itcont'] : [])] : ['gverde', 'nato3', 'ustan'],
+      fr: ww2 ? ['frg', ...(y <= 1941 ? ['fr40'] : ['od'])] : ['frg', 'nato3', 'ustan'], cn: ww2 ? ['cng', 'od'] : ['cng', ...(y >= 2000 ? ['cndig', 'sdig'] : ['ustan'])],
+      se: ww2 ? ['frg', 'wash'] : ['nato', ...(y >= 1985 ? ['m90'] : []), 'wash'], kr: ['nato', 'wood'], il: ['sinai', 'od'],
     }[n] || ['nato', 'ustan'];
     return ['def'].concat(L);
+  },
+  // the pattern colour at a point of the paint texture (x, y in texture pixels)
+  noise: null,
+  pick(P, x, y, base) {
+    const N = this.noise || (this.noise = [makeNoise(901), makeNoise(902), makeNoise(903), makeNoise(904)]), S = P.s, C = P.cols;
+    if (P.k === 'blot' || P.k === 'digital') { const q = P.k === 'digital' ? 12 : 1, X = Math.floor(x / q) * q, Y = Math.floor(y / q) * q, f = P.k === 'digital' ? 1.6 : 1; for (let i = C.length - 1; i >= 0; i--) if (fbm(N[i], X / S * f, Y / S * f, 3) > (i ? 0.2 : 0.12)) return C[i]; return base; }
+    if (P.k === 'stripe') { const u = (x * 0.8 + y * 0.6) / S + fbm(N[0], x / 400, y / 400, 2) * 1.4, b = u - Math.floor(u); return b < 0.42 ? base : b < 0.7 ? C[0] : C[1]; }
+    if (P.k === 'ija') { if (fbm(N[1], x / S, y / S, 3) > 0.14) return C[0]; const u = (x * 0.3 + y) / (S * 1.4) + fbm(N[2], x / 300, y / 300, 2) * 0.8, b = u - Math.floor(u); return b < 0.07 ? C[1] : base; }
+    if (P.k === 'splinter') { for (const [a, k] of [[0.5, 0], [1.25, 1]]) { const c = Math.cos(a), s = Math.sin(a), u = Math.floor((x * c + y * s) / S), v = Math.floor((-x * s + y * c) / (S * 0.6)), h = Math.abs(Math.sin(u * 12.9898 + v * 78.233 + k * 7.1) * 43758.5453) % 1; if (h < 0.28) return C[k] || base; } return base; }
+    return base;
   },
   get(id) { try { return (Save.data.paint || {})[id] || 'def'; } catch (e) { return 'def'; } },
   set(id, k) { try { (Save.data.paint || (Save.data.paint = {}))[id] = k; Save.save(); } catch (e) { } },
@@ -25897,15 +26747,24 @@ const PAINT = {
   def(id, k = this.get(id)) { const d = TANKS[id]; if (!d || !k || k === 'def' || !this.C[k] || this.C[k].wash) return d; const c = this.cache || (this.cache = {}), key = id + '#' + k; return c[key] || (c[key] = Object.create(d, { _paint: { value: k }, camo: { value: this.C[k].camo || d.camo, enumerable: true } })); },
 };
 {
+  for (const [k, S] of Object.entries(PAINT.C)) if (S.pat && typeof CAMOS !== 'undefined') { CAMOS['sk_' + k] = { base: S.c, patches: S.pat.cols.map((c, i) => ({ c, t: 0.12 + i * 0.08, f: S.pat.k === 'digital' ? 1.1 : 0.45, s: 11 + i * 7 })), grain: 6 }; S.camo = 'sk_' + k; }
+  // the pattern laid into a hand-built model's paint texture: the texture's light and shade kept, its colour replaced by the scheme's
+  const shr = W3.shrink; W3.shrink = function (cv) { const P = W3._pat; if (!P || !cv || cv.width < 300) return shr.call(this, cv); const T0 = W3._tint; W3._tint = null;
+    try { const c = cv.getContext('2d'), im = c.getImageData(0, 0, cv.width, cv.height), d = im.data, W = cv.width, H = cv.height, base = P.base; let sum = 0, n = 0; for (let i = 0; i < d.length; i += 4 * 97) { const mx = Math.max(d[i], d[i + 1], d[i + 2]); if (mx > 40 && mx < 215) { sum += d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11; n++; } } const mean = n ? sum / n : 100;
+      const G = 2, gw = Math.ceil(W / G), gh = Math.ceil(H / G), grid = new Array(gw * gh); for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) grid[gy * gw + gx] = PAINT.pick(P, gx * G * 1.8, gy * G * 1.8, base);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * 4, r = d[i], g = d[i + 1], b = d[i + 2], mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = r * 0.3 + g * 0.59 + b * 0.11; if (mx < 20 || (mn > 190 && mx - mn < 28) || (r > 120 && r > g * 1.7 && r > b * 1.7)) continue;
+        const k = l < mean ? clamp(1 + (l - mean) / mean * 0.22, 0.62, 1) : clamp(1 + (l - mean) / mean * 0.3, 1, 1.3), T = grid[((y / G) | 0) * gw + ((x / G) | 0)]; d[i] = Math.min(255, T[0] * k); d[i + 1] = Math.min(255, T[1] * k); d[i + 2] = Math.min(255, T[2] * k); }
+      c.putImageData(im, 0, 0); } catch (e) { console.error(e); } finally { W3._tint = T0; } return shr.call(this, cv); };
   // the mesh of a repainted tank, kept beside the tank's own
   if (typeof Tank3D !== 'undefined') { const m0 = Tank3D.mesh; Tank3D.mesh = function (d) {
     if (!d || !d._paint) return m0.call(this, d); const P = this.pmeshes || (this.pmeshes = {}), key = d.id + '#' + d._paint; if (P[key]) return P[key];
     const S = PAINT.C[d._paint], G = TANK_GEAR[d.id] || {}, hand = G.ww2 || G.leo, keepM = this.meshes[d.id]; delete this.meshes[d.id];
     const S_ = this.skins || (this.skins = {}), sk = G.leo ? 'leo_' + G.leo : G.ww2, keepS = sk ? S_[sk] : null; if (sk) delete S_[sk];
     let M; try {
-      if (hand) { const T = S.c, memo = new Map(); W3._tint = T; W3._tintV = col => { const r = col[0], g = col[1], b = col[2], mx = Math.max(r, g, b), mn = Math.min(r, g, b); if (mx < 0.14 || mx > 0.75 || mx - mn > 0.3 || (r > g * 1.3 && r > b * 1.6) || (b > r * 1.15)) return col; const k_ = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0) | ((col[3] * 15 | 0) << 24); let o = memo.get(k_); if (!o) { const k = clamp((r * 0.3 + g * 0.59 + b * 0.11) / 0.32, 0.5, 1.45); o = [T[0] / 255 * k, T[1] / 255 * k, T[2] / 255 * k, col[3]]; memo.set(k_, o); } return o; }; }
+      if (hand) { const T = S.c, memo = new Map(); W3._tint = T; W3._pat = null; const PT = null; /* the pattern itself is laid on in the shader, in the model's own space (M.skinPat) */ W3._tintV = (col, p) => { const r = col[0], g = col[1], b = col[2], mx = Math.max(r, g, b), mn = Math.min(r, g, b); if (mx < 0.14 || mx > 0.75 || mx - mn > 0.3 || (r > g * 1.3 && r > b * 1.6) || (b > r * 1.15)) return col; if (PT && p) { const k = clamp((r * 0.3 + g * 0.59 + b * 0.11) / 0.32, 0.5, 1.45), Q = PAINT.pick(PT, (p[0] + p[2] * 0.6) * 100 + 500, (p[1] + p[2] * 0.4) * 100 + 500, T); return [Q[0] / 255 * k, Q[1] / 255 * k, Q[2] / 255 * k, col[3]]; } const k_ = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0) | ((col[3] * 15 | 0) << 24); let o = memo.get(k_); if (!o) { const k = clamp((r * 0.3 + g * 0.59 + b * 0.11) / 0.32, 0.5, 1.45); o = [T[0] / 255 * k, T[1] / 255 * k, T[2] / 255 * k, col[3]]; memo.set(k_, o); } return o; }; }
       M = m0.call(this, d);
-    } finally { W3._tint = null; W3._tintV = null; if (keepM) this.meshes[d.id] = keepM; else delete this.meshes[d.id]; if (sk) { if (keepS) S_[sk] = keepS; else delete S_[sk]; } }
+    } finally { W3._tint = null; W3._tintV = null; W3._pat = null; if (keepM) this.meshes[d.id] = keepM; else delete this.meshes[d.id]; if (sk) { if (keepS) S_[sk] = keepS; else delete S_[sk]; } }
+    if (hand && S.pat && M) { const K = { blot: 1, stripe: 2, ija: 3, splinter: 4, digital: 5 }[S.pat.k] || 1, cols = []; for (let i = 0; i < 3; i++) { const q = S.pat.cols[i]; cols.push(...(q ? q.map(x => x / 255) : [0, 0, 0])); } M.skinPat = { k: K, s: S.pat.s / 100, base: S.c.map(x => x / 255), cols: new Float32Array(cols) }; }
     P[key] = M; return M; }; }
   // your own tank wears your paint
   const sh = Battle.prototype.spawnHuman; Battle.prototype.spawnHuman = function (ctx, defId) {
@@ -25916,9 +26775,9 @@ const PAINT = {
     const r = shw.apply(this, arguments); try { if (W3.tankView) W3.tankView.def = PAINT.def(id); } catch (e) { }
     const old = document.getElementById('tpPaint'); if (old) old.remove(); const act = document.getElementById('tpAct'), d = TANKS[id]; if (!act || !d) return r;
     const box = document.createElement('div'); box.id = 'tpPaint'; box.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--dim)';
-    const cur = PAINT.get(id), sw = (k) => { const S = PAINT.C[k], col = k === 'def' ? null : S.c, nm = k === 'def' ? 'Factory' : S.n; const b = document.createElement('button'); b.className = 'btn'; b.title = nm; b.style.cssText = `padding:4px 9px;font-size:11px;letter-spacing:.06em;display:flex;align-items:center;gap:6px;${k === cur ? 'outline:2px solid var(--amber);' : ''}`;
-      b.innerHTML = `<i style="display:inline-block;width:14px;height:14px;border:1px solid rgba(255,255,255,.4);background:${k === 'def' ? 'linear-gradient(135deg,#666,#999)' : S.wash ? '#e8e8e2' : `rgb(${col.join(',')})`}"></i>${nm}`; b.onclick = () => { uiSnd && uiSnd('click'); PAINT.set(id, k); TankPage.show(id); }; return b; };
-    const lab = document.createElement('span'); lab.textContent = 'Paint'; lab.style.cssText = 'letter-spacing:.14em;text-transform:uppercase;margin-right:4px'; box.appendChild(lab); for (const k of PAINT.list(d)) box.appendChild(sw(k));
+    const cur = PAINT.get(id), sw = (k) => { const S = PAINT.C[k], col = k === 'def' ? null : S.c, nm = k === 'def' ? 'Factory' : S.n; const b = document.createElement('button'); b.className = 'btn'; b.title = nm; b.style.cssText = `padding:4px;display:flex;align-items:center;${k === cur ? 'outline:2px solid var(--amber);' : ''}`;
+      const bg = k === 'def' ? 'linear-gradient(135deg,#666,#999)' : S.wash ? '#e8e8e2' : S.pat ? `linear-gradient(135deg,rgb(${col.join(',')}) 0 38%,rgb(${S.pat.cols[0].join(',')}) 38% 68%,rgb(${(S.pat.cols[1] || col).join(',')}) 68%)` : `rgb(${col.join(',')})`; b.innerHTML = `<i style="display:inline-block;width:18px;height:18px;border:1px solid rgba(255,255,255,.4);background:${bg}"></i>`; b.onclick = () => { uiSnd && uiSnd('click'); PAINT.set(id, k); TankPage.show(id); }; return b; };
+    const lab = document.createElement('span'); lab.textContent = 'Skin · ' + (cur === 'def' ? 'Factory' : (PAINT.C[cur] || {}).n || 'Factory'); lab.style.cssText = 'letter-spacing:.14em;text-transform:uppercase;margin-right:4px'; box.appendChild(lab); for (const k of PAINT.list(d)) box.appendChild(sw(k));
     act.parentNode.insertBefore(box, act.nextSibling); return r; };
 }
 
@@ -26028,6 +26887,126 @@ if (TANKS.ariete_amv && TANKS.ariete && TANK_GEAR.ariete) {
 }
 // ---- Type 4 Ke-Nu: the Ha-Go's hull and running gear carrying the Chi-Ha's turret (hg model, KENU branch)
 if (TANKS.kenu && TANKS.hago && TANK_GEAR.hago) { TANK_GEAR.kenu = Object.assign({}, TANK_GEAR.hago, { ww2: 'hg' }); for (const k of ['L', 'W', 'tx', 'hullH']) if (TANKS.hago[k] !== undefined) TANKS.kenu[k] = TANKS.hago[k]; }
+
+// ---------------------------------------------------------------- 1.33 [3]: battle rules and rewards
+// - Respawn (pause menu) only in the first 10 s after deploying and before your tank has damaged an enemy; within that window it is free
+//   (Warbonds back, and in wave survival and the campaign no life is used).
+// - Tank tester: every target shows on the maps, and the targets are tanks of the tested tank's own era.
+// - Loading screen: the version sits top right, clear of the progress bar and its percentage.
+// - Momentary weak spots: a loader who throws an empty case out of a hatch leaves it open for a second or so. A shell that comes in through
+//   that open hatch meets no armour and goes straight into the fighting compartment. (No message says so; a loading tip mentions weak spots.)
+// - Kill awards, War Thunder style: long shot, weak spot, one-shot kill, ammo rack, point blank, revenge. Each gives Warbonds and research
+//   points and shows a badge under the kill streak.
+// - Changing the round you want while the gun is being loaded: the loading time follows the new round (on IFVs a cannon round after a missile
+//   loads in the cannon's time, not the launcher's), keeping the time already spent.
+// - A shell that fails to penetrate never flies on: one that glances off at a steep angle still counts as a ricochet, but it is spent there.
+{
+  // ---- respawn
+  const allowRedeploy = v => !!(v && v.alive && B && B.time - (v.spawnT || 0) <= 10 && !(v.dmgDealt > 0) && !v._hurtFoe);
+  const rd0 = Battle.prototype.redeploy;
+  Battle.prototype.redeploy = function (ctx = this.me) {
+    const v = ctx && ctx.vehicle; if (!v || !v.alive) return false;
+    if (!allowRedeploy(v)) { this.msgTo(ctx, 'Respawn is only possible within 10 s of deploying, before you have hit an enemy', '#ffb35c'); return false; }
+    const lv = this.mode.lives; const r = rd0.call(this, ctx); if (lv != null && this.mode.lives < lv) this.mode.lives = lv; // free: no life used
+    return r;
+  };
+  const sp0 = UI.showPause; UI.showPause = function () { const r = sp0.apply(this, arguments); const b = document.getElementById('pRespawn'); if (b && b.style.display !== 'none') { const ok = allowRedeploy(B && B.player); b.disabled = !ok; b.title = ok ? `Free: ${Math.max(0, Math.ceil(10 - (B.time - (B.player.spawnT || 0))))} s left` : 'Only within 10 s of deploying, before you hit an enemy'; } return r; };
+  const patchRespawn = () => { const pr = document.getElementById('pRespawn'); if (!pr || pr._free) return; pr._free = 1; const c0 = pr.onclick; pr.onclick = async function () { if (!allowRedeploy(B && B.player)) { UI.toast('Respawn is only possible within 10 s of deploying, before you have hit an enemy', true); return; } if (B.mode.lives != null) { if (!await UI.ask('Go back to the tank list and pick another tank? Free within 10 s of deploying.', 'Respawn')) return; if (B.net === 'client') Net.toHost({ t: 'redeploy' }); else B.redeploy(B.me); App.setPause(false); return; } return c0 && c0.apply(this, arguments); }; };
+  window.addEventListener('load', () => { const ui0 = UI.init; UI.init = function () { const r = ui0.apply(this, arguments); patchRespawn(); return r; }; });
+  // damage dealt to emplacements and infantry also closes the window
+  if (typeof MissionMode !== 'undefined' && MissionMode.prototype.objHit) { const oh = MissionMode.prototype.objHit; MissionMode.prototype.objHit = function (p, x, y) { const before = (this.objs || []).reduce((s, o) => s + (o.alive ? o.hp : 0), 0); const r = oh.apply(this, arguments); const after = (this.objs || []).reduce((s, o) => s + (o.alive ? o.hp : 0), 0); if (after < before && p && p.owner) p.owner._hurtFoe = true; return r; }; }
+  if (typeof Inf !== 'undefined') { const k0 = Inf.kill; Inf.kill = function (t, q, by) { if (by && by.team !== t.team) by._hurtFoe = true; return k0.apply(this, arguments); }; }
+
+  // ---- tank tester
+  if (typeof TestDrive !== 'undefined') TestDrive.targets = function (P) {
+    const era = P.def.era || 1, pool = Object.keys(TANKS).filter(k => { const d = TANKS[k]; return d && (d.era || 1) === era && !/APC|IFV|Truck|SPAA|Scout/.test(d.role || '') && !d.hidden && !d.soft && !d.jugg && !d.noAI && !d.wheeled && d.turret !== undefined && k !== P.def.id && !/_ai$/.test(k); }), out = [];
+    const L = pool.length ? pool.sort(() => Math.random() - 0.5) : ['m4a1'];
+    for (const [d, side] of [[150, -0.2], [400, 0.15], [800, -0.1]]) { const a = P.ang + side, x = clamp(P.x + Math.cos(a) * d, 40, B.map.W - 40), y = clamp(P.y + Math.sin(a) * d, 40, B.map.H - 40), [fx, fy] = B.map.navFree(x, y) ? [x, y] : [x + 20, y]; const v = B.addVehicle(L[out.length % L.length], 1, fx, fy, P.ang + Math.PI / 2, {}); v.name = 'Target'; v.ammo.forEach(m => m.n = 0); v.loaded = -1; out.push(v); }
+    return out; };
+  { const us = Battle.prototype.updateSpotting; Battle.prototype.updateSpotting = function () { const r = us.apply(this, arguments); if (this.cfg && this.cfg.testDrive) for (const e of this.vehicles) if (e.alive) { e.seenBy[0] = e.seenBy[1] = true; e.lastSeen = [this.time, this.time]; } return r; }; }
+
+  // ---- loading screen
+  { const s = document.createElement('style'); s.textContent = '#loading .sh-ver{top:22px;bottom:auto;right:30px}'; document.head.appendChild(s); }
+  window.addEventListener('load', () => { try { LOAD_TIPS.push('Try aiming for weak spots on heavily armoured tanks: they are not always where you expect, and some only open up for a moment.', 'Long-range shots, one-shot kills and hits on weak spots earn extra Warbonds and research points.', 'Respawning is free in the first 10 seconds after you deploy, as long as you have not hit an enemy yet.'); } catch (e) { } });
+
+  // ---- the open hatch: the loader throws the empty case out a moment after the shot and the hatch stands open for about a second
+  if (typeof W3Case !== 'undefined') {
+    const f0 = W3Case.fire; W3Case.fire = function (v, sh) { try { if (v && v.def && sh && sh.type !== 'MG' && !sh.cal && !v.def.soft && this.kind(v.def) === 'hand' && B) { v._hO0 = B.time + 1.25; v._hO1 = v._hO0 + 1.2; } } catch (e) { } return f0.apply(this, arguments); };
+    W3Case.weakHit = function (v, part, p, wx, wy) {
+      if (!v._hO0 || B.time < v._hO0 || B.time > v._hO1) return false; let M; try { M = W3.WT.mesh(v.def); } catch (e) { return false; } const P = M && M.port; if (!P) return false;
+      if ((P.g === 'hull') !== (part === 'hull')) return false;
+      const m = P.g === 'hull' ? S3.mR(v) : S3.gun(v).T, o = P.o, n = P.n, c = [m[0] * o[0] + m[4] * o[1] + m[8] * o[2] + m[12], m[1] * o[0] + m[5] * o[1] + m[9] * o[2] + m[13], m[2] * o[0] + m[6] * o[1] + m[10] * o[2] + m[14]], nw = [m[0] * n[0] + m[4] * n[1] + m[8] * n[2], m[1] * n[0] + m[5] * n[1] + m[9] * n[2], m[2] * n[0] + m[6] * n[1] + m[10] * n[2]];
+      const z = p.z !== undefined ? p.z : c[2], r = Math.max(P.H, P.W) * 1.05; if (Math.hypot(wx - c[0], wy - c[1], z - c[2]) > r) return false;
+      const dz = p.vz !== undefined && p.v ? p.vz / p.v : 0; return -(p.dx * nw[0] + p.dy * nw[1] + dz * nw[2]) > 0.15; // it has to come in from the side the hatch faces
+    };
+  }
+
+  // ---- kill awards
+  const AW = {
+    long: { t: 'LONG SHOT', c: '#8fd0ff', sp: 60, rp: 150 }, weak: { t: 'WEAK SPOT', c: '#ffd166', sp: 80, rp: 200 }, one: { t: 'ONE-SHOT KILL', c: '#ff9f43', sp: 50, rp: 120 },
+    ammo: { t: 'AMMO RACK', c: '#ff6b4a', sp: 40, rp: 100 }, close: { t: 'POINT BLANK', c: '#c9b6ff', sp: 30, rp: 80 }, revenge: { t: 'REVENGE', c: '#ff4d6d', sp: 40, rp: 100 },
+  };
+  const Awards = {
+    q: [], art: {},
+    badge(k) { if (this.art[k]) return this.art[k]; const A = AW[k], S = 120, cv = document.createElement('canvas'); cv.width = cv.height = S; const c = cv.getContext('2d'); c.translate(S / 2, S / 2);
+      // a shield with a laurel of chevrons, the award's colour along its rim, a mark for its kind in the middle
+      c.shadowColor = A.c; c.shadowBlur = 10; const g = c.createLinearGradient(0, -46, 0, 46); g.addColorStop(0, '#2a2f36'); g.addColorStop(1, '#0d1014'); c.fillStyle = g; c.strokeStyle = A.c; c.lineWidth = 4;
+      c.beginPath(); c.moveTo(0, -48); c.lineTo(38, -34); c.lineTo(34, 14); c.quadraticCurveTo(24, 38, 0, 50); c.quadraticCurveTo(-24, 38, -34, 14); c.lineTo(-38, -34); c.closePath(); c.fill(); c.stroke(); c.shadowBlur = 0;
+      c.strokeStyle = A.c; c.fillStyle = A.c; c.lineWidth = 4; c.lineCap = 'round';
+      if (k === 'long') { c.beginPath(); c.arc(0, 0, 18, 0, TAU); c.stroke(); c.beginPath(); c.arc(0, 0, 6, 0, TAU); c.fill(); for (const [a, b] of [[0, -30], [0, 30], [-30, 0], [30, 0]]) { c.beginPath(); c.moveTo(a * 0.45, b * 0.45); c.lineTo(a, b); c.stroke(); } }
+      else if (k === 'weak') { c.beginPath(); c.moveTo(-20, -20); c.lineTo(20, 20); c.moveTo(20, -20); c.lineTo(-20, 20); c.stroke(); c.beginPath(); c.arc(0, 0, 26, 0, TAU); c.stroke(); }
+      else if (k === 'one') { c.font = '900 46px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('1', 0, 2); }
+      else if (k === 'ammo') { for (const x of [-14, 0, 14]) { c.beginPath(); c.moveTo(x - 5, 22); c.lineTo(x - 5, -8); c.quadraticCurveTo(x, -26, x + 5, -8); c.lineTo(x + 5, 22); c.closePath(); c.fill(); } }
+      else if (k === 'close') { c.beginPath(); c.moveTo(-24, 0); c.lineTo(-6, 0); c.moveTo(24, 0); c.lineTo(6, 0); c.stroke(); for (const s of [-1, 1]) { c.beginPath(); c.moveTo(s * 6, -10); c.lineTo(s * 6, 10); c.stroke(); } }
+      else { c.beginPath(); c.moveTo(-18, -18); c.lineTo(18, 18); c.moveTo(18, -18); c.lineTo(-18, 18); c.stroke(); c.beginPath(); c.moveTo(-26, 10); c.lineTo(-10, 26); c.moveTo(26, 10); c.lineTo(10, 26); c.stroke(); }
+      return this.art[k] = cv; },
+    give(ctx, keys) { if (!keys.length) return; let sp = 0, rp = 0; for (const k of keys) { sp += AW[k].sp; rp += AW[k].rp; } ctx.sp += sp; ctx.rp += rp; if (ctx.local) { this.q = keys.map((k, i) => ({ k, t: B.time + i * 0.08 })); this.t = B.time; this.bt = B; this.sum = `+${sp} WB · +${rp} RP`; } },
+    draw(c, W, H) {
+      if (this.bt !== B || !this.q.length) return; const age = B.time - this.t, left = 5 - age; if (left <= 0) { this.q = []; return; }
+      const n = this.q.length, sz = 58, gap = 150, y = 232, a = clamp(left / 0.8, 0, 1); c.save(); c.globalAlpha = a; c.textAlign = 'center'; c.textBaseline = 'middle';
+      this.q.forEach((q, i) => { const x = W / 2 + (i - (n - 1) / 2) * gap, f = clamp((B.time - q.t) / 0.25, 0, 1), k = 1 + 0.3 * (1 - f) * (1 - f), s = sz * k; if (f <= 0) return;
+        c.drawImage(this.badge(q.k), x - s / 2, y - s / 2, s, s); c.font = `700 ${Math.round(13 * k)}px ${FONT}`; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(AW[q.k].t, x, y + 42); c.fillStyle = AW[q.k].c; c.fillText(AW[q.k].t, x, y + 42); });
+      c.font = `600 12px ${FONT}`; c.fillStyle = '#f1e8dc'; c.strokeText(this.sum, W / 2, y + 62); c.fillText(this.sum, W / 2, y + 62); c.restore();
+    },
+  };
+  window.Awards = Awards;
+  // hits counted per target, weak-spot hits remembered
+  const rv0 = resolveVehicleHit;
+  resolveVehicleHit = function (p, v, part, h, wx, wy) {
+    if (v && v.alive && p && p.owner && p.owner !== v && p.sh && p.sh.type !== 'MG') v._hn = (v._hn || 0) + 1;
+    const ric = p.ric; const r = rv0.apply(this, arguments);
+    if (p.ric > ric) p.alive = false; // a glancing shell is spent where it glanced off
+    return r;
+  };
+  const od = Battle.prototype.onDestroyed;
+  Battle.prototype.onDestroyed = function (v, killer, reason) {
+    const r = od.apply(this, arguments);
+    try {
+      if (this.demo || !killer || killer.team === v.team || v.def.soft) return r; const kc = this.ctxOf(killer); if (!kc) return r;
+      const d = dist(killer.x, killer.y, v.x, v.y), era = killer.def.era || 1, keys = [];
+      if (d >= (era <= 2 ? 600 : 1500)) keys.push('long');
+      if (v._weakT !== undefined && this.time - v._weakT < 1.5) keys.push('weak');
+      if ((v._hn || 0) <= 1) keys.push('one');
+      if (reason === 'ammo') keys.push('ammo');
+      if (d < 20) keys.push('close');
+      if (kc._killedBy !== undefined && kc._killedBy === v.id) { keys.push('revenge'); kc._killedBy = undefined; }
+      Awards.give(kc, keys);
+    } catch (e) { console.error(e); }
+    try { const vc = this.ctxOf(v); if (vc && killer) vc._killedBy = killer.id; } catch (e) { }
+    return r;
+  };
+  { const dr = Streak.draw; Streak.draw = function (c, W, H) { dr.apply(this, arguments); try { Awards.draw(c, W, H); } catch (e) { } }; }
+
+  // ---- changing the next round while loading: the time follows the new round
+  const up0 = Vehicle.prototype.update;
+  Vehicle.prototype.update = function (dt) {
+    const nx = this.next; const r = up0.apply(this, arguments);
+    if (this._nx !== undefined && this.next !== this._nx && this.loaded < 0 && this.reloadMax > 0 && this.ammo && this.ammo.length > 1) {
+      const spent = this.reloadMax - this.reloadT, nm = this.def.reload * this.reloadMult(); if (Math.abs(nm - this.reloadMax) > 0.05) { this.reloadMax = nm; this.reloadT = Math.max(0.05, nm - spent); }
+    }
+    this._nx = this.next; return r;
+  };
+}
 
 // ---------------------------------------------------------------- the tactical map (M)
 // A paper map of the whole battlefield laid over the screen: the printed map, a squared grid lettered down the side and numbered along the
@@ -27275,7 +28254,7 @@ const Lobby = {
       go.textContent = S.inBattle ? 'Battle running…' : solo ? 'Start solo battle ▶' : ok ? 'Start battle ▶' : `Waiting for ready (${nr}/${sl.length})`; go.classList.toggle('primary', ok && !S.inBattle); }
     const P = S.players, me = P[this.myPid];
     const count = Object.keys(P).length;
-    $('lbCount').textContent = `${count} / ${Lobby.maxP ? Lobby.maxP() : MAX_PLAYERS} players`;
+    $('lbCount').textContent = `${count} / ${this.isHost ? (Lobby.maxP ? Lobby.maxP() : MAX_PLAYERS) : (this.srvMaxG || MAX_PLAYERS)} players`;
     this.renderMaps(S, host);
     // battle in progress banner (host away from the battle, or guests not in it)
     const meWait = me && me.waiting;
@@ -27550,7 +28529,7 @@ function netErrText(e) {
   return { noanswer: 'room not found — check the code and make sure the host still has the lobby open', timeout: 'the host did not answer — is the room still open?', nohost: 'room not found', signal: 'cannot reach the matchmaking server', server: 'matchmaking server error', p2p: 'found the host, but the two networks blocked the connection — try another network (e.g. not a phone hotspot or school/office Wi-Fi)', nortc: 'this browser does not support WebRTC', taken: 'room code clash' }[e] || e;
 }
 function copyText(t) {
-  const done = () => UI.toast('Link copied — paste it in your chat app');
+  const done = () => UI.toast('Link copied');
   if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(done, fallback); else fallback();
   function fallback() { const i = $('lbLink'); if (i) { i.select(); try { document.execCommand('copy'); done(); } catch (e) { UI.toast('Select the link and copy it'); } } }
 }
@@ -27952,7 +28931,7 @@ const GSFX_SETS = {
   hit: ['hit1', 'hit2', 'hit3'], crit: ['crit1', 'crit2'], rico: ['rico1', 'rico2', 'rico3'], reload: ['reload1', 'reload2'],
 };
 // the calibres (mm) each gun recording is used for: five classes from autocannon crack to the heaviest guns' long thump
-const GSFX_CAL = { cA1: [0, 42], cA2: [0, 42], cB1: [43, 62], cB2: [43, 62], cC1: [63, 92], cC2: [63, 92], shotnear1: [63, 92], cD1: [93, 126], cD2: [93, 126], cE1: [127, 999], cE2: [127, 999], bmedL: [43, 92], shotnear2: [43, 92], bmedH: [93, 999], shotmed: [63, 126] };
+const GSFX_CAL = { cA1: [0, 30], cA2: [0, 30], cB1: [31, 45], cB2: [31, 45], cC1: [46, 62], cC2: [46, 62], shotnear1: [63, 92], cD1: [63, 126], cD2: [63, 126], cE1: [93, 999], cE2: [93, 999], bmedL: [31, 92], shotnear2: [46, 126], bmedH: [63, 999], shotmed: [63, 126] };
 const GSFX_GAIN = { rico2: 0.5, hit1: 1.1, hit3: 1.1 }; // per-file trims (file 2 of the ricochets plays quieter)
 const GSfx = {
   bufs: {}, loading: false, rr: {}, voices: {},
@@ -28011,7 +28990,7 @@ const GSfx = {
     let h = 0; for (let i = 0; i < tag.length; i++) h = (h * 31 + tag.charCodeAt(i)) >>> 0;
     const k = L[h % L.length], cal = clamp(calmm / 100, 0.4, 1.5);
     // every tank model gets its own fixed "voice": pitch, tone colour and (for big guns) an extra low boom
-    const rate = (1.12 - 0.16 * cal) * (0.9 + (h % 7) / 30), eq = [260 + ((h >>> 3) % 6) * 190, ((h >>> 6) % 10) - 4];
+    const rate = (1.05 - 0.1 * cal) * (0.93 + (h % 7) / 40), eq = [260 + ((h >>> 3) % 6) * 190, ((h >>> 6) % 10) - 4];
     let g, lp;
     if (me) { g = 1.7; lp = 20000; }
     else if (set === 'shotNear') { g = 0.95 - d / 140 * 0.2; lp = 20000; }
@@ -28021,7 +29000,8 @@ const GSfx = {
     const delay = d > 300 ? Math.min(2.4, (d - 300) / 343 * 0.6) : 0;
     this.shoot(k, me ? g : g * (0.8 + cal * 0.2), pan, set === 'shotFar' ? rate * 0.94 : rate, lp, delay, set === 'shotNear' ? eq : null, far);
     if (set === 'shotNear') {
-      if (cal >= 0.95 && this.bufs.shotmed) this.shoot('shotmed', (me ? 0.55 : 0.3) * (cal - 0.5), pan, rate * 0.85, 1400, delay);   // heavy guns: deep boom underneath
+      if (cal >= 0.95 && this.bufs.shotmed) this.shoot('shotmed', (me ? 0.55 : 0.3) * (cal - 0.5), pan, rate * 0.85, 1400, delay);
+      else if (cal >= 0.36 && this.bufs.shotmed) { this.shoot('shotmed', (me ? 0.5 : 0.3) * (0.35 + cal * 0.45), pan, rate * (1.2 - cal * 0.25), 900, delay); if (cal < 0.75) { const out = Sfx.out({ g: me ? 0.55 : 0.35 * (1 - d / 140), pan, lp: 1 }); Sfx.noiseBurst(out, Sfx.ctx.currentTime, 0.12, 6500, 1600, 0.8, 'highpass', 0.6); } }   // heavy guns: deep boom underneath
       else { const out = Sfx.out({ g: me ? 0.7 : 0.45 * (1 - d / 140), pan, lp: 1 }); Sfx.noiseBurst(out, Sfx.ctx.currentTime, 0.14, 7000, 1800, 0.8, 'highpass', 0.7); } // lighter guns: sharp muzzle crack
     }
     return true;
