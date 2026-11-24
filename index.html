@@ -15263,6 +15263,11 @@ const Tank3D = {
               { const G_ = glacis([3.58, 0, 1.02], [2.35, 0, 1.56]); hatch(HL, 2.35, -0.55, 1.58, 0.26, 0.24); for (const s of [-1, 1]) { lamp(3.45, s * 1.2, 1.2, true); box(HL, 3.2, 3.45, s * 1.42 - 0.12, s * 1.42 + 0.12, 1.12, 1.3, C(PA, 0.9)); } rivs(HL, G_.at(0.03, -1.0), G_.at(0.03, 1.0), 8, G_.n, PA.map(q => q * 1.15), 0.014); }
               for (const x of [-1.4, -2.6]) { box(HL, x - 0.5, x + 0.5, -1.0, 1.0, 1.6, 1.63, C(PA, 0.92)); meshG(HL, x - 0.45, x + 0.45, -0.95, 0.95, 1.635, 0.07); } for (let k = 0; k < 7; k++) box(HL, -3.57, -3.53, -0.9, 0.9, 0.85 + k * 0.08, 0.88 + k * 0.08, C(DK));
               for (const s of [-1, 1]) { box(HL, -3.0, -1.0, s > 0 ? W2 - 0.4 : -W2 + 0.02, s > 0 ? W2 - 0.02 : -W2 + 0.4, 1.6, 1.82, C(PA, 0.9)); jerry(HL, -3.4, s * 1.3, 1.6, PA.map(q => q * 0.85)); }
+              if (G.flak === 'gepard') { // the Gepard's own: the bent front mudguards over the tracks, tow hooks, the stowage bins on the left guard
+                for (const s of [-1, 1]) { extS(HL, [[3.4, 1.03], [3.78, 0.93], [3.8, 0.7], [3.74, 0.69], [3.72, 0.88], [3.4, 0.97]], s > 0 ? W2 - 0.52 : -W2 + 0.02, s > 0 ? W2 - 0.02 : -W2 + 0.52, PA, 1);
+                  cyl(HL, [3.5, s * 0.75, 0.78], 'x', 0.16, 0.06, C(STL, 0.7), 10, 0, 0.06, true, C(STL, 0.6)); box(HL, 3.62, 3.7, s * 0.75 - 0.08, s * 0.75 + 0.08, 0.7, 0.86, C(STL, 0.7)); }
+                for (let k = 0; k < 3; k++) box(HL, 1.3 - k * 0.62, 1.86 - k * 0.62, W2 - 0.42, W2 - 0.04, 1.6, 1.86, C(PA, 0.88));
+              }
             } else {
               extS(HL, [[4.1, 0.9], [4.15, 1.08], [2.55, 1.6], [-3.95, 1.62], [-4.12, 1.48], [-4.12, 0.72], [-3.4, 0.5], [3.6, 0.5]], -YH, YH, PA);
               extS(HL, [[4.15, 1.08], [2.55, 1.61], [-4.0, 1.62], [-4.0, 1.52], [2.55, 1.52], [4.0, 1.04]], -W2 + 0.02, -YH, PA, 1); extS(HL, [[4.15, 1.08], [2.55, 1.61], [-4.0, 1.62], [-4.0, 1.52], [2.55, 1.52], [4.0, 1.04]], YH, W2 - 0.02, PA, 1);
@@ -15302,19 +15307,49 @@ const Tank3D = {
               cyl(TUR, [-1.1, -0.9, 0.3], 'x', -1.3, 0.12, C(PA, 0.85), 12, 0, 0.12, true, C(PA, 0.75)); box(TUR, -1.42, -1.0, -0.6, 0.6, 0.15, 0.5, C(PA, 0.88)); whip(TUR, [-0.9, 0.9, 0.62], 2.2, 0.012, 0.004, C(BLK));
               st = [[X0 + 0.22, 0.13], [X0 + 0.45, 0.115], [X0 + 0.5, 0.09], [X0 + 2.6, 0.085], [X0 + 2.66, 0.11], [X0 + 3.15, 0.11], [X0 + 3.2, 0.085], [ge, 0.08]];
             } else if (LE && G.flak === 'gepard') {
-              // ---- the Gepard turret: a big flat-sided box on the Leopard 1 ring, a 35 mm Oerlikon KDA in an armoured housing on each side outside
-              //      it, the tracking radar's round dish on the front, the search radar on its mast at the back, smoke dischargers either side
-              const B0 = mir([[1.4, 0.0], [1.4, 0.78], [0.7, 1.18], [-1.45, 1.18], [-1.75, 0.95]]), B1 = mir([[1.25, 0.0], [1.25, 0.7], [0.62, 1.08], [-1.4, 1.1], [-1.65, 0.88]]), H = 1.02;
-              prism(TUR, B0, 0.02, B1, H, [-0.2, 0, 0.5]); gz = 0.62; X0 = 0.05; ge = 4.05;
-              for (const s of [-1, 1]) { const y = s * 1.5; box(TUR, -0.2, 0.35, s * 1.1, s * 1.3, gz - 0.2, gz + 0.2, C(PA, 0.85));
-                box(TUR, -0.95, 0.95, y - 0.24, y + 0.24, gz - 0.32, gz + 0.3, C(PA, 0.95), null, 2); box(TUR, -0.9, 0.9, y - 0.25, y + 0.25, gz + 0.3, gz + 0.34, C(PA, 0.85), null, 2);
-                box(TUR, -0.7, -0.2, y + s * 0.25, y + s * 0.34, gz - 0.25, gz + 0.12, C(PA, 0.8), null, 2);
-                barrel([[0.95, 0.075], [1.25, 0.06], [1.3, 0.045], [3.75, 0.04], [3.78, 0.065], [4.0, 0.065], [4.05, 0.045]], y, gz);
-                smoke(TUR, -0.5, s * 1.22, 0.75, 4, s, 1.2, 0.04, 0.18); }
-              cyl(TUR, [1.3, 0, 0.62], 'x', 0.18, 0.52, C(PA, 0.9), 20, 0, 0.52, true, C(PA, 0.75)); cyl(TUR, [1.48, 0, 0.62], 'x', 0.04, 0.4, C(STL, 0.8), 18);
-              cyl(TUR, [-1.0, 0, H], 'z', 0.55, 0.16, C(PA, 0.85), 12); box(TUR, -1.15, -0.85, -0.95, 0.95, H + 0.55, H + 0.62, C(STL, 0.9)); for (let k = 0; k < 7; k++) { const y = -0.9 + k * 0.3; box(TUR, -1.2, -0.8, y - 0.12, y + 0.12, H + 0.62, H + 0.66 + Math.cos((y / 0.95) * Math.PI / 2) * 0.32, C(STL, 0.75)); }
-              cupola(-0.2, 0.62, H, 0.34, 8, 0.18); hatch(TUR, -0.2, -0.62, H + 0.01, 0.32, 0.3); box(TUR, 0.5, 0.95, 0.35, 0.65, H, H + 0.22, C(PA, 0.92));
-              whip(TUR, [-1.5, 0.8, H], 2.2, 0.012, 0.004, C(BLK)); st = null;
+              // ---- the Gepard turret, after the vehicle: a tall slab-sided welded turret on the Leopard 1 ring; on the front the round drum of the
+              //      tracking radar with its smaller neighbour; outside each side an armoured housing that elevates with its 35 mm Oerlikon KDA (L/90,
+              //      3.15 m barrel), the muzzle-velocity frame on the muzzle; four smoke dischargers on a shelf under each housing; at the back the
+              //      search radar's black "bucket" antenna raised on its mast, the waveguide looping down behind; stowage bins, whips.
+              const tp2 = (g, pts, ctr, sd) => { const n = normal(pts[0], pts[1], pts[2], ctr); poly(g, pts, [1, 1, 1, 1], ctr, sd, null, pts.map(p => sk(g, p, n))); };
+              const ext2 = (prof, y0, y1, sd = 2, dz = 0) => { let cx = 0, cz = 0; for (const q of prof) { cx += q[0]; cz += q[1]; } cx /= prof.length; cz /= prof.length; const ctr = [cx, (y0 + y1) / 2, cz + dz], A = prof.map(q => [q[0], y0, q[1] + dz]), B_ = prof.map(q => [q[0], y1, q[1] + dz]); for (let i = 0; i < A.length; i++) { const j = (i + 1) % A.length; tp2(TUR, [A[i], A[j], B_[j], B_[i]], ctr, sd); } tp2(TUR, A, ctr, sd); tp2(TUR, B_.slice().reverse(), ctr, sd); };
+              const H = 1.32, B0 = mir([[1.12, 0.0], [1.12, 0.74], [0.88, 1.04], [-1.5, 1.04], [-1.72, 0.82]]), B1 = mir([[0.98, 0.0], [0.98, 0.64], [0.74, 0.97], [-1.46, 0.97], [-1.64, 0.76]]);
+              prism(TUR, B0, 0.02, B1, H, [-0.2, 0, 0.5]); gz = 0.9; X0 = 0.2; ge = 4.44;
+              // roof: the raised rear deck under the radar mast, hatches, periscopes, the roof sight
+              prism(TUR, mir([[-0.75, 0], [-0.75, 0.72], [-1.5, 0.72], [-1.58, 0.6]]), H, mir([[-0.8, 0], [-0.8, 0.68], [-1.46, 0.68], [-1.54, 0.56]]), H + 0.14, [-1.1, 0, H]);
+              hatch(TUR, -0.25, 0.48, H + 0.01, 0.32, 0.28); hatch(TUR, -0.25, -0.48, H + 0.01, 0.32, 0.28);
+              for (const y of [0.3, 0.62, -0.3, -0.62]) { box(TUR, 0.45, 0.62, y - 0.08, y + 0.08, H, H + 0.12, C(PA, 0.92)); box(TUR, 0.62, 0.63, y - 0.06, y + 0.06, H + 0.03, H + 0.1, C(GLS, 0.5)); }
+              box(TUR, 0.05, 0.45, -0.18, 0.18, H, H + 0.3, C(PA, 0.94)); box(TUR, 0.45, 0.47, -0.13, 0.13, H + 0.1, H + 0.26, C(GLS, 0.5)); cyl(TUR, [-0.6, 0, H], 'z', 0.08, 0.12, C(PA, 0.85), 12);
+              // the tracking radar: the big drum on the front with its domed face, the smaller drum beside it, the cradle under them
+              box(TUR, 0.9, 1.32, -0.62, 0.78, 0.1, 0.32, C(PA, 0.9)); 
+              cyl(TUR, [0.92, -0.08, 0.72], 'x', 0.42, 0.5, C(PA, 0.92), 26, 0, 0.44, true, C(PA, 0.8)); cyl(TUR, [1.34, -0.08, 0.72], 'x', 0.07, 0.5, C(PA, 0.85), 26, 0, 0.45, false); cyl(TUR, [1.41, -0.08, 0.72], 'x', 0.08, 0.45, C([0.5, 0.52, 0.46]), 26, 0, 0.3, false); cyl(TUR, [1.49, -0.08, 0.72], 'x', 0.05, 0.3, C([0.5, 0.52, 0.46]), 26, 0, 0.12, true, C([0.5, 0.52, 0.46]));
+              cyl(TUR, [0.95, 0.6, 0.52], 'x', 0.36, 0.26, C(PA, 0.9), 20, 0, 0.25, true, C(PA, 0.8)); cyl(TUR, [1.31, 0.6, 0.52], 'x', 0.06, 0.24, C([0.45, 0.47, 0.42]), 20, 0, 0.14, true, C([0.45, 0.47, 0.42]));
+              box(TUR, 0.92, 1.2, -0.62, 0.45, 1.22, 1.3, C(PA, 0.88)); // the hood over the drum
+              for (const s of [-1, 1]) {
+                const y = s * 1.48;
+                // the trunnion boss on the turret side, the shelf with the four smoke dischargers under the housing
+                cyl(TUR, [X0, s * 0.98, gz], 'y', s * 0.3, 0.2, C(PA, 0.88), 16, 0, 0.2, true, C(PA, 0.8));
+                box(TUR, -0.15, 0.4, s > 0 ? 1.0 : -1.3, s > 0 ? 1.3 : -1.0, 0.36, 0.4, C(PA, 0.85)); for (let k = 0; k < 4; k++) { const x = -0.08 + k * 0.14, p = [x, s * 1.16, 0.4], d = V3.norm([0.55, s * 0.35, 0.75]); tube(TUR, [[p, 0.045], [V3.add(p, V3.mul(d, 0.24)), 0.045]], C(PA, 0.75)); }
+                // the gun housing: a long armoured box, its nose sloping down to the barrel, the feed box on top; it elevates with the gun
+                ext2([[-0.8, -0.3], [1.02, -0.3], [1.3, -0.12], [1.3, 0.1], [0.98, 0.27], [0.2, 0.32], [-0.8, 0.32]], y - 0.24, y + 0.24, 2, gz);
+                ext2([[-0.55, 0.32], [0.45, 0.32], [0.35, 0.44], [-0.5, 0.44]], y - 0.17, y + 0.17, 2, gz);
+                box(TUR, -0.6, 0.7, y + s * 0.24, y + s * 0.29, gz - 0.22, gz + 0.16, C(PA, 0.86), null, 2); box(TUR, -0.82, -0.78, y - 0.2, y + 0.2, gz - 0.25, gz + 0.28, C(PA, 0.8), null, 2);
+                // the 35 mm barrel: recoil sleeve, the plain tube with its ring, the muzzle brake, the muzzle-velocity frame round it
+                barrel([[1.28, 0.1], [1.62, 0.1], [1.64, 0.066], [2.9, 0.06], [2.92, 0.075], [3.04, 0.075], [3.06, 0.054], [4.12, 0.05], [4.14, 0.075], [4.4, 0.075], [4.42, 0.05]], y, gz);
+                for (const x of [4.12, 4.38]) { box(TUR, x, x + 0.04, y - 0.09, y + 0.09, gz + 0.07, gz + 0.09, C(BLK), null, 2); box(TUR, x, x + 0.04, y - 0.09, y + 0.09, gz - 0.09, gz - 0.07, C(BLK), null, 2); box(TUR, x, x + 0.04, y - 0.09, y - 0.07, gz - 0.07, gz + 0.07, C(BLK), null, 2); box(TUR, x, x + 0.04, y + 0.07, y + 0.09, gz - 0.07, gz + 0.07, C(BLK), null, 2); }
+                for (const [a, b] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) box(TUR, 4.0, 4.44, y + a * 0.08 - 0.01, y + a * 0.08 + 0.01, gz + b * 0.08 - 0.01, gz + b * 0.08 + 0.01, C(BLK), null, 2);
+                // stowage bins on the turret's rear flanks
+                box(TUR, -1.5, -0.9, s > 0 ? 0.97 : -1.12, s > 0 ? 1.12 : -0.97, 0.5, 1.0, C(PA, 0.9)); }
+              // the rear: the overhang box, the radar mast, the yoke and the search antenna
+              box(TUR, -1.92, -1.6, -0.62, 0.62, 0.25, 0.9, C(PA, 0.88));
+              const MZ = H + 0.14; box(TUR, -1.36, -1.0, -0.18, 0.18, MZ, MZ + 0.5, C(PA, 0.86)); cyl(TUR, [-1.18, 0, MZ + 0.5], 'z', 0.1, 0.16, C(STL, 0.8), 14);
+              for (const s of [-1, 1]) box(TUR, -1.28, -1.08, s * 0.2, s * 0.28, MZ + 0.55, MZ + 0.92, C(BLK));
+              { const RD = [], N = 28, dx = [[-0.98, 0.0, 0.0], [-1.02, 0.88, 0.34], [-1.12, 0.96, 0.4], [-1.26, 0.94, 0.38], [-1.36, 0.8, 0.3], [-1.4, 0.0, 0.0]];
+                for (const [x, a, b] of dx) { const r = []; for (let i = 0; i < N; i++) { const t = i / N * TAU, c = Math.cos(t), sn = Math.sin(t), yy = a * Math.sign(c) * Math.pow(Math.abs(c), 0.45), zz = b * Math.sign(sn) * Math.pow(Math.abs(sn), 0.45); r.push([x + 0.14 * (yy / 0.96) ** 2, yy, MZ + 1.12 + zz]); } RD.push(r); }
+                const ctr = [-1.2, 0, MZ + 1.12]; for (let i = 0; i + 1 < RD.length; i++) for (let k = 0; k < N; k++) { const q = (k + 1) % N; poly(TUR, [RD[i][k], RD[i][q], RD[i + 1][q], RD[i + 1][k]], C([0.08, 0.085, 0.08]), ctr); }
+                box(TUR, -1.42, -1.3, -0.12, 0.12, MZ + 0.75, MZ + 1.0, C(BLK)); cyl(TUR, [-1.15, 0, MZ + 1.52], 'z', 0.12, 0.02, C(BLK), 6); }
+              tube(TUR, [[[-1.36, 0.1, MZ + 0.1], 0.045], [[-1.5, 0.1, MZ + 0.35], 0.045], [[-1.5, 0.1, MZ + 0.7], 0.045], [[-1.36, 0.1, MZ + 0.9], 0.045]], C(BLK));
+              whip(TUR, [-1.5, 0.85, H], 2.4, 0.012, 0.004, C(BLK)); whip(TUR, [-1.5, -0.85, H], 2.4, 0.012, 0.004, C(BLK)); st = null;
             } else if (LE) {
               // the cast Leopard 1 turret; on the 1A5 the welded-on spaced armour boxes it in, with the EMES 18 thermal sight on the roof
               const ring = (z, k) => { const o = []; for (let i = 0; i < 24; i++) { const a = i / 24 * TAU, c = Math.cos(a), sn = Math.sin(a); o.push([c > 0 ? c * 1.25 * k : c * 1.62 * k - 0.05, sn * 1.24 * k * (c < -0.6 ? 0.9 : 1), z]); } return o; };
@@ -17584,9 +17619,9 @@ const UI = {
       const gm = s.gm || 'cap';
       const brief = gm === 'tdm' ? `Six tanks per side, no points to capture. Every kill scores for your team; when the ${MATCH_MINUTES}-minute clock runs out the team with more kills wins. You respawn at your home base.`
         : gm === 'jugg' ? `Three of the twelve crews — possibly you — are handed a Landkreuzer P.1000 <b>Ratte</b>: a 1,000-tonne land battleship with twin 28 cm guns and automatic flak turrets. Everyone else is on the same side and must sink all three within ${JUGG_SECONDS / 60} minutes; hunters respawn, Rattes do not. If any Ratte is still afloat when the clock runs out, the juggernauts win.`
-        : gm === 'convoy' ? `${CONVOY_WAVES.length} waves of supply trucks, led by escort tanks, cross the map north–south. You are randomly a <b>raider</b> (destroy them) or an <b>escort</b> (get them across). Raiders win if they destroy more than get through.`
+        : gm === 'aa' ? AA_BRIEF : gm === 'convoy' ? `${CONVOY_WAVES.length} waves of supply trucks, led by escort tanks, cross the map north–south. You are randomly a <b>raider</b> (destroy them) or an <b>escort</b> (get them across). Raiders win if they destroy more than get through.`
         : `Six tanks per side fight over three capture points for ${MATCH_MINUTES} minutes. There is no early win — when the clock runs out, the team holding the most points wins (ties go to whoever held points longer). You can respawn at your home base or at any point your team holds, as long as no enemies are nearby.`;
-      r.innerHTML = `<div class="lbl">Game mode</div><div class="gm-row setup-gm">${GM_ORDER.map(k => `<div class="gm ${k === gm ? 'sel' : ''}" data-k="${k}"><b>${GAME_MODES[k].short}</b></div>`).join('')}</div>
+      r.innerHTML = `<div class="lbl">Game mode</div><div class="gm-row setup-gm">${GM_ORDER.filter(k => k !== 'camp').map(k => `<div class="gm ${k === gm ? 'sel' : ''}" data-k="${k}"><b>${GAME_MODES[k].short}</b></div>`).join('')}</div>
         <div class="lbl">Battlefield</div><div class="setup-map"><canvas width="520" height="150"></canvas><div class="row2"><div class="n">${T.name}</div><button class="btn small" id="setupMap">Change map</button></div><div class="d">${T.desc}</div></div>
         <div class="lbl">Briefing</div><div class="brief">${brief} Allies and enemies are drawn from <b>${ERA_NAMES[d.era]}</b>, matched to your tank.</div>`;
       r.querySelectorAll('.setup-gm .gm').forEach(el => { el.onclick = () => { uiSnd('click'); s.gm = el.dataset.k; this.renderSetup(); }; });
@@ -17909,7 +17944,7 @@ const App = {
     this.lastCfg = null;
     UI.hideAll(); Sfx.init();
     const build = () => {
-      new Battle({ mode: 'mpclient', net: 'client', mapCfg: m.mapCfg, mpView: { settings: m.settings }, mp: { settings: m.settings }, localPid: m.pid, myTeam: m.team, name: Lobby.myName(), diff: m.settings.diff });
+      new Battle({ mode: 'mpclient', net: 'client', mapCfg: m.mapCfg, mpView: { settings: m.settings }, mp: { settings: m.settings }, localPid: m.pid, myTeam: m.team, name: m.name || Lobby.myName(), diff: m.settings.diff });
       B.me.pref = m.tank; if (m.tanks) B.me.tanks = m.tanks; if (m.name) B.me.name = m.name;
     };
     const done = () => { this.state = 'battle'; this.paused = false; Music.setContext('battle'); Music.resume(); };
@@ -18975,7 +19010,7 @@ const W3Scene = {
     // a band of woods just outside the map hides its edge
     if (map.trees.length > 60 && map.cfg.theme !== 'desert') {
       const kinds = [...new Set(map.trees.map(t => t.kind))];
-      for (let i = 0; i < 2600; i++) { const side = R() * 4 | 0, o = 185 + Math.pow(R(), 1.3) * 190, u = R() * 1.7 - 0.35, x = side === 0 ? -o : side === 1 ? map.W + o : u * map.W, y = side === 2 ? -o : side === 3 ? map.H + o : u * map.H; addT(null, x, y, 3.5 + R() * 2.5, kinds[R() * kinds.length | 0], R() * 3 | 0, true); }
+      for (let i = 0; i < 2600; i++) { const side = R() * 4 | 0, o = 185 + Math.pow(R(), 1.3) * 190, u = R() * 1.7 - 0.35, x = side === 0 ? -o : side === 1 ? map.W + o : u * map.W, y = side === 2 ? -o : side === 3 ? map.H + o : u * map.H; if (!(map.seaZ && map.seaZ(x, y) !== null)) addT(null, x, y, 3.5 + R() * 2.5, kinds[R() * kinds.length | 0], R() * 3 | 0, true); }
     }
     const data = [], cells = [];
     for (const k of Object.keys(cell)) {
@@ -20686,7 +20721,7 @@ Render.drawMarkers3D = function (c) {
     c.beginPath(); c.moveTo(q[0] - 6, ty - 7); c.lineTo(q[0] + 6, ty - 7); c.lineTo(q[0], ty + 2); c.closePath(); c.stroke(); c.fill(); ty -= 12;
     if (p && p.alive && !Aim.manual()) { c.font = '600 11px "Bahnschrift","Segoe UI",Arial,sans-serif'; const d = `${Math.round(dist(p.x, p.y, v.x, v.y))} m`; c.fillStyle = 'rgba(0,0,0,0.65)'; c.fillText(d, q[0] + 1, ty + 1); c.fillStyle = light; c.fillText(d, q[0], ty); ty -= 13; }
     if (v.human != null && v.human >= 0 && B.mp) { c.font = '700 13px "Bahnschrift","Segoe UI",Arial,sans-serif'; c.fillStyle = `rgb(${col})`; c.fillText(v.name, q[0], ty); }
-    else { c.globalAlpha = flash; this.tankIcon(c, q[0], ty - 5, `rgb(${col})`); c.globalAlpha = 1; }
+    else { c.globalAlpha = flash; ((v.convoy || (B.mode.gm === 'convoy' && v.def.soft)) && this.truckIcon ? this.truckIcon : this.tankIcon).call(this, c, q[0], ty - 5, `rgb(${col})`); c.globalAlpha = 1; }
   }
   for (const pt of B.map.points || []) {
     const q = W3.project(pt.x, pt.y, W3.gz(pt.x, pt.y) + 13); if (!q || !q[2]) continue; const own = pt.owner === B.myTeam, en = pt.owner >= 0 && !own, col = own ? '#6fb8ff' : en ? '#ff6a5e' : '#e8e3d0';
@@ -23401,7 +23436,7 @@ const Scorch = {
       { type: G_CRATER, col: () => [74, 62, 46], a: 0.85 },
     ],
     terrain(m, R) {
-      const W = m.W, H = m.H, O = OM(W, H); m.om = O;
+      const W = m.W, H = m.H, O = OM(W, H); m.om = O; m.seaZ = (x, y) => { const sy = O.seaY(clamp(x, 0, W)); return y < sy ? -1.8 - Math.min(2.2, (sy - y) * 0.03) : null; }; // the open sea: beyond the map's north edge it runs on to the horizon
       // sea, wet sand, dry sand, the shingle bank
       for (let gy = 0; gy < m.gh; gy++) for (let gx = 0; gx < m.gw; gx++) { const x = gx * GC, y = gy * GC, i = gy * m.gw + gx;
         if (y < O.seaY(x)) m.ground[i] = G_WATER; else if (y < O.beachTop(x)) m.ground[i] = G_SAND; else if (y < O.beachTop(x) + 9) m.ground[i] = G_STONE; else if (y < O.bluffBase) m.ground[i] = G_GRASS; }
@@ -26921,6 +26956,162 @@ const Scenery = {
   }
 }
 
+// ---------------------------------------------------------------- Villers-Bocage, 13 June 1944
+// A compact Norman market town on the Route Nationale 175 from Caen: two- and three-storey houses of pale limestone (and some brick) with
+// slate roofs, built in continuous rows along the wide main street (the rue Pasteur, running west to east), a market square, narrow side
+// streets. Round it the bocage: small pastures and apple orchards boxed in by earth banks two metres high topped with thick hedges and trees,
+// which no tank could see through or climb without showing its belly; the lanes between them sunk below the fields. A mile east along the N175
+// the wooded ridge of Point 213 overlooks the town and the valley. That morning Michael Wittmann's Tiger of the 101st SS Heavy Panzer
+// Battalion drove down the road from Point 213 shooting up the 7th Armoured Division's column parked along it, into the main street, until a
+// 6-pounder disabled it in the town. In the afternoon more Tigers and the Panzer IVs of the Panzer-Lehr Division came into the narrow streets,
+// and British infantry, anti-tank guns, Cromwells and a Firefly knocked out several of them among the houses before the brigade withdrew.
+// The map: west to east, the town (main street, square, side streets, gardens), the N175 running out between the hedges, burnt-out half-tracks
+// and carriers along it, and Point 213 with its woods in the east.
+{
+  const VB = 'villers';
+  BIOMES[VB] = { grass: [[96, 132, 62], [88, 124, 58]], forest: [52, 80, 40], dirt: [104, 90, 70], fields: [[110, 140, 66], [124, 150, 70], [150, 160, 82]], road: '#5f5b55', roof: ['#4a4e56', '#52565e', '#454850', '#5a5650'], tree: [[58, 92, 44], [64, 98, 46], [52, 84, 40]] };
+  SKY[VB] = { top: [0.38, 0.55, 0.78], hor: [0.74, 0.8, 0.86], fog: [0.76, 0.8, 0.84], sun: [1.0, 0.95, 0.86], amb: [0.66, 0.7, 0.74], fogD: 0.0007, cloud: 0.3 };
+  const VG = (W, H) => {
+    const road = x => H * 0.5 + Math.sin(x / 260) * 10 + (x > W * 0.55 ? -(x - W * 0.55) * 0.18 : 0); // the N175, rising north-east towards Point 213 beyond the town
+    return { road, x0: W * 0.05, x1: W * 0.5, sq: { x: W * 0.3, y: road(W * 0.3) - 34 }, side: [W * 0.14, W * 0.22, W * 0.38, W * 0.46], hill: { x: W * 0.9, y: road(W * 0.9) - 30 }, start: { x: W * 0.12, y: road(W * 0.12) } };
+  };
+  const inTown = (K, x, y) => x > K.x0 - 10 && x < K.x1 + 15 && Math.abs(y - K.road(x)) < 150;
+  MAP_THEMES[VB] = {
+    name: 'Villers-Bocage', sub: 'Market town · bocage · Point 213', desc: 'Villers-Bocage on 13 June 1944: the market town on the N175 with its stone houses, main street and square, the hedgerows and sunken lanes round it, and Point 213 to the east.',
+    base: G_GRASS, lone: 0.002, grade: 'rgba(110,104,90,0.06)', dark: 0.02,
+    layout(W, H, r, j) {
+      const K = VG(W, H), main = []; for (let x = 0; x <= W; x += 40) main.push([x, K.road(x)]);
+      const town = main.filter(([x]) => x >= K.x0 - 20 && x <= K.x1 + 20), roads = [{ pts: main, w: 9, paved: true }, { pts: town, w: 18, paved: true }]; // the N175, and through the town the wide rue Pasteur from house front to house front
+      // the side streets out of the main street, and the lanes beyond them
+      for (const sx of K.side) { const y = K.road(sx); roads.push({ pts: [[sx, y], [sx + 4, y - 150], [sx + 30, y - 320]], w: 6, paved: true }); roads.push({ pts: [[sx, y], [sx - 4, y + 150], [sx - 20, y + 330]], w: 6, paved: true }); }
+      roads.push({ pts: [[K.sq.x - 30, K.sq.y - 26], [K.sq.x + 30, K.sq.y - 26]], w: 6, paved: true });
+      // a lane south-east across the bocage towards the ridge, the way the afternoon attack came in
+      roads.push({ pts: [[K.side[3], K.road(K.side[3]) + 150], [W * 0.62, H * 0.66], [W * 0.78, H * 0.6], [K.hill.x - 20, K.hill.y + 70]], w: 5 });
+      return { biome: VB, points: [], forest: 0, fields: 0, rocks: 0, roads, villages: [], bridges: [], river: null, spawn: [{ x: K.start.x, y: K.start.y }, { x: K.hill.x, y: K.hill.y }], clear: [{ x: K.sq.x, y: K.sq.y, r: 26 }] };
+    },
+    forestOn: () => false,
+    treeKind: r => r < 0.08 ? 1 : 0,
+    layers: [{ type: G_CONCRETE, col: (x, y, n, n3) => { const k = n(x / 2.5, y / 2.5), q = n3(x / 0.7, y / 0.7) * 0.5; return [146 + k * 14 + q * 8, 142 + k * 12 + q * 8, 134 + k * 10 + q * 6]; }, edge: 0.15 }], // the pavements and the cobbled square
+    terrain(m, R) {
+      const W = m.W, H = m.H, K = VG(W, H); m.vb = K;
+      for (let gy = 0; gy < m.gh; gy++) for (let gx = 0; gx < m.gw; gx++) {
+        const x = gx * GC + 2, y = gy * GC + 2, i = gy * m.gw + gx;
+        if (inTown(K, x, y) && (Math.abs(y - K.road(x)) < 9.5 || (m.ground[i] === G_ROAD && Math.abs(y - K.road(x)) < 130))) { m.ground[i] = G_CONCRETE; continue; } // the paved streets and pavements of the town
+        if (m.ground[i] === G_ROAD) continue;
+        if (Math.hypot((x - K.sq.x) / 34, (y - K.sq.y) / 22) < 1) { m.ground[i] = G_CONCRETE; continue; } // the market square
+        if (Math.hypot(x - K.hill.x, y - K.hill.y) < 150 + m.noise(x / 40, y / 40) * 40) { m.ground[i] = G_FOREST; continue; } // the woods on Point 213
+      }
+      m.zFn = (x, y) => {
+        let z = 8 + fbm(m.noise, x / 280, y / 280, 3) * 3;
+        z += 22 * Math.exp(-(Math.pow((x - K.hill.x) / 230, 2) + Math.pow((y - K.hill.y) / 260, 2)));   // Point 213
+        z -= 4 * Math.exp(-Math.pow((x - W * 0.62) / 120, 2));                                           // the valley between town and ridge
+        if (inTown(K, x, y)) z = lerp(z, 8, 0.7);                                                          // the town on its level ground
+        return z;
+      };
+    },
+    build(m, R) {
+      const W = m.W, H = m.H, K = m.vb, ok = (x, y, r) => !m.collidesStatic(x, y, r) && !m.inClear(x, y, r + 1) && ![G_ROAD, G_CONCRETE].includes(m.groundAt(x, y));
+      const LIME = [[196, 188, 166], [204, 196, 174], [188, 178, 156], [210, 204, 184]], BRICK = [150, 102, 80];
+      // the town: continuous rows of houses on both sides of the main street, gables to the street, back gardens behind
+      const g0 = m.bGap; m.bGap = 0.4;
+      const row = (x0, x1, s, setback, depth) => { let x = x0; while (x < x1) { const w = 8 + R() * 6, xc = x + w / 2, y = K.road(xc) + s * (setback + depth / 2), a = Math.atan2(K.road(xc + 1) - K.road(xc), 1);
+          if (!K.side.some(sx => Math.abs(xc - sx) < w / 2 + 5) && !(s < 0 && Math.abs(xc - K.sq.x) < 40)) { const b = m.addB(xc, y, a, w - 0.3, depth, 'house', pick2(R, m.biome.roof), true); if (b) { b._wc = R() < 0.15 ? BRICK : pick2(R, LIME); b.h = R() < 0.35 ? 9.5 + R() * 1.5 : 6.5 + R() * 1.5; } }
+          x += w; } };
+      for (const s of [-1, 1]) { row(K.x0, K.x1, s, 9.5, 11); row(K.x0 + 10, K.x1 - 20, s, 32, 9); }
+      // along the side streets
+      for (const sx of K.side) for (const s of [-1, 1]) for (let d = 28; d < 120; d += 12 + R() * 4) for (const side of [-1, 1]) { const x = sx + side * 9 + s * d * 0.02, y = K.road(sx) + s * d; if (!ok(x, y, 5)) continue; const b = m.addB(x, y, 0, 9, 10 + R() * 3, 'house', pick2(R, m.biome.roof), true); if (b) { b._wc = pick2(R, LIME); b.h = 6 + R() * 2.5; } }
+      // the square: the church at its head, the town hall, a few plane trees
+      { const S = K.sq, ch = m.addB(S.x, S.y - 46, 0, 30, 14, 'house', '#4a4e56', true); if (ch) { ch._wc = [190, 182, 162]; ch.h = 13; } const tw = m.addB(S.x + 20, S.y - 46, 0, 7, 7, 'tower', '#3e4248', true); if (tw) { tw._wc = [186, 178, 158]; tw.h = 26; }
+        const th = m.addB(S.x - 50, S.y, 0, 12, 20, 'house', '#4a4e56', true); if (th) { th._wc = [206, 198, 178]; th.h = 11; }
+        m.forceKind = 0; for (const [dx, dy] of [[-22, -12], [22, -12], [-22, 12], [22, 12]]) m.trees.push({ x: S.x + dx, y: S.y + dy, r: 2.2, alive: true, kind: 0, v: 1, rot: R() * TAU, fall: 0 }); m.forceKind = undefined; }
+      m.bGap = g0;
+      // garden walls behind the rows
+      for (const s of [-1, 1]) for (let x = K.x0 + 20; x < K.x1 - 20; x += 22) { const y = K.road(x) + s * 46; if (ok(x, y, 4)) m.walls.push({ kind: 'wall', x, y, a: 0, hx: 9, hy: 0.4, hp: 9999 }); }
+      // the bocage: small fields boxed in by earth banks with hedges and trees on them, a gap for the gate in each; some fields are apple orchards
+      m.hedgeTrees = [];
+      const hedge = (x0, y0, x1, y1) => { const L = Math.hypot(x1 - x0, y1 - y0), a = Math.atan2(y1 - y0, x1 - x0), n = Math.max(1, Math.round(L / 9)), gate = R() < 0.75 ? Math.floor(R() * n) : -1;
+        for (let k = 0; k < n; k++) { if (k === gate) continue; const t = (k + 0.5) / n, x = lerp(x0, x1, t), y = lerp(y0, y1, t); if (m.collidesStatic(x, y, 3) || m.inClear(x, y, 4) || [G_ROAD, G_CONCRETE].includes(m.groundAt(x, y)) || inTown(K, x, y) && Math.abs(y - K.road(x)) < 60) continue;
+          m.walls.push({ kind: 'berm', x, y, a, hx: L / n / 2 + 0.3, hy: 1.5, hp: 9999, hedge: true }); m.hedgeTrees.push([x, y, a, L / n]); } };
+      for (let fx = 0; fx < W; fx += 90 + R() * 30) for (let fy = 0; fy < H; fy += 80 + R() * 30) {
+        const x0 = fx, y0 = fy, x1 = fx + 85 + R() * 30, y1 = fy + 75 + R() * 25, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+        if (inTown(K, cx, cy) && Math.abs(cy - K.road(cx)) < 90) continue; if (Math.hypot(cx - K.hill.x, cy - K.hill.y) < 160) continue;
+        hedge(x0, y0, x1, y0); hedge(x1, y0, x1, y1);
+        if (R() < 0.35) { m.forceKind = 0; for (let ax = x0 + 8; ax < x1 - 6; ax += 9) for (let ay = y0 + 8; ay < y1 - 6; ay += 9) if (!m.collidesStatic(ax, ay, 2) && m.groundAt(ax, ay) !== G_ROAD) m.trees.push({ x: ax + (R() - 0.5) * 1.5, y: ay + (R() - 0.5) * 1.5, r: 1.6 + R() * 0.4, alive: true, kind: 0, v: 2, rot: R() * TAU, fall: 0 }); m.forceKind = undefined; } // an apple orchard
+        else if (R() < 0.5) { const f = { x: cx, y: cy, a: 0, hx: (x1 - x0) / 2 - 4, hy: (y1 - y0) / 2 - 4, col: Math.floor(R() * m.biome.fields.length), furrow: false }; m.fields.push(f); m.forOBBCells(f, i2 => { if (m.ground[i2] === G_GRASS) m.ground[i2] = G_FIELD; }); }
+      }
+      // the N175 out of town: telegraph poles, and the burnt-out column of the morning along it between the town and the ridge
+      const rp = []; for (let x = K.x1; x <= W; x += 30) rp.push([x, K.road(x)]); Scenery.poles(m, rp, 40, -9, R);
+      const wr = [['halftrack', 0.56], ['truck', 0.6], ['halftrack', 0.64], ['cromwell', 0.68], ['halftrack', 0.72], ['truck', 0.76], ['stuart', 0.8], ['halftrack', 0.84]];
+      for (const [id, f] of wr) { const x = W * f + (R() - 0.5) * 10, y = K.road(x) + (R() < 0.5 ? -1 : 1) * (8 + R() * 4); if (TANKS[id] && !m.collidesStatic(x, y, 3)) Scenery.wreck(m, x, y, Math.atan2(K.road(x + 1) - K.road(x), 1) + Math.PI + (R() - 0.5) * 0.5, id, R() < 0.6); }
+      // in the main street: a Cromwell knocked out against a house front, and the Tiger the 6-pounder stopped
+      for (const [id, f, s] of [['cromwell', 0.42, 1], ['tiger1', 0.35, -1]]) { const x = W * f, y = K.road(x) + s * 4.5; if (TANKS[id] && !m.collidesStatic(x, y, 3)) Scenery.wreck(m, x, y, Math.PI + s * 0.2, id, false); }
+      // rubble from shell-hit houses
+      for (let k = 0; k < 10; k++) { const x = lerp(K.x0 + 20, K.x1 - 10, R()), y = K.road(x) + (R() < 0.5 ? -1 : 1) * (7 + R() * 2); if (!m.collidesStatic(x, y, 2.5)) m.walls.push({ kind: 'rubble', x, y, a: R() * TAU, hx: 2 + R() * 1.5, hy: 1.4 + R(), hp: 9999 }); }
+      m.fxSources = m.fxSources || []; for (const [, f] of wr) if (R() < 0.6) { const x = W * f; m.fxSources.push({ x, y: K.road(x) + 8, kind: 'smoke' }); }
+    },
+    trees(m, R) {
+      const K = m.vb; if (!K) return;
+      // the hedges on the banks: a dense line of trees and brush (planted on the bank itself)
+      for (const [x, y, a, L] of m.hedgeTrees || []) { const n = Math.max(1, Math.round(L / 3.2)); for (let k = 0; k < n; k++) { const t = (k + 0.5) / n - 0.5, px = x + Math.cos(a) * t * L + (R() - 0.5) * 0.8, py = y + Math.sin(a) * t * L + (R() - 0.5) * 0.8; m.trees.push({ x: px, y: py, r: R() < 0.3 ? 2.4 + R() * 1.2 : 1.5 + R() * 0.6, alive: true, kind: R() < 0.06 ? 1 : 0, v: Math.floor(R() * 4), rot: R() * TAU, fall: 0, hedge: true }); } }
+      for (let i = 0; i < 2600; i++) { const x = R() * m.W, y = R() * m.H; if (m.groundAt(x, y) === G_FOREST) m.tryTree(x, y, 2 + R() * 1.6); }
+      // the avenue of trees along the N175 east of the town
+      for (let x = K.x1 + 20; x < m.W - 10; x += 11) for (const s of [-1, 1]) m.tryTree(x + (R() - 0.5) * 2, K.road(x) + s * 11, 2.2 + R() * 0.6);
+    },
+  };
+  // hedge trees standing on their bank are not knocked down by a tank: the bank stops it first
+  if (typeof Battle !== 'undefined') { const ct0 = Battle.prototype.crushTree; Battle.prototype.crushTree = function (t) { if (t && t.hedge) return; return ct0.apply(this, arguments); }; }
+  const dma0 = drawMapArt; drawMapArt = function (cv, key) { if (key !== VB) return dma0(cv, key); return dma0(cv, 'farm'); };
+
+  // ---------------------------------------------------------------- the mission: Villers-Bocage, 13 June 1944 (British side)
+  TPL.villers = (o = {}) => ({
+    map(seed) { return missionMap(VB, seed, this.k); },
+    init() {
+      const W = B.map.W, H = B.map.H, K = B.map.vb || VG(W, H), S = K.sq, D = B.diffKey, cd = this.cdiff();
+      this.setPoints([{ name: 'A', x: S.x, y: S.y + 14, r: 34, capTime: 30 }]); this.start = { x: S.x - 40, y: K.road(S.x - 40), a: 0 };
+      // the 4th County of London Yeomanry in the town: Cromwells and a Firefly, the 6-pounders of the anti-tank platoon covering the main street
+      for (const [dx, s, id] of [[-70, 1, 'cromwell'], [-20, -1, 'firefly'], [40, 1, 'cromwell'], [-110, -1, 'cromwell']]) { if (!TANKS[id]) continue; const x = S.x + dx, [fx, fy] = this.free(x, K.road(x) + s * 4, 8), v = B.addVehicle(id, 0, fx, fy, 0, { ai: true, diff: 'regular', role: 'hold', goal: [fx, fy, 8] }); v.ai.diffKey = 'regular'; }
+      if (this.placeGun) { this.placeGun('qf6', S.x + 10, K.road(S.x + 10) + 7, 0, 0); this.placeGun('qf6', K.side[3] - 12, K.road(K.side[3]) + 26, 0.6, 0); }
+      this.phase = 1; this.wi = 0; this.t1 = 0; this.fxT = 0; this.kills = 0; this.need = Math.max(4, Math.round(7 * cd.count));
+      this.goalFor = v => v.team === 0 ? [S.x, S.y + 14, 40] : [S.x, S.y + 14, 30];
+      // the afternoon: Tigers of the 101st SS Heavy Panzer Battalion and Panzer IVs of the Panzer-Lehr, down the main road and in by the lanes
+      this.waves = [[0, ['tiger1', 'pz4h', 'pz4h']], [90, ['pz4h', 'tiger1', 'pz4h']], [180, ['tiger1', 'tiger1', 'pz4h', 'pz4h']]].map(([t, l]) => [t, l.filter(id => TANKS[id])]);
+    },
+    update(dt) {
+      const W = B.map.W, H = B.map.H, K = B.map.vb || VG(W, H), S = K.sq;
+      // smoke over the burning column on the road
+      this.fxT += dt; if (this.fxT > 0.25 && !B.preview) { this.fxT = 0; const f = B.map.fxSources && B.map.fxSources[Math.floor(Math.random() * B.map.fxSources.length)]; if (f) { W3.fxZ = W3.gz(f.x, f.y) + 1; FX.add('dark', f.x + rnd(-3, 3), f.y + rnd(-3, 3), { r: rnd(2, 3.2), gr: 3, life: rnd(8, 12), a: 0.6, wind: 1 }); W3.fxZ = undefined; } }
+      // the morning: one Tiger comes down the N175 from Point 213 into the town
+      if (this.phase === 1 && this.t > 12 && !this.tiger) { const x = W - 30, [fx, fy] = this.free(x, K.road(x), 20); const v = B.addVehicle('tiger1', 1, fx, fy, Math.PI, { ai: true, diff: diffStep(B.diffKey, 1), role: 'attack', goal: [S.x, K.road(S.x), 20] }); v.ai.diffKey = diffStep(B.diffKey, 1); v.name = 'Tiger 222'; this.tiger = v; const wp = []; for (let x2 = fx - 60; x2 > S.x; x2 -= 60) wp.push([x2, K.road(x2)]); v.ai.waypoints = wp; B.hudMsg('A Tiger is coming down the main road from Point 213!', '#ff9f43'); this.ev('tiger'); }
+      if (this.phase === 1 && this.tiger && (!this.tiger.alive || this.t > 210)) { this.phase = 2; this.t1 = this.t; this.ev(this.tiger.alive ? 'tigerGone' : 'tigerDead'); B.hudMsg(this.tiger.alive ? 'The Tiger has pulled back. Get ready for the afternoon.' : 'The Tiger is stopped in the town! More are coming.', '#9fd18a'); }
+      if (this.phase === 2 && this.wi < this.waves.length && this.t - this.t1 > 25 + this.waves[this.wi][0]) {
+        const [, list] = this.waves[this.wi++], n = Math.max(2, Math.round(list.length * this.cdiff().count));
+        for (let i = 0; i < n; i++) { const id = list[i % list.length], byLane = i % 2 === 1, x = byLane ? W * 0.78 : W - 30, y = byLane ? H * 0.6 : K.road(W - 30), [fx, fy] = this.free(x + (Math.random() - 0.5) * 30, y + (Math.random() - 0.5) * 30, 25), v = B.addVehicle(id, 1, fx, fy, Math.PI, { ai: true, diff: B.diffKey, role: 'attack', goal: [S.x, S.y + 14, 30] }); v.ai.diffKey = B.diffKey; }
+        B.hudMsg(this.wi === 1 ? 'Tigers and Panzer IVs moving into the town!' : 'Another push into the streets!', '#ff9f43'); this.ev('wave' + this.wi);
+      }
+    },
+    dead(v) { if (v.team === 1 && !v.def.soft) this.kills++; },
+    check(en) {
+      const A = B.map.points[0]; if (this.phase === 2 && A && A.owner === 1) { this.endMsg = 'The Germans hold the square'; return 'lose'; }
+      if (this.phase === 2 && this.wi >= this.waves.length && en === 0) return 'win';
+      return null;
+    },
+    obj(en) { if (this.phase === 1) return this.tiger ? 'Stop the Tiger in the main street — side armour, from the side streets' : 'Hold the town: cover the main street from the east'; return this.wi < this.waves.length ? `Hold the market square (A) — next attack coming` : `Hold the market square (A): knock out the German tanks in the town (${en} left)`; },
+  });
+  const i = MISSIONS.findIndex(q => q.id === 'c3m2');
+  if (i >= 0) {
+    const M0 = MISSIONS[i];
+    MISSIONS[i] = { id: 'c3m2', chap: M0.chap, title: 'Villers-Bocage', date: '13 June 1944', place: 'Villers-Bocage, Normandy', sub: 'Street fight', real: 'Battle of Villers-Bocage: the 7th Armoured Division against the 101st SS Heavy Panzer Battalion and the Panzer-Lehr Division', reward: M0.reward || 2100,
+      sit: 'The 22nd Armoured Brigade has pushed through Villers-Bocage onto Point 213. Your squadron holds the town behind it.',
+      tip: 'Nothing on the British side goes through a Tiger\'s front at range except the Firefly\'s 17-pounder. Let them come into the streets, wait in a side street, and take them in the side as they pass. The hedgerows outside town stop tanks and hide them: use the gaps.',
+      only: ['cromwell', 'firefly', 'stuart'], x: TPL.villers(), side: { friend: ['cromwell', 'firefly'], foe: ['pz4h'], foeUp: ['tiger1'] },
+      brief: '13 June 1944, one week after D-Day. The 7th Armoured Division is trying to get round the Germans at Caen, and its 22nd Armoured Brigade has driven through Villers-Bocage, a market town on the main road from Caen, and on up to Point 213, the wooded ridge a mile to the east. Your squadron of the 4th County of London Yeomanry holds the town: the main street, the square, the side streets. The bocage round it is hedgerow country: small fields boxed in by high earth banks and hedges that no tank can see through or climb. The column up the road is parked nose to tail.',
+      radio: [[2, 'Squadron', 'Column is on Point 213. Keep the main street covered from the east.'], ['tiger', 'Lt. Cotton', 'A Tiger\'s shot up the column on the road and he\'s coming into town! Get round his side!'], ['tigerDead', 'Squadron', 'The six-pounder\'s got his track. Well done. Jerry will be back with more.'], ['tigerGone', 'Squadron', 'He\'s pulled back up the road. Stay put.'], ['wave1', 'Lt. Cotton', 'Tigers and Mark IVs coming in from the east and by the lane. Wait for them in the side streets.'], ['wave3', 'Squadron', 'Last push. Hold the square and then we pull out.'], ['allyLost', 'Squadron', 'Lost a Cromwell in the main street.']],
+      win: 'Several Tigers and Panzer IVs are burning in the streets of Villers-Bocage. By nightfall the brigade, outnumbered and cut off from Point 213, is ordered back west out of the town; but the panzers have paid for it, and for the next weeks the Germans will be pinned down in front of Caen.',
+      lose: 'The panzers are in the market square. The squadron falls back west out of Villers-Bocage.' };
+    if (typeof MISSION_NATS !== 'undefined') MISSION_NATS['Villers-Bocage'] = ['uk'];
+  }
+}
+
 // ---------------------------------------------------------------- 1.33: the M3 medium (Lee and Grant), the Panzer IV with the short gun
 {
   const add = (o, src, mg, era = 0) => { if (TANKS[o.id]) return; const d = tank(o); TREE_ORDER[era].push(o.id); if (TANK_GEAR[src]) TANK_GEAR[o.id] = Object.assign({}, TANK_GEAR[src]); if (mg) MG_SPECS[o.id] = mg; return d; };
@@ -28198,7 +28389,7 @@ for (const k in AIR_X) { const X = AIR_X[k], T = AIR_T[k]; if (!T) continue; for
         body(St2, E.y, col, 3); for (const [x, rr2, cc] of [[E.x + 0.07, r * 0.7, DK], [E.x - E.len - 0.01, r * 0.55, DK]]) { const nn = [x > E.x ? 1 : -1, 0, 0]; for (let i = 0; i < 16; i++) { const a0 = i / 16 * TAU, a1 = (i + 1) / 16 * TAU; tri([x, E.y, E.z], [x, E.y + Math.cos(a0) * rr2, E.z + Math.sin(a0) * rr2], [x, E.y + Math.cos(a1) * rr2, E.z + Math.sin(a1) * rr2], cc, [x - nn[0], E.y, E.z]); } }
         body([[E.x + 0.25, 0.01, 0.01, E.z, 2], [E.x + 0.12, 0.13, 0.26, E.z, 2], [E.x - 0.1, 0.14, 0.28, E.z, 2]], E.y, () => MET, 2);
         body([[E.x - E.len + 0.25, 0.2, 0.4, E.z, 2], [E.x - E.len - 0.1, 0.16, 0.32, E.z, 2], [E.x - E.len - 0.3, 0.02, 0.04, E.z, 2]], E.y, () => [0.22, 0.2, 0.18], 2);
-        const wz = surfAt(H, [E.x - 1.4, E.y, E.z + r], [0, 0, 1], 4); if (wz) { const top = wz.p[2] + 0.05, bot = E.z + r * 0.6; for (const sd of [-1, 1]) { const y = E.y + sd * 0.16; quad([E.x - 0.5, y, bot], [E.x - 2.9, y, bot], [E.x - 2.9, y, top], [E.x - 0.9, y, top], col([0, 0, 0], [0, sd, 0]), [E.x - 1.6, E.y, (top + bot) / 2]); } }
+        const wa = surfAt(H, [E.x - 0.9, E.y, E.z + r], [0, 0, 1], 4), wb = surfAt(H, [E.x - 2.6, E.y, E.z + r], [0, 0, 1], 4); if (wa && wb) { const ta = wa.p[2] + 0.01, tb = wb.p[2] + 0.01, bot = E.z + r * 0.6; for (const sd of [-1, 1]) { const y = E.y + sd * 0.12, cc = col([0, 0, 0], [0, 0, -1]); quad([E.x - 0.5, y, bot], [E.x - 2.6, y, bot], [E.x - 2.6, y, tb], [E.x - 0.9, y, ta], cc, [E.x - 1.6, E.y, (ta + bot) / 2]); } }
         continue; }
       // piston engines: a nacelle (twins), a cowling, the exhaust stubs; props are separate and spin
       const ann = E.ann || E.r && E.y, rc = E.y ? (E.ann ? 0.7 : 0.6) : 0;
@@ -28234,12 +28425,20 @@ for (const k in AIR_X) { const X = AIR_X[k], T = AIR_T[k]; if (!T) continue; for
     if (X.bola) { const z = Air.fzc(T, 4) - T.fus[3][2] * 0.42; body([[5.2, 0.05, 0.1, z, 2], [4.7, 0.36, 0.56, z - 0.12, 2.4], [3.2, 0.4, 0.62, z - 0.16, 2.6], [2.0, 0.36, 0.5, z - 0.1, 2.4], [1.4, 0.1, 0.14, z, 2]], 0.18, (p, n) => p[0] < 2.3 ? glass(p, n) : col(p, n), 2); }
     // ---- markings, laid on the real surfaces
     H = hit0(); const WH = [0.86, 0.86, 0.82], BKC = [0.05, 0.05, 0.05], RED = [0.62, 0.08, 0.06], BLU = [0.08, 0.12, 0.32];
-    const plate = (c, u, v, n, a, b, cc, lift) => { const P = (i, j) => [c[0] + u[0] * a * i + v[0] * b * j + n[0] * lift, c[1] + u[1] * a * i + v[1] * b * j + n[1] * lift, c[2] + u[2] * a * i + v[2] * b * j + n[2] * lift]; for (const [p, q, r] of [[P(-1, -1), P(1, -1), P(1, 1)], [P(-1, -1), P(1, 1), P(-1, 1)]]) { Ph.V(o, p, n, cc); Ph.V(o, q, n, cc); Ph.V(o, r, n, cc); } };
-    const cross = (c, u, v, n, r, outline) => { plate(c, u, v, n, r, r * 0.3, WH, 0.012); plate(c, u, v, n, r * 0.3, r, WH, 0.012); plate(c, u, v, n, r * 0.82, r * 0.16, BKC, 0.02); plate(c, u, v, n, r * 0.16, r * 0.82, BKC, 0.02); };
-    const star = (c, u, v, n, r, cc, lift = 0.02) => { const P = (i, q) => { const a = Math.PI / 2 + i * TAU / 10; return [0, 1, 2].map(k => c[k] + u[k] * Math.cos(a) * q + v[k] * Math.sin(a) * q + n[k] * lift); }, ri = r * 0.382, C = c.map((x, k) => x + n[k] * lift); for (let i = 0; i < 10; i++) { Ph.V(o, C, n, cc); Ph.V(o, P(i, i % 2 ? ri : r), n, cc); Ph.V(o, P(i + 1, (i + 1) % 2 ? ri : r), n, cc); } };
-    const disc = (c, u, v, n, r, cc) => { const C = c.map((x, k) => x + n[k] * 0.015); for (let i = 0; i < 20; i++) { const P = a => [0, 1, 2].map(k => c[k] + (u[k] * Math.cos(a) + v[k] * Math.sin(a)) * r + n[k] * 0.015); Ph.V(o, C, n, cc); Ph.V(o, P(i / 20 * TAU), n, cc); Ph.V(o, P((i + 1) / 20 * TAU), n, cc); } };
+    // decals follow the surface: each piece is cut into small cells and every corner is dropped onto the skin along the local normal, so a
+    // cross on a dihedral or gull wing, or on the round fuselage, lies flat on it and bends with it
+    const frameAt = (n0, u0, v0) => { let u = V3.norm(V3.sub(u0, V3.mul(n0, V3.dot(u0, n0)))); if (!isFinite(u[0]) || V3.len(u) < 0.5) u = V3.norm(V3.cross(n0, [0, 0, 1])); let v = V3.cross(n0, u); if (V3.dot(v, v0) < 0) v = V3.mul(v, -1); return [u, v]; };
+    const drop = (c, n0, u, v, a, b, lift) => { const q = [c[0] + u[0] * a + v[0] * b, c[1] + u[1] * a + v[1] * b, c[2] + u[2] * a + v[2] * b], h = surfAt(H, V3.add(q, V3.mul(n0, 0.5)), V3.mul(n0, -1), 1.0); if (!h || V3.dot(h.n, n0) < 0.2) return null; return [V3.add(h.p, V3.mul(h.n, lift)), h.n]; };
+    const triD = (c, n0, u, v, P, cc, lift) => { // a 2D triangle in the decal's plane, split until small, dropped onto the skin
+      const go = (A, B2, C2, d) => { const L = Math.max(Math.hypot(A[0] - B2[0], A[1] - B2[1]), Math.hypot(B2[0] - C2[0], B2[1] - C2[1]), Math.hypot(A[0] - C2[0], A[1] - C2[1])); if (L > 0.12 && d < 6) { const m = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2], ab = m(A, B2), bc = m(B2, C2), ca = m(C2, A); go(A, ab, ca, d + 1); go(ab, B2, bc, d + 1); go(ca, bc, C2, d + 1); go(ab, bc, ca, d + 1); return; }
+        const q = [A, B2, C2].map(p => drop(c, n0, u, v, p[0], p[1], lift)); if (q.some(x => !x)) return; let nn = V3.cross(V3.sub(q[1][0], q[0][0]), V3.sub(q[2][0], q[0][0])); const flip = V3.dot(nn, n0) < 0; const ord = flip ? [0, 2, 1] : [0, 1, 2]; for (const k of ord) Ph.V(o, q[k][0], q[k][1], cc); };
+      go(P[0], P[1], P[2], 0); };
+    const plate = (c, u0, v0, n0, a, b, cc, lift) => { const [u, v] = frameAt(n0, u0, v0); triD(c, n0, u, v, [[-a, -b], [a, -b], [a, b]], cc, lift); triD(c, n0, u, v, [[-a, -b], [a, b], [-a, b]], cc, lift); };
+    const cross = (c, u, v, n, r) => { plate(c, u, v, n, r, r * 0.3, WH, 0.012); plate(c, u, v, n, r * 0.3, r, WH, 0.012); plate(c, u, v, n, r * 0.82, r * 0.16, BKC, 0.02); plate(c, u, v, n, r * 0.16, r * 0.82, BKC, 0.02); };
+    const star = (c, u0, v0, n, r, cc, lift = 0.02) => { const [u, v] = frameAt(n, u0, v0), P = i => { const a = Math.PI / 2 + i * TAU / 10, q = i % 2 ? r * 0.382 : r; return [Math.cos(a) * q, Math.sin(a) * q]; }; for (let i = 0; i < 10; i++) triD(c, n, u, v, [[0, 0], P(i), P(i + 1)], cc, lift); };
+    const disc = (c, u0, v0, n, r, cc) => { const [u, v] = frameAt(n, u0, v0); for (let i = 0; i < 20; i++) { const a0 = i / 20 * TAU, a1 = (i + 1) / 20 * TAU; triD(c, n, u, v, [[0, 0], [Math.cos(a0) * r, Math.sin(a0) * r], [Math.cos(a1) * r, Math.sin(a1) * r]], cc, 0.015); } };
     const mark = (h, u, v, r) => { const n = h.n, c = h.p; if (T.mark === 'de') cross(c, u, v, n, r); else if (T.mark === 'red') star(c, u, v, n, r, RED); else { disc(c, u, v, n, r, BLU); star(c, u, v, n, r * 0.92, WH, 0.024); } };
-    { const xs = T.fin ? T.fin.x + 1.6 : T.fus[T.fus.length - 3][0] + 0.5; for (const s of [-1, 1]) { const h = surfAt(H, [xs, s * 4, Air.fzc(T, xs)], [0, -s, 0], 4); if (h) { const n = V3.norm([0, h.n[1], h.n[2] * 0.3]); mark({ p: h.p, n }, [1, 0, 0], V3.norm(V3.cross(n, [1, 0, 0])).map(x => x * -s), Math.min(0.5, (Air.fz(T, xs) - Air.fzc(T, xs)) * 0.8)); } } }
+    { const xs = T.fin ? T.fin.x + 1.6 : T.fus[T.fus.length - 3][0] + 0.5; for (const s of [-1, 1]) { const h = surfAt(H, [xs, s * 4, Air.fzc(T, xs)], [0, -s, 0], 4); if (h) { mark(h, [1, 0, 0], [0, 0, 1], Math.min(0.5, (Air.fz(T, xs) - Air.fzc(T, xs)) * 0.8)); } } }
     for (const s of [-1, 1]) { const y = s * half * 0.7, xw = T.wing.x - Math.tan((T.wing.sweep || 0) * DEG) * (half * 0.7 - (T.wing.inner || 0)) - T.wing.ct * 0.75; for (const d of [-1, 1]) { const h = surfAt(H, [xw, y, d * 6], [0, 0, -d], 12); if (h) mark(h, [1, 0, 0], [0, d, 0], 0.55); } }
     if (T.mark === 'red' && finTop) for (const sd of [-1, 1]) { const h = surfAt(H, [finTop[0] - 0.1, sd * 3, finTop[2] - 0.6], [0, -sd, 0], 3.2); if (h) star(h.p, [1, 0, 0], [0, 0, 1], h.n, 0.3, RED); }
     // ---- what it carries: the bombs, drawn while it still has them
@@ -28337,7 +28536,7 @@ for (const k in AIR_X) { const X = AIR_X[k], T = AIR_T[k]; if (!T) continue; for
   if (TANKS.leo1) { const L1 = TANKS.leo1; add(Object.assign({}, hullOf(L1), { id: 'gepard', name: 'Flakpanzer Gepard', nation: 'de', era: 3, tier: 3, role: 'SPAA', year: 1976, crewN: 3, tx: 0.2, tl: 1.25, tw: 1.3, gunL: 4.0, cal: 35, mantlet: 15, mantletW: 0.5, cupolaArmor: 15,
     armor: { hull: JSON.parse(JSON.stringify(L1.armor.hull)), turret: { front: [15, 20], side: [15, 0], rear: [12, 0] } },
     speed: 65, rev: 20, hpt: 17.5, mass: 47.5, hullTurn: 30, traverse: 90, reload: 60 / 1100, disp: 0.6, aimTime: 0.7, elevMaxDeg: 85, depressDeg: 10, stab: 1,
-    engine: 'diesel', layout: L1.layout, camo: L1.camo, turretShape: 'mount', hullShape: L1.hullShape, aa: { mag: 640, magT: 30, barrels: [[1.5, 0], [-1.5, 0]] },
+    engine: 'diesel', layout: L1.layout, camo: 'nato3', turretShape: 'mount', hullShape: L1.hullShape, aa: { mag: 640, magT: 30, barrels: [[1.5, 0], [-1.5, 0]] },
     shells: [SD(S('HEIT35', '35 mm HEI-T', 'HE', 3, 1175, 640, 112), 6.0, { cal: 35 }), Object.assign(S('APDS35', '35 mm APDS', 'APDS', [90, 70], 1385, 40), { cal: 35 })], sp: 260, rp: 3200,
     desc: 'The Leopard 1 chassis carrying two 35 mm Oerlikon cannon, one on each side of a big radar turret: search radar at the back, tracking radar on the front. Each gun fires 550 rounds a minute, accurate and hard-hitting far out; 40 armour-piercing rounds for ground targets.' }),
     Object.assign({}, TANK_GEAR.leo1 || { ww2: 'l1' }, { flak: 'gepard' }), null, 3); }
@@ -28680,7 +28879,7 @@ if (typeof CAMP_OPEN !== 'undefined' && CAMP_OPEN) {
 // ---------------------------------------------------------------- 1.35
 // Omaha, German side: respawning at home base no longer puts you aboard an American landing craft (only the landing mission boards one)
 {
-  const isLanding = () => !!(B && B.mode && B.mode.X && B.mode.X.landing);
+  const isLanding = () => !(B && B.mode && B.mode.X && !B.mode.X.landing); // the landing missions and every battle on the beach map (team battles, multiplayer); not the German missions there
   if (typeof Landing !== 'undefined') { const bd0 = Landing.board; Landing.board = function () { if (!isLanding()) return; return bd0.apply(this, arguments); }; const bg0 = Landing.begin; Landing.begin = function () { if (!isLanding()) return; return bg0.apply(this, arguments); }; }
 }
 // ---- aiming: the Ratte's four rear turrets are solid (to the sight and to shells), and a sight line that misses everything no longer throws
@@ -28694,13 +28893,50 @@ if (typeof CAMP_OPEN !== 'undefined' && CAMP_OPEN) {
       const dl = Math.sqrt(aa); best = { v, part: 'hull', h: { t, face: 'rear', nx: -1, ny: 0, top: false, lx: 0, ly: 0, lz: 0, ldx: 1, ldy: 0, ldz: 0, tExit: t + 2, cos3: 1, mn: [1, 0, 0], sc: 1, ld: [dir[0] / dl, dir[1] / dl, dir[2] / dl], track: false, mini: i } }; });
     return best;
   };
-  // a hit on a rear turret: its light plating is no protection against a tank gun, so every hit wears it down
+  // a hit on a rear turret: each one is armoured, crewed and knocked out exactly like a medium tank's turret (the Panzer IV H's: 50 mm front,
+  // 30 mm sides and rear). The shell has to get through the plate at its angle (ricochets, overmatch, normalisation and HE as on any
+  // tank); a penetration sprays the turret's three men and may strike the gun breech or the ready rounds. A turret is out when its gunner
+  // and loader are both down or its ammunition goes up; a smashed breech silences it until the crew has repaired it.
+  const MED = () => (typeof TANKS !== 'undefined' && TANKS.pz4h && TANKS.pz4h.armor && TANKS.pz4h.armor.turret) || { front: [50, 10, 1], side: [30, 25, 1], rear: [30, 15, 1] };
+  const crewOf = m => m.crew || (m.crew = [100, 100, 100]); // gunner, loader, commander
+  const miniState = (v, i, owner) => { const m = v.mini[i], c = crewOf(m), alive = c.filter(x => x > 0).length; m.hp = m.max * c.reduce((q, x) => q + Math.max(0, x), 0) / 300; if (m.dead) return; if ((c[0] <= 0 && c[1] <= 0) || alive === 0) { m.hp = 0; RatteBoss.killMini(v, i, owner); } };
   const rv0 = resolveVehicleHit; resolveVehicleHit = function (p, v, part, h, wx, wy) {
     if (!(h && h.mini !== undefined && v.def.jugg && v.alive)) return rv0.apply(this, arguments);
-    const ev = newEvent(p, v, part, h.face), T = p.T || {}, cal = p.sh.cal || (p.owner && p.owner.def ? p.owner.def.cal || 75 : 75), [mx, my] = toWorld(RATTE_MINI[h.mini][0], RATTE_MINI[h.mini][1], v.x, v.y, v.ang); ev.result = 'pen';
-    W3.fxZ = miniZ(v); B.fxPen(wx, wy, p.dx, p.dy); Sfx.play('vhit', wx, wy, v.id * 4 + 1); W3.fxZ = undefined;
-    const q = { x: mx, y: my, owner: p.owner }; juggDamage(v, Object.assign(Object.create(p), q), cal * 1.3 * (T.he || T.chem ? 1.35 : 1), ev); p.alive = false; finishEvent(ev, p);
+    const i = h.mini, m = v.mini[i], T = p.T || {}, sh = p.sh, ev = newEvent(p, v, 'turret', 'front'), notes = ev.notes, A = MED();
+    if (p.owner && p.owner !== v) { v.lastHitBy = p.owner; v.lastHitT = B.time; }
+    W3.fxZ = miniZ(v);
+    try {
+      // which face: from the shell's line against the way the turret is pointing
+      const inc = Math.atan2(-p.dy, -p.dx), rel = Math.abs(angDiff(m.a || v.ang, inc)), faceKey = rel < Math.PI / 4 ? 'front' : rel > Math.PI * 3 / 4 ? 'rear' : 'side', nAng = faceKey === 'front' ? 0 : faceKey === 'rear' ? Math.PI : Math.PI / 2;
+      ev.face = faceKey; const cosH = Math.abs(Math.cos(faceKey === 'side' ? rel - nAng : faceKey === 'rear' ? Math.PI - rel : rel)), plate = A[faceKey] || A.side, t = plate[0], slope = plate[1] || 0;
+      const cosI = Math.cos(slope * DEG) * cosH, impact = Math.acos(clamp(cosI, 0, 1)) / DEG, pen = penAt(sh, p.trav) * (p.penK || 1), overmatch = !!T.ke && sh.cal >= 3 * t; ev.angle = impact; ev.pen = pen;
+      const ricP = T.he && !T.hesh ? 0 : overmatch ? 0 : smoothRic(impact, (T.ric || [70, 80])[0], (T.ric || [70, 80])[1]);
+      if (Math.random() < ricP) {
+        if (T.chem) { ev.result = 'fuse'; notes.push('Fuse failure at extreme angle'); p.alive = false; B.fxSparks(wx, wy, p.dx, p.dy, 6); Sfx.play('vhit', wx, wy, v.id * 4); finishEvent(ev, p); return; }
+        const nx = Math.cos(m.a + nAng), ny = Math.sin(m.a + nAng), dn = p.dx * nx + p.dy * ny; p.dx -= 2 * dn * nx; p.dy -= 2 * dn * ny; p.v *= 0.6; p.penK = (p.penK || 1) * 0.4; p.ric = (p.ric || 0) + 1; p.ignore = v; p.ignoreT = 0.08; p.range = Math.min(p.range, p.trav + 250); if (p.ric > 2) p.alive = false;
+        ev.result = 'ricochet'; ev.eff = t; B.fxSparks(wx, wy, p.dx, p.dy, 14); Sfx.play('vhit', wx, wy, v.id * 4 + 2); finishEvent(ev, p); return; }
+      const normAng = overmatch ? impact * 0.25 : Math.max(0, impact - (T.norm || 0)); let eff = t / Math.max(0.1, Math.cos(normAng * DEG));
+      if (T.chem) eff *= plate[2] || 1; if (T.he) eff = T.hesh ? t * (impact > 60 ? 1 / Math.cos((impact - 60) * DEG) : 1) : t / Math.max(0.3, Math.cos(normAng * 0.5 * DEG)); ev.eff = eff;
+      const c = crewOf(m), hurt = (k, dmg, who) => { if (c[k] <= 0) return; c[k] -= dmg; notes.push(c[k] <= 0 ? `Rear turret ${who} knocked out` : `Rear turret ${who} wounded`); };
+      if (pen < eff) { // stopped by the plate; a big HE shell still shakes the men inside
+        ev.result = 'nonpen'; B.fxSparks(wx, wy, -p.dx, -p.dy, 8);
+        if (T.he) { B.fxExplosion(wx, wy, sh.ex / 1000, false); Sfx.play('explosion', wx, wy, 0.5 + sh.ex / 3000); if (sh.ex > 2500 && Math.random() < clamp((sh.ex - 2500) / 12000, 0, 0.6)) { const j = Math.random() * 3 | 0; hurt(j, 20 + sh.ex / 300, ['gunner', 'loader', 'commander'][j]); }; if (sh.ex > 1500 && Math.random() < 0.3) { m.jamT = Math.max(m.jamT || 0, 8); notes.push('Rear turret gun damaged'); } }
+        Sfx.play('vhit', wx, wy, v.id * 4); p.alive = false; miniState(v, i, p.owner); finishEvent(ev, p); return; }
+      // through: the shell and its spall
+      ev.result = 'pen'; B.fxPen(wx, wy, p.dx, p.dy); Sfx.play('vhit', wx, wy, v.id * 4 + 1);
+      const cal = sh.cal || (p.owner && p.owner.def ? p.owner.def.cal || 75 : 75), K = clamp(cal / 75, 0.45, 2.2) * (T.he || T.hesh ? 1.4 : 1) * (T.chem ? 0.85 : 1), names = ['gunner', 'loader', 'commander'], first = Math.random() * 3 | 0;
+      for (let k = 0; k < 3; k++) { const j = (first + k) % 3, ch = k === 0 ? clamp(0.75 * K, 0.4, 0.97) : clamp(0.45 * K, 0.2, 0.9); if (Math.random() < ch) hurt(j, (k === 0 ? 70 : 35) * K * (0.7 + Math.random() * 0.6), names[j]); }
+      if (Math.random() < clamp(0.3 * K, 0.15, 0.6)) { m.jamT = Math.max(m.jamT || 0, 20); notes.push('Rear turret gun breech destroyed'); }
+      if (Math.random() < clamp(0.1 * K, 0.04, 0.3)) { notes.push('Rear turret ammunition detonated'); c[0] = c[1] = c[2] = 0; B.fxExplosion(wx, wy, 1.6, true); Sfx.play('explosion', wx, wy, 1.2); }
+      if (T.he) { B.fxExplosion(wx, wy, sh.ex / 1000, false); }
+      juggDamage(v, Object.assign(Object.create(p), { x: v.x, y: v.y, owner: p.owner, _miniDone: true }), cal * 0.3, null);
+      p.alive = false; miniState(v, i, p.owner); finishEvent(ev, p);
+    } finally { W3.fxZ = undefined; }
   };
+  // the Ratte's own hit routine is not to wear a rear turret down a second time when a turret hit passes a little on to the hull
+  { const jd = juggDamage; juggDamage = function (v, p, dmg, ev) { if (p && p._miniDone && v && v.mini) { return jd.call(this, v, Object.assign(Object.create(p), { x: v.x + 1e4, y: v.y + 1e4 }), dmg, ev); } return jd.apply(this, arguments); }; }
+  // silenced turrets (breech being repaired) hold fire
+  { const rg = ratteGuns; ratteGuns = function (v, dt) { if (v && v.mini) for (const m of v.mini) { if (m.jamT > 0) { m.jamT -= dt; if (!m._cd0) m._cd0 = true; m.cd = Math.max(m.cd || 0, 0.5); } else m._cd0 = false; const c = m.crew; if (c && !m.dead && (c[0] <= 0 || c[1] <= 0)) m.cd = Math.max(m.cd || 0, 0) + dt * 0.5; } return rg.apply(this, arguments); }; }
   // the sight line: if it meets nothing, it is taken to the vehicle it passes closest to, or else kept at the last range you aimed at
   const pk0 = S3.pick; S3.pick = function (eye, dir, me, skip) {
     const r = pk0.apply(this, arguments); if (!me || !r) return r;
@@ -28786,6 +29022,282 @@ const KIT = {
       box.appendChild(b); }
     anchor.parentNode.insertBefore(box, anchor.nextSibling); return r; };
 }
+// ---------------------------------------------------------------- an open sea: on a coast map (Omaha) the water runs on past the map's edge to the
+// horizon. Outside the map the ground is normally the map mirrored and then far hills, which put a second shore just behind the water.
+{
+  const g0 = W3.grid; W3.grid = function (map) { const had = !!map.g3, r = g0.apply(this, arguments); if (had || !map.seaZ) return r; const { W, H, d, o } = r;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const mx = x - o, my = y - o; if (mx >= 0 && my >= 0 && mx <= map.W && my <= map.H) continue; const z = map.seaZ(mx, my); if (z !== null) d[y * W + x] = Math.min(d[y * W + x], z); } return r; };
+  const fl0 = W3Scene.buildFarLand; W3Scene.buildFarLand = function (map) { if (!map.seaZ) return fl0.apply(this, arguments); const q0 = this.quad; this.quad = function (a, p, nn, c, u, m) { const P = p.map(v => { const z = map.seaZ(v[0], v[1] - 30); return z === null ? v : [v[0], v[1], Math.min(v[2], -6)]; }); return q0.call(this, a, P, nn, c, u, m); }; try { return fl0.apply(this, arguments); } finally { this.quad = q0; } };
+  const bw0 = W3Scene.buildWater; W3Scene.buildWater = function (map) { const r = bw0.apply(this, arguments); if (!map.seaZ) return r;
+    const gl = W3.gl, a = [], Z0 = WATER_LEVEL, O = W3.OUT, seen = new Set(), add = (X, Y, w, h) => a.push(X, Y, Z0, X + w, Y, Z0, X + w, Y + h, Z0, X, Y, Z0, X + w, Y + h, Z0, X, Y + h, Z0);
+    // the water the map itself builds (copied from buildWater, keeping note of each cell)
+    for (let gy = 0; gy < map.gh; gy++) for (let gx = 0; gx < map.gw; gx++) { let w = false; for (let j = -6; j <= 6 && !w; j++) for (let i = -6; i <= 6 && !w; i++) { const q = gy + j, rr = gx + i; if (q >= 0 && rr >= 0 && q < map.gh && rr < map.gw && map.ground[q * map.gw + rr] === G_WATER) w = true; }
+      if (!w) continue; const x = gx * GC, y = gy * GC, xs = [x], ys = [y]; if (x < O) xs.push(-x - GC); if (x + GC > map.W - O) xs.push(2 * map.W - x - GC); if (y < O) ys.push(-y - GC); if (y + GC > map.H - O) ys.push(2 * map.H - y - GC); for (const X of xs) for (const Y of ys) { const k = Math.round(X / GC) + ',' + Math.round(Y / GC); if (seen.has(k)) continue; seen.add(k); add(X, Y, GC, GC); } }
+    for (const c of W3Water.wet(map)) for (let k = 0; k < 16; k++) { const a0 = k / 16 * TAU, a1 = (k + 1) / 16 * TAU; a.push(c.x, c.y, c.z, c.x + Math.cos(a0) * c.r, c.y + Math.sin(a0) * c.r, c.z, c.x + Math.cos(a1) * c.r, c.y + Math.sin(a1) * c.r, c.z); }
+    // the rest of the sea out to the band of real ground round the map, cell by cell
+    for (let Y = -Math.ceil(O / GC) * GC; Y < map.H + O; Y += GC) for (let X = -Math.ceil(O / GC) * GC; X < map.W + O; X += GC) { if (X >= 0 && Y >= 0 && X + GC <= map.W && Y + GC <= map.H) continue; const k = Math.round(X / GC) + ',' + Math.round(Y / GC); if (seen.has(k)) continue; if (map.seaZ(X + GC / 2, Y + GC / 2 - GC * 3) === null) continue; seen.add(k); add(X, Y, GC, GC); }
+    // and beyond that to the horizon: big sheets out past the band, strips alongside it as far as the sea goes
+    const E = 4200, S = 300; for (let Y = -O - S; Y + S > -E; Y -= S) for (let X = -E; X < map.W + E; X += S) add(X, Y, S, S + 0.5);
+    for (let Y = -O; Y < map.H + O; Y += GC) { if (map.seaZ(0, Y + GC / 2 - GC * 3) !== null) add(-E, Y, E - O, GC); if (map.seaZ(map.W, Y + GC / 2 - GC * 3) !== null) add(map.W + O, Y, E - O, GC); }
+    if (!this.wBuf) this.wBuf = gl.createBuffer(); this.waterZ = WATER_LEVEL; this.waterN = a.length / 3; gl.bindBuffer(gl.ARRAY_BUFFER, this.wBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(a), gl.STATIC_DRAW); return r; };
+}
+
+// =====================================================================
+//  1.35 [3] — online play: everyone loads before the battle starts, a guest's own tank answers its controls at once (it is
+//  predicted on the guest's machine and corrected by the host), small arms no longer kick a guest's view like a cannon, the same name
+//  everywhere; a truck marker for convoys; the Anti-Air game mode; the campaign played together.
+// =====================================================================
+
+// ---------------------------------------------------------------- the loading screen holds until every player has loaded
+const NetReady = {
+  wait: null, cgo: false,
+  tip(t) { const e = document.getElementById('ldTip'); if (e) e.textContent = t; },
+  hostBegin() { this.wait = { got: new Set(), hold: true, done: null, t0: performance.now(), iv: null }; },
+  hostGot(pid) { const W = this.wait; if (W) { W.got.add(pid); this.check(); return; } const l = Lobby.links[pid]; if (l && l.alive) l.send({ t: 'go' }); },
+  check() {
+    const W = this.wait; if (!W || !W.done) return; let need = []; try { need = Lobby.battleLinks().map(([pid]) => pid); } catch (e) { }
+    const n = need.filter(pid => W.got.has(pid)).length; this.tip(`Waiting for every player to finish loading · ${n + 1} of ${need.length + 1} ready`);
+    if (n >= need.length || performance.now() - W.t0 > 120000) this.release();
+  },
+  release() { const W = this.wait; if (!W) return; this.wait = null; clearInterval(W.iv); try { for (const [, l] of Lobby.battleLinks()) l.send({ t: 'go' }); } catch (e) { } Loader.hide(); if (W.done) W.done(); },
+};
+window.addEventListener('load', () => {
+  const sb0 = App.startBattle; App.startBattle = function (cfg) { if (cfg && cfg.net === 'host') NetReady.hostBegin(); else NetReady.wait = null; return sb0.apply(this, arguments); };
+  const run0 = Loader.run; Loader.run = function (opts) {
+    if (NetReady.wait && opts && !opts._nr) { const d0 = opts.done; opts = Object.assign({}, opts, { _nr: true, done: () => { const W = NetReady.wait; if (!W) { if (d0) d0(); return; } W.done = d0 || (() => { }); W.iv = setInterval(() => NetReady.check(), 250); NetReady.check(); } }); }
+    return run0.call(this, opts);
+  };
+  const hide0 = Loader.hide; Loader.hide = function (force) { if (force) { if (NetReady.wait) { clearInterval(NetReady.wait.iv); NetReady.wait = null; } return hide0.apply(this, arguments); } if (NetReady.wait && NetReady.wait.hold) return; return hide0.apply(this, arguments); };
+  // a guest: tell the host when loaded, then stay on the loading screen until the host says go
+  const cl0 = App.clientLoading; App.clientLoading = function () { NetReady.cgo = false; return cl0.apply(this, arguments); };
+  const fc0 = App.finishClientLoad; App.finishClientLoad = function (L) {
+    if (!L || this.clientLoad !== L) return fc0.apply(this, arguments);
+    if (L._go || NetReady.cgo) return fc0.apply(this, arguments);
+    if (!L._rdy) { L._rdy = true; Net.toHost({ t: 'rdy' }); NetReady.tip('Waiting for the other players to finish loading…'); setTimeout(() => { if (this.clientLoad === L) { L._go = true; fc0.call(this, L); } }, 120000); }
+  };
+});
+
+// ---------------------------------------------------------------- the connection: ping, and the guest's own tank predicted locally
+const NetPing = { rtt: 120, t: 0, last: 0,
+  got(c) { const r = performance.now() - c; if (r >= 0 && r < 5000) { this.rtt = this.last ? this.rtt * 0.75 + r * 0.25 : r; this.last = r; } },
+  el() { let e = document.getElementById('netPing'); if (!e) { e = document.createElement('div'); e.id = 'netPing'; e.style.cssText = 'position:fixed;top:6px;right:10px;z-index:40;font:600 11px "Bahnschrift","Segoe UI",Arial,sans-serif;letter-spacing:.06em;color:rgba(214,228,238,.7);pointer-events:none;text-shadow:0 1px 2px #000'; document.body.appendChild(e); } return e; },
+  show() { const on = Net.role === 'client' && App.state === 'battle' && B && B.net === 'client' && Net.hostLink, e = this.el(); e.style.display = on ? '' : 'none'; if (!on) return; const relay = !!Net.hostLink.relay; e.textContent = `PING ${Math.round(this.rtt)} ms · ${relay ? 'RELAY SERVER' : 'DIRECT'}`; e.style.color = relay || this.rtt > 220 ? '#ffb35c' : 'rgba(214,228,238,.7)'; },
+};
+window.addEventListener('load', () => {
+  const nt0 = Net.tick; Net.tick = function (dt) {
+    const r = nt0.apply(this, arguments);
+    if (this.role === 'client' && this.hostLink) { NetPing.t += dt; if (NetPing.t > 1) { NetPing.t = 0; this.toHost({ t: 'pg', c: performance.now() }); NetPing.show(); } } else if (NetPing.t !== -1) { NetPing.t = -1; NetPing.show(); NetPing.t = 0; }
+    if (this.role === 'host' && B && B.net === 'host' && !B.over) hostExtras(dt);
+    return r;
+  };
+  const hm2 = Lobby.hostMsg2; Lobby.hostMsg2 = function (link, m, pid, P) {
+    if (m.t === 'pg') { link.send({ t: 'po', c: m.c }, true); return; }
+    if (m.t === 'rdy') { NetReady.hostGot(pid); return; }
+    const r = hm2.apply(this, arguments);
+    if (m.t === 'name' && B && B.humans && B.humans[pid]) { const c = B.humans[pid]; c.name = P.name; if (c.vehicle) c.vehicle.name = P.name; }
+    return r;
+  };
+  const cm0 = Lobby.clientMsg; Lobby.clientMsg = function (m) {
+    if (m.t === 'po') { NetPing.got(m.c); return; }
+    if (m.t === 'go') { NetReady.cgo = true; const L = App.clientLoad; if (L) { L._go = true; if (L.built && (L.ended || L._rdy)) App.finishClientLoad(L); } return; }
+    if (m.t === 'air') { if (B && B.net === 'client') AirSync.recv(m); return; }
+    if (m.t === 'obj') { if (B && B.net === 'client') { B.mpObj = m.o; if (m.l != null) B.mpLives = m.l; } return; }
+    if (m.t === 'start' && m.settings && m.settings.gm === 'camp') { m = Object.assign({}, m, { team: 0 }); const M = MISSIONS[m.settings.mission | 0]; if (M) { const T = typeof missionTanks === 'function' ? missionTanks(m.settings.mission | 0) : Object.assign({}, CHAPTERS[M.chap], M.side || {}).tanks || []; m.tanks = T.slice(); if (!T.includes(m.tank)) m.tank = T[0]; } }
+    return cm0.call(this, m);
+  };
+  // the same name before, during and after a battle: the host's spelling of it
+  const mn0 = Lobby.myName; Lobby.myName = function () { return cleanName(mn0.apply(this, arguments)); };
+  const sn0 = Lobby.setName; Lobby.setName = function (n) { const r = sn0.apply(this, arguments); try { const nm = cleanName(n); if (B && B.mp && B.me) { B.me.name = nm; if (B.player) B.player.name = nm; } } catch (e) { } return r; };
+  // snapshot times, for the guest's own tank
+  const as0 = Battle.prototype.applySnap; Battle.prototype.applySnap = function (m) { const r = as0.apply(this, arguments); const v = this.player; if (v && v._snaps && v._snaps.length) { const L = v._snaps[v._snaps.length - 1]; if (!L.rt) L.rt = performance.now(); } return r; };
+  // the guest's own tank: driven here at once with the same rules the host uses, and pulled onto the host's position as each update arrives
+  const cu0 = Battle.prototype.clientUpdate; Battle.prototype.clientUpdate = function (dt) {
+    const r = cu0.apply(this, arguments); const v = this.player;
+    try {
+      if (!v || !v.alive || !v._snaps || !v._snaps.length || App.state !== 'battle') { if (v) v._pr = null; } else {
+        const L = v._snaps[v._snaps.length - 1], c = v.ctrl, d = v.def; let P = v._pr;
+        if (!P) P = v._pr = { x: L.x, y: L.y, a: L.a, vel: L.vel, av: L.av, T: L.T, ta: L.ta, bad: 0, off: 0 };
+        if (P.off > 0) P.off -= dt;
+        // driving, as Vehicle.update does it (terrain speed, engine, transmission, tracks)
+        const drive = v.canDrive ? v.canDrive() : true, tracks = v.tracksOK ? v.tracksOK() : true, eng = v.mod('engine'), trans = v.mod('transmission') || { hp: 1, max: 1 };
+        const power = (eng && eng.hp < eng.max * 0.6 ? 0.5 : 1) * (trans.hp < trans.max * 0.6 ? 0.8 : 1), gm = this.map.speedAt(P.x, P.y), vmax = v.maxSpeed() * gm * (power < 1 ? 0.65 : 1), vrev = (d.rev || 15) / 3.6 * Math.max(0.5, gm);
+        let target = 0; if (drive && tracks) target = c.throttle > 0 ? c.throttle * vmax : c.throttle * vrev; const acc = (d.acc || 2) * power;
+        if (target > P.vel) P.vel = Math.min(target, P.vel + (P.vel < 0 ? 5 : acc) * dt); else if (target < P.vel) P.vel = Math.max(target, P.vel - (P.vel > 0 ? (c.throttle < 0 ? 5 : 2.2) : acc * 0.8) * dt);
+        let tr = d.hullTurn * DEG * Math.sqrt(power) * (drive && tracks ? 1 : 0); tr *= 1 - 0.4 * clamp(Math.abs(P.vel) / v.maxSpeed(), 0, 1); tr *= Math.max(0.55, gm);
+        P.av += clamp((c.steer || 0) * tr - P.av, -tr * 4 * dt - 0.001, tr * 4 * dt + 0.001); if (!drive || !tracks) P.av *= 0.8;
+        P.a = angNorm(P.a + P.av * dt); P.x += Math.cos(P.a) * P.vel * dt; P.y += Math.sin(P.a) * P.vel * dt;
+        // the turret follows the aim here too
+        if (d.turret && !d.arcs && c.aim !== undefined && v.traverseRate) { const rate = v.traverseRate(), want = angDiff(P.a + P.ta, c.aim); P.ta = angNorm(P.ta + clamp(want, -rate * dt, rate * dt)); }
+        // a new update from the host: where the tank is there now, carried forward by the time it took to arrive
+        if (L.T !== P.T) { P.T = L.T; const lead = clamp(NetPing.rtt / 2000 + 0.04, 0, 0.35), S = { x: L.x + Math.cos(L.a) * L.vel * lead, y: L.y + Math.sin(L.a) * L.vel * lead, a: L.a + L.av * lead }, ex = S.x - P.x, ey = S.y - P.y, e = Math.hypot(ex, ey);
+          P.bad = e > 2.2 ? P.bad + 1 : 0; if (P.bad >= 4) P.off = 2.5; P.blk = Math.abs(L.vel) < 0.4 && Math.abs(P.vel) > 1.5 ? (P.blk || 0) + 1 : 0; if (P.blk >= 2) P.off = Math.max(P.off, 0.6); // stopped there (a wall, a wreck, a hedge): stop here too // the host is moving us (a landing craft, a collision): follow it for a moment
+          if (e > 6 || P.off > 0) { P.x = S.x; P.y = S.y; P.a = S.a; P.vel = L.vel; P.av = L.av; }
+          else { const k = (c.throttle || c.steer) ? 0.35 : 0.6; P.x += ex * k; P.y += ey * k; P.a = angNorm(P.a + angDiff(P.a, S.a) * k); P.vel += (L.vel - P.vel) * 0.5; P.av += (L.av - P.av) * 0.5; }
+          if (Math.abs(angDiff(P.ta, L.ta)) > 0.6 || !d.turret || d.arcs) P.ta = L.ta; }
+        v.x = P.x; v.y = P.y; v.ang = P.a; v.vel = P.vel; v.angVel = P.av; v.turretAng = P.ta;
+      }
+    } catch (e) { if (!this._prE) { this._prE = 1; console.error(e); } }
+    try { AirSync.tick(dt); } catch (e) { }
+    return r;
+  };
+  // small arms (coaxial, bow, roof and auxiliary machine guns) are not the main gun: no cannon recoil, no cannon flash, on a guest's screen
+  const ae = Battle.prototype.applyArrEvent; Battle.prototype.applyArrEvent = function (e) {
+    if (e[0] === 'mz') { const v = this.vmap && this.vmap[e[1]];
+      if (e[5] < 0) { if (v) { v.revealT = Math.max(v.revealT || 0, 2); const sh = v.mgSh || v.rfSh; if (sh) { try { this.fxMuzzle(v, e[2], e[3], e[4], sh); } catch (er) { } } } return; }
+      const r = ae.call(this, e); if (v) v.recoil = 0.45 * clamp((v.def.cal || 75) / 75, 0.12, 1); return r; }
+    return ae.call(this, e);
+  };
+});
+
+// ---------------------------------------------------------------- aircraft over a multiplayer battle: the host flies them, the guests see them
+const AirSync = {
+  map: {},
+  send() { if (!B.air) return []; return B.air.filter(a => !a.gone).map(a => [a.id, a.k, r1(a.x), r1(a.y), r1(a.z), r3(a.h), r3(a.p), r3(a.r), r2(Math.max(0, a.hp) / a.T.hp), a.down ? 1 : 0, a.bombs || 0, a.siren ? 1 : 0]); },
+  recv(m) {
+    B.air = B.air || []; const now = performance.now(), seen = new Set();
+    for (const q of m.A) { const [id, k, x, y, z, h, p, r, hp, down, bombs, sir] = q, T = AIR_T[k]; if (!T) continue; seen.add(id); let a = this.map[id];
+      if (!a || a.gone) { a = this.map[id] = { id, k, T, g: { team: 2 }, x, y, z, h, p, r, hp: hp * T.hp, down: !!down, bombs, prop: Math.random() * TAU, smT: 0, alive: true, vx: 0, vy: 0, vz: 0, t0: now }; B.air.push(a); }
+      const dtm = Math.max(0.03, (now - (a.t0 || now)) / 1000); if (a.tx !== undefined) { a.vx = (x - a.tx) / dtm; a.vy = (y - a.ty) / dtm; a.vz = (z - a.tz) / dtm; }
+      a.tx = x; a.ty = y; a.tz = z; a.t0 = now; a.th = h; a.tp2 = p; a.tr = r; a.hp = hp * T.hp; a.down = !!down; a.bombs = bombs; a.siren = !!sir; }
+    for (const a of B.air) if (!seen.has(a.id) && !a.gone) { a.gone = true; delete this.map[a.id]; }
+    B.air = B.air.filter(a => !a.gone);
+  },
+  tick(dt) {
+    if (!B || !B.air || !B.air.length) return; const now = performance.now();
+    for (const a of B.air) { if (a.tx === undefined) continue; const ex = (now - a.t0) / 1000, X = a.tx + a.vx * ex, Y = a.ty + a.vy * ex, Z = a.tz + a.vz * ex, k = clamp(dt * 8, 0, 1);
+      a.x += (X - a.x) * k; a.y += (Y - a.y) * k; a.z += (Z - a.z) * k; a.h = angNorm(a.h + angDiff(a.h, a.th) * k); a.p += (a.tp2 - a.p) * k; a.r += (a.tr - a.r) * k; a.prop += dt * 60;
+      if (a.down) { a.smT -= dt; if (a.smT <= 0) { a.smT = 0.05; W3.fxZ = a.z; FX.add('dark', a.x, a.y, { r: 1.8, gr: 2.8, life: 5, a: 0.75, wind: 1 }); FX.add('fire', a.x, a.y, { r: 1.6, life: 0.3, add: true }); W3.fxZ = undefined; } }
+      else try { Air.smoke(a, dt); } catch (e) { } }
+    try { Air.sound(dt); } catch (e) { }
+  },
+};
+let hostExT = 0, hostObjT = 0;
+function hostExtras(dt) {
+  hostExT += dt; hostObjT += dt; let links = []; try { links = Lobby.battleLinks(); } catch (e) { } if (!links.length) return;
+  if (hostExT >= 0.1 && (B.air && B.air.length || AirSync._had)) { hostExT = 0; const A = AirSync.send(); AirSync._had = A.length > 0; for (const [, l] of links) l.send({ t: 'air', A }, true); }
+  if (hostObjT >= 1 && B.mode instanceof MissionMode) { hostObjT = 0; let o = ''; try { o = B.mode.objective(); } catch (e) { } for (const [pid, l] of links) { const c = B.humans[pid]; l.send({ t: 'obj', o, l: c ? c.lives : null }); } }
+}
+// a guest's objective line comes from the host's mission
+window.addEventListener('load', () => { MPClientMode.prototype.objective = function () { if (B && B.mpObj) return B.mpObj; return TeamMode.prototype.objective.apply(this, arguments); }; });
+
+// ---------------------------------------------------------------- the convoy marker: a truck, drawn like the tank marker
+Render.truckIcon = function (c, x, y, col) { // small top-down lorry: cab ahead, the covered load bed behind, three axles
+  c.save(); c.translate(x, y); c.scale(1.35, 1.35); c.fillStyle = col; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = 1;
+  c.beginPath(); c.rect(-5, -1.5, 10, 9.5); c.stroke(); c.fill();                     // load bed
+  c.beginPath(); c.rect(-4, -8.5, 8, 6); c.stroke(); c.fill();                        // cab
+  c.fillStyle = 'rgba(0,0,0,0.35)'; c.fillRect(-3, -7.6, 6, 1.7);                    // windscreen
+  c.fillRect(-6.4, -7.5, 1.6, 3); c.fillRect(4.8, -7.5, 1.6, 3); c.fillRect(-6.4, 1, 1.6, 2.6); c.fillRect(4.8, 1, 1.6, 2.6); c.fillRect(-6.4, 4.6, 1.6, 2.6); c.fillRect(4.8, 4.6, 1.6, 2.6); // wheels
+  c.fillStyle = 'rgba(0,0,0,0.22)'; c.fillRect(-5, 1.7, 10, 0.8); c.fillRect(-5, 4.6, 10, 0.8);   // the canvas over its hoops
+  c.restore();
+};
+
+// ---------------------------------------------------------------- the Anti-Air game mode
+// Formations of attack aircraft come in at both teams, one side and then the other. Every aircraft a team brings down scores for it,
+// and enemy tanks still count: an anti-aircraft gun busy with the sky is an easy target for the other side's tanks.
+GAME_MODES.aa = { name: 'Anti-Air', short: 'Anti-Air', desc: 'Formations of attack aircraft bomb and strafe both teams. Each aircraft your team brings down scores 2, each enemy tank 1. Highest score when the 10-minute clock runs out wins.' };
+if (!GM_ORDER.includes('aa')) GM_ORDER.push('aa');
+const AA_BRIEF = 'Six tanks per side, and formations of attack aircraft — dive bombers, fighter-bombers and level bombers — coming in at each team in turn. Every aircraft your team shoots down scores 2 points, every enemy tank knocked out scores 1. Anti-aircraft vehicles are the obvious choice, but the other side is busy with the sky too. You respawn at your home base.';
+window.addEventListener('load', () => {
+  const P = TeamMode.prototype;
+  // an Anti-Air battle is a deathmatch with the aircraft added
+  const ip = P.init; P.init = function () { if (this.gm === 'aa') { this.aa = true; this.gm = 'tdm'; } return ip.apply(this, arguments); };
+  const cfg0 = P.mapCfg; P.mapCfg = function () { if (this.gm === 'aa') { this.aa = true; this.gm = 'tdm'; } return cfg0.apply(this, arguments); };
+  const up = P.update; P.update = function (dt) { const r = up.apply(this, arguments); if (this.aa && !this.demo && !(this instanceof MPClientMode) && B && B.net !== 'client') this.aaTick(dt); return r; };
+  P.aaTick = function (dt) {
+    if (this.aaT === undefined) this.aaT = 20; this.aaT -= dt; if (this.aaT > 0 || B.over) return; this.aaT = rnd(34, 50) * (B.time > 360 ? 0.8 : 1);
+    const W = B.map.W, H = B.map.H, team = (this.aaK = (this.aaK || 0) + 1) % 2, mine = B.vehicles.filter(v => v.alive && !v.hidden && v.team === team);
+    const to = mine.length ? [mine.reduce((s, v) => s + v.x, 0) / mine.length, mine.reduce((s, v) => s + v.y, 0) / mine.length] : [this.spawn[team].x, this.spawn[team].y];
+    const pool = this.era >= 3 ? ['me262', 'ar234', 'fw190', 'ju88', 'il2', 'a20'] : ['ju87', 'ju88', 'fw190', 'il2', 'pe2', 'b25', 'a20'], k = pick(pool), T = AIR_T[k]; if (!T) return;
+    const n = T.mode === 'jabo' ? rndi(2, 3) : T.mode === 'dive' ? rndi(2, 4) : rndi(2, 3), a = Math.random() * TAU, R = Math.max(W, H) * 0.5 + 800, from = [W / 2 + Math.cos(a) * R, H / 2 + Math.sin(a) * R];
+    Air.raid({ type: k, team: 2, n, from, to: [clamp(to[0], 60, W - 60), clamp(to[1], 60, H - 60)], passes: 3, err: 22 });
+    B.teamMsg(team, `${T.name} × ${n} inbound on your position`, '#ff9f43'); B.teamMsg(1 - team, `${T.name} × ${n} attacking the enemy`, '#cfd8dc');
+  };
+  // what the aircraft knock out scores for nobody, and the kill feed names the aircraft
+  const odd = P.onDestroyed; P.onDestroyed = function (v, killer) { if (this.aa) { const k = killer || (B.time - v.lastHitT < 30 ? v.lastHitBy : null); if (k && k.team === 2) { const t = this.tickets.slice(); const r = odd.call(this, v, null); this.tickets[0] = t[0]; this.tickets[1] = t[1]; return r; } } return odd.apply(this, arguments); };
+  const gh = Air.ghost; Air.ghost = function (team, name) { const g = gh.apply(this, arguments); if (team === 2 && g && g.def) g.def = Object.create(g.def, { name: { value: name || 'Aircraft' }, soft: { value: false } }); return g; };
+  const ob = P.objective; P.objective = function () { return this.aa ? 'Shoot down the most aircraft' : ob.apply(this, arguments); };
+  // AI crews in an Anti-Air battle often take an anti-aircraft vehicle
+  const ad = P.aiDef; P.aiDef = function () { if (this.aa && Math.random() < 0.45) { const ht = this.cfg.mp && this.cfg.mp.hostTanks, era = this.cfg.mp ? this.cfg.mp.settings.era : this.era; const l = Object.keys(TANKS).filter(id => TANKS[id].aa && !TANKS[id].hidden && TANKS[id].era <= era && (!ht || ht.includes(id))); if (l.length) return TANKS[pick(l)]; } return ad.apply(this, arguments); };
+  // aircraft brought down score for the team that brought them down
+  const dm = Air.damage; Air.damage = function (a, dmg, by, he) { const was = a.down, r = dm.apply(this, arguments);
+    if (!was && a.down && B && B.mode && B.mode.aa && by && (by.team === 0 || by.team === 1)) { B.mode.tickets[by.team] += 2; const ctx = B.ctxOf ? B.ctxOf(by) : null; if (ctx && !ctx.local) B.msgTo(ctx, `${a.T.name} shot down`, '#9fd18a'); }
+    return r; };
+});
+
+// ---------------------------------------------------------------- the campaign, together: a co-op mission against the mission's own AI
+// The host picks one of the missions it has reached; everyone plays on the mission's side with the mission's tanks. Each player has
+// three tanks and respawns as the mission allows; with all three gone you watch the others. Only Warbonds and research points are earned:
+// nobody's campaign progress moves.
+GAME_MODES.camp = { name: 'Campaign (co-op)', short: 'Campaign', desc: 'Play one of the host\'s unlocked campaign missions together against its AI. Three tanks each; research points only, no campaign progress.' };
+if (!GM_ORDER.includes('camp')) GM_ORDER.push('camp');
+window.addEventListener('load', () => {
+  const sb = App.startBattle; App.startBattle = function (cfg, after, ms) {
+    if (cfg && cfg.mode === 'team' && cfg.mp && cfg.mp.settings && cfg.mp.settings.gm === 'camp') {
+      const idx = cfg.mp.settings.mission | 0, M = MISSIONS[idx], T = typeof missionTanks === 'function' ? missionTanks(idx) : Object.assign({}, CHAPTERS[M.chap], M.side || {}).tanks || [];
+      const cd = { recruit: 'cadet', regular: 'soldier', veteran: 'veteran', ace: 'ace' }[cfg.mp.settings.diff] || 'soldier';
+      cfg = Object.assign({}, cfg, { mode: 'mission', mission: idx, cdiff: cd, myTeam: 0, tank: T.includes(cfg.tank) ? cfg.tank : T[0] });
+    }
+    return sb.call(this, cfg, after, ms);
+  };
+  const MP = MissionMode.prototype, coop = m => !!(m && m.cfg && m.cfg.mp && B && B.net === 'host');
+  // the map's settings go to the guests as they were before the map was built on them (building hangs the map's own objects on them)
+  const mc = MP.mapCfg; MP.mapCfg = function () { const c = mc.apply(this, arguments); try { if (this.cfg && this.cfg.mp) this._cleanCfg = JSON.parse(JSON.stringify(c)); } catch (e) { } return c; };
+  const it = MP.initTail; MP.initTail = function () {
+    if (coop(this) && this._cleanCfg) B.mapCfg = this._cleanCfg;
+    const r = it.apply(this, arguments); if (!coop(this)) return r;
+    const S = this.cfg.mp, T = (typeof missionTanks === 'function' ? missionTanks(this.idx) : B.me.tanks || []).slice(); B.me.tanks = T.slice(); this.lives = 3; B.me.lives = 3;
+    for (const t of [0, 1]) for (const pid of S.slots[t]) { if (pid == null || pid < 0 || pid === B.localPid) continue; const pl = S.players[pid]; if (!pl) continue;
+      const c = B.addHuman(pid, pl.name, 0); c.team = 0; c.name = pl.name; c.tanks = T.slice(); c.pref = T.includes(pl.tank) ? pl.tank : T[0]; c.freeSpawn = true; c.sp = 0; c.lives = 3; }
+    B.myTeam = 0; const bt = B; setTimeout(() => { if (B !== bt) return; for (const c of Object.values(B.humans)) if (!c.local) { B.centerTo(c, B.center); B.openSpawnFor(c); } }, 80);
+    return r;
+  };
+  // every spawn the mission offers is open to the guests too
+  const sp = MP.spawnPoints; MP.spawnPoints = function () { const L = sp.apply(this, arguments) || []; return L.map(o => o.ok === undefined ? Object.assign({}, o, { ok: true }) : o); };
+  // the mission's tanks, not the server's era list
+  const at = Battle.prototype.allowedTanks; Battle.prototype.allowedTanks = function (ctx = this.me) { if (this.mode instanceof MissionMode && this.mp) return (ctx.tanks || []).filter(id => TANKS[id]); return at.apply(this, arguments); };
+  // the briefing waits for nobody: the guests are already in
+  const bf = UI.showBriefing; UI.showBriefing = function () { if (B && B.mp && B.net === 'host') { App.paused = false; return; } return bf.apply(this, arguments); };
+  // lives: three tanks for every player
+  const od = MP.onDestroyed; MP.onDestroyed = function (v) {
+    const r = od.apply(this, arguments);
+    if (coop(this) && v.human != null) { const c = B.humans[v.human]; if (c && !c.local) { c.lives = Math.max(0, (c.lives == null ? 3 : c.lives) - 1); B.msgTo(c, c.lives ? `Tank lost — ${c.lives} ${c.lives === 1 ? 'life' : 'lives'} left` : 'Last tank lost — you can watch the others', '#ff6b6b'); } else if (c && c.local) B.me.lives = this.lives; }
+    return r;
+  };
+  const allOut = () => Object.values(B.humans).every(c => (c.local ? B.mode.lives <= 0 : (c.lives || 0) <= 0) && !(c.vehicle && c.vehicle.alive));
+  const os = Battle.prototype.openSpawnFor; Battle.prototype.openSpawnFor = function (ctx) {
+    if (this.mode instanceof MissionMode && this.mp && this.net === 'host' && !this.over) {
+      const out = ctx.local ? this.mode.lives <= 0 : (ctx.lives || 0) <= 0;
+      if (out) { if (allOut()) { this.end('lose'); return; }
+        ctx.specOnly = true; ctx.spawnScreen = false; ctx.spectate = this.vehicles.find(v => v.alive && !v.hidden && v.team === ctx.team) || null;
+        if (ctx.local) { UI.showSpectate(true); } else ctx.out.push({ k: 'spectate', only: true }); return; }
+    }
+    return os.apply(this, arguments);
+  };
+  // the mission ends for everyone when the last life is spent
+  const ce = MP.checkEnd; MP.checkEnd = function () { const r = ce.apply(this, arguments); if (r || !coop(this)) return r; if (B.time > 5 && allOut()) return 'lose'; return null; };
+  // what the mission says to the host it says to everyone on the mission's side
+  const hm = Battle.prototype.hudMsg; Battle.prototype.hudMsg = function (text, col) { const r = hm.apply(this, arguments); if (this.mp && this.net === 'host' && this.mode instanceof MissionMode) for (const c of Object.values(this.humans)) if (!c.local && c.team === 0) this.msgTo(c, text, col); return r; };
+  // the lobby: the mission picker, the host's unlocked missions only
+  const rm = Lobby.renderMaps; Lobby.renderMaps = function (S, host) {
+    const r = rm.apply(this, arguments);
+    try {
+      let box = document.getElementById('lbCamp'); const on = (S.settings.gm || 'cap') === 'camp';
+      if (!on) { if (box) box.remove(); return r; }
+      if (!box) { box = document.createElement('div'); box.id = 'lbCamp'; box.style.cssText = 'margin-top:10px'; const gm = document.getElementById('lbModes'); (gm || document.getElementById('lbTop')).appendChild(box); }
+      const idx = S.settings.mission | 0, M = MISSIONS[idx] || MISSIONS[0], edit = host && !S.inBattle;
+      const opts = MISSIONS.map((m, i) => [m, i]).filter(([m, i]) => campUnlocked(i)).map(([m, i]) => `<option value="${i}" ${i === idx ? 'selected' : ''}>${esc((CHAPTERS[m.chap] || {}).name || '')} · ${esc(m.title)}${m.date ? ' · ' + esc(m.date) : ''}</option>`).join('');
+      const key = [idx, edit, opts.length].join('|');
+      if (box._k !== key) { box._k = key;
+        box.innerHTML = `<div class="lbl" style="margin:0 0 6px">Mission</div>${edit ? `<select id="lbCampSel" style="width:100%;padding:6px;background:#101820;color:#e4edf3;border:1px solid rgba(255,255,255,.2)">${opts}</select>` : `<div style="font-weight:700">${esc(M.title)}</div>`}<div style="margin-top:6px;font-size:12px;line-height:1.4;color:rgba(214,228,238,.75)">${esc(M.date || '')}${M.place ? ' · ' + esc(M.place) : ''}<br>${esc(M.brief || '')}</div>`;
+        const sel = document.getElementById('lbCampSel'); if (sel) sel.onchange = () => { uiSnd('click'); this.setSetting('mission', +sel.value); }; }
+      if (host && !S.inBattle && !campUnlocked(idx)) { const first = MISSIONS.findIndex((m, i) => campUnlocked(i)); if (first >= 0 && first !== idx) this.setSetting('mission', first); }
+    } catch (e) { console.error(e); }
+    return r;
+  };
+  const st = Lobby.start; Lobby.start = function () { const S = this.state; if (S && S.settings.gm === 'camp') { S.settings.ai = true; if (!campUnlocked(S.settings.mission | 0)) { UI.toast('Pick a mission you have unlocked', true); return; } } return st.apply(this, arguments); };
+});
+// the guests' aircraft are flown by the host: nothing to work out on a guest's machine
+window.addEventListener('load', () => { const u = Air.update; Air.update = function () { if (B && B.net === 'client') return; return u.apply(this, arguments); }; });
 
 // ---------------------------------------------------------------- the tactical map (M)
 // A paper map of the whole battlefield laid over the screen: the printed map, a squared grid lettered down the side and numbered along the
@@ -28917,13 +29429,11 @@ const Boot = {
     await this.y(0.3, 'Compiling shaders'); try { if (W3.init()) { } } catch (e) { console.error(e); }
     // every tank, before the menu opens: its model (geometry, paint and running gear, uploaded to the graphics card) and its photograph for the
     // tech tree, the tank pages and the Last Stand bays. Nothing is built later on the first visit to a screen.
-    // only the tank in your garage is built and photographed before the menu: building all of them took most of the loading time. The rest are
-    // built in the background once the menu is up, one at a time and only while you are not touching anything (BootWarm, below); a screen that
-    // needs one sooner builds it on the spot, and the tech tree's pictures are kept on disk between sessions
-    if (!this.quick && W3.gl) { const sel = TANKS[(Save.data && Save.data.selected)] || TANKS.m4a1;
-      try { W3.WT.mesh(sel); } catch (e) { console.error(e); } await this.y(0.5, `Building tanks · ${sel.name}`);
-      for (let k = 0; k < 2; k++) { try { Render.frame(0); } catch (e) { } await this.y(0.6, 'Photographing tanks'); }
-      try { if (!W3.thumb(sel)) { Render.frame(0); W3.thumb(sel); } getSprites(sel); } catch (e) { console.error(e); } this.blank = 0; }
+    if (!this.quick && W3.gl) { const sel = (Save.data && Save.data.selected), ids = [...new Set([sel, ...Object.keys(TANKS)])].filter(id => TANKS[id] && !TANKS[id].hidden), n = ids.length;
+      for (let i = 0; i < n; i++) { const d = TANKS[ids[i]]; try { W3.WT.mesh(d); } catch (e) { console.error(e); } await this.y(0.3 + 0.32 * (i + 1) / n, `Building tanks · ${d.name}  (${i + 1}/${n})`); }
+      for (let k = 0; k < 2; k++) { try { Render.frame(0); } catch (e) { } await this.y(0.62, 'Photographing tanks'); }
+      for (let i = 0; i < n; i++) { const d = TANKS[ids[i]]; try { if (!W3.thumb(d)) { Render.frame(0); W3.thumb(d); } getSprites(d); } catch (e) { console.error(e); } if (i % 3 === 2 || i === n - 1) await this.y(0.62 + 0.16 * (i + 1) / n, `Photographing tanks · ${d.name}  (${i + 1}/${n})`); }
+      this.blank = 0; }
     // the menu: shown under the boot screen, its pictures drawn one at a time
     const F0 = this.quick ? 0.42 : 0.78, F1 = this.quick ? 0.68 : 0.84;
     await this.y(F0, 'Painting the menu'); const da = UI.drawArts; UI.drawArts = () => { }; UI.showMenu(); UI.drawArts = da;
