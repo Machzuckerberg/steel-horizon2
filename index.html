@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Steel Horizon 2</title>
@@ -29638,6 +29639,36 @@ function rtcWaitIce(pc, ms = 5000) {
 // Messages are sent over several free public services at once and de-duplicated,
 // so the game still works when one of them is down or blocked.
 const qp = k => { const m = location.search.match(new RegExp('[?&]' + k + '=([^&]+)')); return m ? decodeURIComponent(m[1]) : null; };
+class SupabaseRoute {
+  constructor(cfg, id, cb) {
+    this.cb = cb; this.ok = false; this.id = id; this.chans = {};
+    if (!sb) { setTimeout(() => cb.fail('signal'), 0); return; }
+    this.rx = sb.channel(SIG_TOPIC + id, { config: { broadcast: { self: false } } });
+    this.rx.on('broadcast', { event: 'sig' }, ({ payload }) => {
+      if (payload) cb.msg(payload);
+    }).subscribe(status => {
+      if (status === 'SUBSCRIBED' && !this.ok) { this.ok = true; cb.open(); }
+      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') { if (!this.ok) cb.fail('signal'); }
+    });
+  }
+  send(p) {
+    if (!sb || !this.ok) return false;
+    const topic = SIG_TOPIC + p.dst;
+    let ch = this.chans[topic];
+    if (!ch) {
+      ch = this.chans[topic] = sb.channel(topic);
+      ch.subscribe();
+    }
+    ch.send({ type: 'broadcast', event: 'sig', payload: p }).catch(() => {});
+    return true;
+  }
+  close() {
+    if (!sb) return;
+    try { sb.removeChannel(this.rx); } catch (e) {}
+    for (const ch of Object.values(this.chans)) { try { sb.removeChannel(ch); } catch (e) {} }
+    this.chans = {};
+  }
+}
 const sigRoutes = () => {
   if (location.protocol === 'file:' || /(^|[#&])local\b/.test(location.hash)) return [{ kind: 'bc', name: 'local' }];
   const only = qp('routes'); // test override, e.g. routes=pj,mqtt
@@ -29738,8 +29769,8 @@ class BcRoute { // same-browser tabs (file:// testing)
   send(p) { try { this.bc.postMessage(p); } catch (e) { } }
   close() { try { this.bc.close(); } catch (e) { } }
 }
-const ROUTE_CLS = { pj: PjRoute, mqtt: MqttRoute, ntfy: NtfyRoute, bc: BcRoute };
-const RELAY_KINDS = ['mqtt', 'bc']; // routes fast enough to carry game traffic when a direct connection is blocked
+const ROUTE_CLS = { sb: SupabaseRoute, pj: PjRoute, mqtt: MqttRoute, ntfy: NtfyRoute, bc: BcRoute };
+const RELAY_KINDS = ['sb', 'bc'];
 class Signal { // sends every message over all routes; first copy to arrive wins
   constructor(id, h, routes = sigRoutes()) {
     this.id = id; this.h = h; this.open = false; this.seen = new Set(); this.routes = []; this.failed = 0;
@@ -31090,19 +31121,72 @@ class MqttLite { // MQTT 3.1.1 over WebSocket, QoS 0, retained publish + wildcar
   close() { this.closed = true; clearTimeout(this.rt); clearInterval(this.hb); try { this.ws.send(new Uint8Array([0xE0, 0])); this.ws.close(); } catch (e) { } }
 }
 
+const SB_URL = "https://yremplebuzxcjdpbbmbi.supabase.co/rest/v1/";
+const SB_KEY = "sb_publishable_OZdph5clyuP6FVrxGqPF_A_zIqkH_cD";
+const sb = window.supabase ? window.supabase.createClient(SB_URL, SB_KEY) : null;
+
 const RoomList = {
-  // ---------------------------------------------------------- host side
-  pubs: null, code: null, info: null, timer: null,
+  code: null, info: null, timer: null,
   announce(code, info) {
     if (this.code && this.code !== code) this.unannounce();
     this.code = code; this.info = info;
-    if (!this.pubs) {
-      const topic = ROOMS_TOPIC + code;
-      this.pubs = ROOM_BROKERS.map(u => new MqttLite(u, { will: topic, onUp: () => this.send() }));
-      this.timer = setInterval(() => this.send(), 15000);
-    }
+    if (!this.timer) this.timer = setInterval(() => this.send(), 10000);
     this.send();
   },
+  async send() {
+    if (!sb || !this.code || !this.info) return;
+    await sb.from('lobbies').upsert({
+      id: this.code,
+      room_name: JSON.stringify(Object.assign({ code: this.code, build: GAME_BUILD, t: Date.now() }, this.info)),
+      player_count: this.info.n || 1,
+      is_public: true,
+      updated_at: new Date().toISOString()
+    });
+  },
+  async unannounce() {
+    const oldCode = this.code;
+    this.code = null; this.info = null;
+    clearInterval(this.timer); this.timer = null;
+    if (sb && oldCode) await sb.from('lobbies').delete().eq('id', oldCode);
+  },
+  rooms: {}, onChange: null, tick: null,
+  watch(onChange) {
+    this.onChange = onChange;
+    if (this.tick) { if (onChange) onChange(this.list()); return; }
+    this.rooms = {};
+    this.fetchNow();
+    this.tick = setInterval(() => this.fetchNow(), 3000);
+  },
+  async fetchNow() {
+    if (!sb) return;
+    const cutoff = new Date(Date.now() - 45000).toISOString();
+    const { data, error } = await sb.from('lobbies').select('*').eq('is_public', true).gte('updated_at', cutoff);
+    if (error || !data) return;
+    const fresh = {};
+    for (const row of data) {
+      try {
+        const parsed = JSON.parse(row.room_name);
+        parsed.n = row.player_count;
+        parsed.seen = Date.now();
+        fresh[row.id] = parsed;
+      } catch (e) {}
+    }
+    this.rooms = fresh;
+    if (this.onChange) this.onChange(this.list());
+  },
+  list() {
+    const now = Date.now();
+    return Object.values(this.rooms)
+      .filter(r => r.build === GAME_BUILD && Math.abs(now - (r.t || 0)) < 90000 && (r.n || 0) < (r.max || 12))
+      .sort((a, b) => (b.n || 0) - (a.n || 0));
+  },
+  stop() {
+    clearInterval(this.tick);
+    this.tick = null;
+    this.onChange = null;
+  },
+};
+
   send() { if (!this.pubs || !this.code) return; const m = Object.assign({ code: this.code, build: GAME_BUILD, t: Date.now() }, this.info); for (const p of this.pubs) p.pub(ROOMS_TOPIC + this.code, m, true); },
   unannounce() {
     if (!this.pubs) { this.code = null; return; }
