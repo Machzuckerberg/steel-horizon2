@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Steel Horizon 2</title>
@@ -579,7 +578,7 @@ body.nolock canvas#game,body.gate canvas#game{cursor:crosshair}
 const CAP_SLOW = 2.8;
 const MATCH_MINUTES = 10;         // point-capture battles always run to this clock           // capture-time multiplier (higher = slower captures)
 const GAME_BUILD = '149d73583570';  // stamped by the build; changing it resets saved progress
-const GAME_VERSION = '1.35';
+const GAME_VERSION = '1.36';
 const DEBUG = false;            // debug/test flag — keep false for release
 const VERSION = '1.0';
 
@@ -6848,7 +6847,7 @@ class Battle {
     this.over = false; this.result = null; this.silent = cfg.mode === 'demo'; this.demo = cfg.mode === 'demo';
     this.respawnQueue = []; this.spotT = 0;
     this.mode = cfg.mode === 'tutorial' ? new TutorialMode(cfg) : cfg.mode === 'waves' ? new WaveMode(cfg) : cfg.mode === 'mission' ? new MissionMode(cfg) : cfg.mode === 'mpclient' ? new MPClientMode(cfg) : new TeamMode(cfg);
-    this.mapCfg = this.mode.mapCfg();
+    this.mapCfg = this.mode.mapCfg(); try { this.mapCfg0 = JSON.parse(JSON.stringify(this.mapCfg)); } catch (e) { this.mapCfg0 = null; }
     this.map = new GameMap(this.mapCfg);
     if (this.mode.gm && this.mode.gm !== 'cap') this.map.points = []; // deathmatch / juggernaut: nothing to capture
     this.cam = { x: this.map.W / 2, y: this.map.H / 2, zoom: 5, base: 5, sight: false, shake: 0 };
@@ -13283,8 +13282,7 @@ const Tank3D = {
             for (const s of [-1, 1]) poly(TUR, [[0.55, s * 0.62, z0 + 0.18], [-0.5, s * 0.62, z0 + 0.18], [-0.5, s * 0.55, z0 + 1.0], [0.4, s * 0.5, z0 + 1.0]], C(PA, 0.95), [0, s * 3, gz]);
             poly(TUR, [[0.55, -0.62, z0 + 0.18], [0.55, 0.62, z0 + 0.18], [0.4, 0.5, z0 + 1.0], [0.4, -0.5, z0 + 1.0]], C(PA, 0.97), [-3, 0, gz]);
             box(TUR, 0.2, 0.75, -0.2, 0.2, gz - 0.2, gz + 0.2, C(PA, 0.9), null, 2); // the gun housing
-            for (let k = 0; k < 6; k++) { const a = k / 6 * TAU, y = Math.cos(a) * 0.075, z = Math.sin(a) * 0.075; barrel([[0.75, 0.016], [1.95, 0.014], [2.0, 0.016]], y, gz + z); }
-            cyl(TUR, [1.4, 0, gz], 'x', 0.05, 0.11, C(STL), 12, 2); cyl(TUR, [1.95, 0, gz], 'x', 0.05, 0.11, C(STL), 12, 2); // the barrel clamps
+            barrel([[0.75, 0.012], [2.0, 0.012]], 0, gz); // the axis of the barrel cluster (the six barrels and their clamps turn about it, drawn on their own: Vulcan in w3_upd38)
             box(TUR, -0.1, 0.5, 0.62, 0.92, gz - 0.12, gz + 0.32, C(PA, 0.9), null, 2); cyl(TUR, [0.5, 0.77, gz + 0.1], 'x', 0.06, 0.13, C(BLK, 1.5), 14, 2); // the radar pod
             box(TUR, -0.3, -0.05, -0.12, 0.12, z0 + 0.6, z0 + 1.1, C(BLK, 1.5)); box(TUR, 0.0, 0.1, -0.08, 0.08, z0 + 0.9, z0 + 1.15, C(STL), null, 2);
             crewman(TUR, [-0.2, -0.05, z0 + 0.4], 0, { nat: 'us_inf', floor: -0.4 - 1.6, sit: true, lean: 0.3, seed: 91 });
@@ -15323,8 +15321,10 @@ const Tank3D = {
               box(TUR, 0.05, 0.45, -0.18, 0.18, H, H + 0.3, C(PA, 0.94)); box(TUR, 0.45, 0.47, -0.13, 0.13, H + 0.1, H + 0.26, C(GLS, 0.5)); cyl(TUR, [-0.6, 0, H], 'z', 0.08, 0.12, C(PA, 0.85), 12);
               // the tracking radar: the big drum on the front with its domed face, the smaller drum beside it, the cradle under them
               box(TUR, 0.9, 1.32, -0.62, 0.78, 0.1, 0.32, C(PA, 0.9)); 
-              cyl(TUR, [0.92, -0.08, 0.72], 'x', 0.42, 0.5, C(PA, 0.92), 26, 0, 0.44, true, C(PA, 0.8)); cyl(TUR, [1.34, -0.08, 0.72], 'x', 0.07, 0.5, C(PA, 0.85), 26, 0, 0.45, false); cyl(TUR, [1.41, -0.08, 0.72], 'x', 0.08, 0.45, C([0.5, 0.52, 0.46]), 26, 0, 0.3, false); cyl(TUR, [1.49, -0.08, 0.72], 'x', 0.05, 0.3, C([0.5, 0.52, 0.46]), 26, 0, 0.12, true, C([0.5, 0.52, 0.46]));
-              cyl(TUR, [0.95, 0.6, 0.52], 'x', 0.36, 0.26, C(PA, 0.9), 20, 0, 0.25, true, C(PA, 0.8)); cyl(TUR, [1.31, 0.6, 0.52], 'x', 0.06, 0.24, C([0.45, 0.47, 0.42]), 20, 0, 0.14, true, C([0.45, 0.47, 0.42]));
+              cyl(TUR, [0.9, -0.08, 0.72], 'x', 0.4, 0.5, C(PA, 0.92), 30, 0, 0.5, true, C(PA, 0.8)); cyl(TUR, [1.3, -0.08, 0.72], 'x', 0.05, 0.51, C(PA, 0.8), 30, 0, 0.5, false); // the drum and the rim the radome sits in
+              // the radome: a shallow dome, near enough a half-ellipsoid, over the whole face of the drum
+              { const RD = C([0.56, 0.58, 0.52]), R = 0.48, D = 0.3, N = 9; for (let k = 0; k < N; k++) { const t0 = k / N * Math.PI / 2, t1 = (k + 1) / N * Math.PI / 2, x0 = 1.35 + D * Math.sin(t0), x1 = 1.35 + D * Math.sin(t1); cyl(TUR, [x0, -0.08, 0.72], 'x', x1 - x0, Math.max(0.01, R * Math.cos(t0)), RD, 30, 0, Math.max(0.01, R * Math.cos(t1)), k === N - 1, RD); } }
+              cyl(TUR, [0.95, 0.6, 0.52], 'x', 0.36, 0.26, C(PA, 0.9), 20, 0, 0.25, true, C(PA, 0.8)); { const RD = C([0.5, 0.52, 0.47]), R = 0.23, D = 0.14, N = 6; for (let k = 0; k < N; k++) { const t0 = k / N * Math.PI / 2, t1 = (k + 1) / N * Math.PI / 2, x0 = 1.31 + D * Math.sin(t0), x1 = 1.31 + D * Math.sin(t1); cyl(TUR, [x0, 0.6, 0.52], 'x', x1 - x0, Math.max(0.01, R * Math.cos(t0)), RD, 22, 0, Math.max(0.01, R * Math.cos(t1)), k === N - 1, RD); } }
               box(TUR, 0.92, 1.2, -0.62, 0.45, 1.22, 1.3, C(PA, 0.88)); // the hood over the drum
               for (const s of [-1, 1]) {
                 const y = s * 1.48;
@@ -28570,7 +28570,7 @@ for (const k in AIR_X) { const X = AIR_X[k], T = AIR_T[k]; if (!T) continue; for
     if (B) for (let i = n0; i < B.projs.length; i++) { const q = B.projs[i]; if (q.owner !== this) continue; const sp = Math.hypot(q.vz || 0, q.v) || 1, k = q.v / sp; q.vz = (q.vz || 0) * k; q.v *= k; if (q._v !== undefined) q._v = q.v;
       const e1 = gauss() * 0.0022, ca = Math.cos(e1), sa = Math.sin(e1), dx = q.dx; q.dx = dx * ca - q.dy * sa; q.dy = dx * sa + q.dy * ca; q.vz += gauss() * 0.0022 * sh0(q); } // the mount's own dispersion: the guns shake on it
     // a light automatic gun does not rock the hull the way a tank gun does
-    if (ph) { ph.vp = vp + (ph.vp - vp) * 0.04; ph.vr = vr + (ph.vr - vr) * 0.04; }
+    if (ph) { ph.vp = vp + (ph.vp - vp) * 0.075; ph.vr = vr + (ph.vr - vr) * 0.075; }
     this._bi = ((this._bi || 0) + 1) % A.barrels.length; this.recoil = 0.12; this.disp = Math.max(this.def.disp, this.disp * 0.6);
     this._magN = (this._magN || 0) + 1; if (this._magN >= A.mag) { this._magN = 0; this.reloadMax = this.reloadT = A.magT * this.reloadMult(); if (this.isPlayer) this.status(A.mag > 50 ? 'Changing ammunition chests' : 'Changing magazines', '#cfd8dc'); }
     return r;
@@ -29300,6 +29300,226 @@ window.addEventListener('load', () => {
 // the guests' aircraft are flown by the host: nothing to work out on a guest's machine
 window.addEventListener('load', () => { const u = Air.update; Air.update = function () { if (B && B.net === 'client') return; return u.apply(this, arguments); }; });
 
+// =====================================================================
+//  1.36 [1] — smoke screens that hide only one way, online too; the death camera on whoever got you; the timber sea wall at Omaha
+//  gives way under a tank; the M163's six barrels spinning; recoil scaled from tank guns down to machine guns; aircraft falling and
+//  crashing you can see from far off; anti-aircraft shells bursting round the aircraft; heavier muzzle blast; unlimited ammunition in
+//  the tank tester.
+// =====================================================================
+{
+  // ---------------------------------------------------------------- smoke: whose it is
+  // A screen hides the side that fired it from the enemy, but they can see out through it (and see the enemy's markers). The screens
+  // never kept their team, so they blinded everyone; and a guest's copy came over the network without one.
+  const as0 = Battle.prototype.addSmoke;
+  Battle.prototype.addSmoke = function (x, y, r, dur, delay) {
+    let team = this._smokeTeam; if (team === undefined && this._smTeamNet !== undefined) team = this._smTeamNet;
+    if (team === undefined && this.net !== 'client') { const L = this._lastSmoke; if (L && this.time - L.t < 4 && Math.hypot(L.x - x, L.y - y) < 70) team = L.team; }
+    const hadTeam = this._smokeTeam; if (team !== undefined) this._smokeTeam = team;
+    let r0; try { r0 = as0.apply(this, arguments); } finally { this._smokeTeam = hadTeam; }
+    const s = this.smokes[this.smokes.length - 1]; if (s && s.team === undefined && team !== undefined) s.team = team;
+    if (this.net === 'host' && team !== undefined) { const e = NET.ev[NET.ev.length - 1]; if (e && e[0] === 'sm') e[5] = team; }
+    return r0;
+  };
+  const ds = Vehicle.prototype.deploySmoke; Vehicle.prototype.deploySmoke = function () { if (B) B._lastSmoke = { team: this.team, x: this.x, y: this.y, t: B.time }; return ds.apply(this, arguments); };
+}
+window.addEventListener('load', () => {
+  // ---------------------------------------------------------------- events carried to the guests
+  const ae = Battle.prototype.applyArrEvent; Battle.prototype.applyArrEvent = function (e) {
+    if (e[0] === 'sm') { this._smTeamNet = e[5]; try { return ae.call(this, e); } finally { this._smTeamNet = undefined; } }
+    if (e[0] === 'wb') { const w = this.map.walls[e[1]]; if (w && !w.dead) SeaWall.burst(w, true); return; }
+    if (e[0] === 'mz') { const v = this.vmap && this.vmap[e[1]]; if (v) { v._fireT = performance.now(); if (e[5] >= 0 && v.def.aa && v._ph) { const vp = v._ph.vp, vr = v._ph.vr, r = ae.call(this, e); v._ph.vp = vp + (v._ph.vp - vp) * Recoil.AA; v._ph.vr = vr + (v._ph.vr - vr) * Recoil.AA; return r; } } }
+    return ae.call(this, e);
+  };
+  // ---------------------------------------------------------------- the death camera, online
+  // Knocked out: five seconds watching the tank that did it (or whoever finishes it, if it goes first), then the spawn screen.
+  const up = Battle.prototype.update; Battle.prototype.update = function (dt) {
+    const r = up.apply(this, arguments);
+    if (this.mp && this.net !== 'client' && !this.over) for (const c of Object.values(this.humans)) {
+      if (!c.vehicle || c.vehicle.alive || c._dcV === c.vehicle || !(c.deathT > 0)) continue; c._dcV = c.vehicle;
+      const v = c.vehicle, k = v.killedBy || (this.time - (v.lastHitT || -99) < 30 ? v.lastHitBy : null), kv = k && k.alive && !k.hidden && k.id !== undefined ? k : null;
+      c.deathT = 5; c._dc = true;
+      if (c.local) { c.spectate = kv; } else c.out.push({ k: 'deathcam', id: kv ? kv.id : -1 });
+    }
+    return r;
+  };
+  const de = Vehicle.prototype.destroy; Vehicle.prototype.destroy = function (reason, killer) { if (killer && !this.killedBy) this.killedBy = killer; return de.apply(this, arguments); };
+  const os = Battle.prototype.openSpawnFor; Battle.prototype.openSpawnFor = function (ctx) { if (ctx && ctx._dc) { ctx._dc = false; ctx.spectate = null; } return os.apply(this, arguments); };
+  const ce = Battle.prototype.applyCtxEvent; Battle.prototype.applyCtxEvent = function (e) {
+    if (e.k === 'deathcam') { const v = this.vmap && this.vmap[e.id]; this.me._dc = true; this.me.spectate = v && v.alive ? v : null; return; }
+    if (e.k === 'spawnscreen') this.me._dc = false;
+    return ce.apply(this, arguments);
+  };
+  // the line under the screen while it lasts
+  const dr = HUD.draw; HUD.draw = function (c, dt) {
+    const me = B && B.me, p = B && B.player;
+    if (me && me._dc && B.mp && !(p && p.alive) && B.deathT > 0) { const s = B.spectate, keep = B.me.spectate; B.me.spectate = null; let r; try { const dT = B.deathT; B.me.deathT = -1; r = dr.apply(this, arguments); B.me.deathT = dT; } finally { B.me.spectate = keep; }
+      const who = s && s.alive ? `${s.human != null && s.name ? s.name + ' · ' : ''}${s.def.name}` : null; this.text(c, `${who ? 'Knocked out by ' + who + ' · ' : 'Knocked out · '}back in ${Math.max(1, Math.ceil(B.deathT))}`, Render.W / 2, Render.H - 80, '#ffd166', 17, 'center', 700); return r; }
+    return dr.apply(this, arguments);
+  };
+});
+
+// ---------------------------------------------------------------- the timber sea wall at Omaha gives way under a tank
+const SeaWall = {
+  burst(w, net) {
+    if (w.dead) return; w.dead = true; w.soft = true; w.broke = true; if (w._cell) w._cell.dirty = true;
+    try { if (W3Scene.cells) for (const c of W3Scene.cells.values()) if (c.items && c.items.some(it => it === w || it.o === w)) c.dirty = true; } catch (e) { }
+    const zg = W3.gz(w.x, w.y); W3.fxZ = zg + 0.8;
+    for (let i = 0; i < 26; i++) { const u = (Math.random() - 0.5) * w.hx * 2, [x, y] = toWorld(u, 0, w.x, w.y, w.a), a = w.a + Math.PI / 2 * (Math.random() < 0.5 ? 1 : -1) + rnd(-0.8, 0.8), s = rnd(1.5, 6); FX.add('debris', x, y, { vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: rnd(1.5, 5), r: rnd(0.12, 0.3), life: rnd(1.6, 2.6), col: '#5e4630', hi: false }); }
+    for (let i = 0; i < 5; i++) FX.add('dust', w.x + rnd(-w.hx, w.hx) * Math.cos(w.a), w.y + rnd(-w.hx, w.hx) * Math.sin(w.a), { r: rnd(1, 1.8), gr: 1.5, life: rnd(1.5, 2.5), a: 0.35 });
+    W3.fxZ = undefined; try { Sfx.play('treefall', w.x, w.y, 0.55); Sfx.play('crush', w.x, w.y, 0.6); } catch (e) { }
+    if (!net && B && B.net === 'host') NET.rec(['wb', B.map.walls.indexOf(w)]);
+  },
+};
+window.addEventListener('load', () => {
+  if (typeof Crash === 'undefined') return;
+  Crash.SOFT.seawall = 1;
+  // only the timber stretches: the concrete wall in the west still stops a tank
+  Crash.soft = function (v, nx, ny) { if (!B || !B.map || !B.map.query) return null; const R = v.def.L * 0.5 + 1.6, T = Crash._sq || (Crash._sq = []); for (const w of B.map.query(v.x - R, v.y - R, v.x + R, v.y + R, 'w', T)) { if (!Crash.SOFT[w.kind] || w.dead || (w.kind === 'seawall' && !w.timber)) continue; const dx = w.x - v.x, dy = w.y - v.y, L = Math.hypot(dx, dy) || 1; if (L < R + (w.kind === 'seawall' ? w.hx : 0) && (dx * -nx + dy * -ny) / L > (w.kind === 'seawall' ? -0.2 : 0.2)) return w; } return null; };
+  const bu = Crash.burst; Crash.burst = function (w) { if (w.kind === 'seawall') { if (B && B.net === 'client') return; return SeaWall.burst(w); } return bu.apply(this, arguments); };
+  // a broken stretch: the stumps of the piles and planks strewn about
+  const aw = W3Scene.addWall; W3Scene.addWall = function (a, w) {
+    if (w.kind === 'seawall' && w.timber && w.broke) { const zg = W3.gz(w.x, w.y), WD = [0.36, 0.28, 0.2], WD2 = [0.3, 0.23, 0.16], R = mulberry32((w.x * 31 + w.y * 7) | 0);
+      for (let k = 0; k <= 8; k++) { const u = -w.hx + k * w.hx / 4, [x, y] = toWorld(u, -0.2, w.x, w.y, w.a); this.box(a, x, y, w.a + (R() - 0.5) * 0.3, 0.13, 0.13, zg - 1, zg + 0.15 + R() * 0.35, WD2, WD2); }
+      for (let k = 0; k < 6; k++) { const u = (R() - 0.5) * w.hx * 1.8, v = (R() - 0.5) * 3, [x, y] = toWorld(u, v, w.x, w.y, w.a); this.box(a, x, y, w.a + (R() - 0.5) * 1.4, 1.2 + R() * 0.8, 0.12, zg - 0.05, zg + 0.07, WD, WD); }
+      return; }
+    return aw.call(this, a, w);
+  };
+});
+
+// ---------------------------------------------------------------- recoil, from a tank gun down to a machine gun
+// A tank gun rocks the hull. An automatic anti-aircraft gun gives it a few percent of that, a shiver for every round; a machine gun
+// two or three percent: the tank barely trembles.
+const Recoil = { AA: 0.075, MG: 0.025, base: 0.37 };
+window.addEventListener('load', () => {
+  const fm = Battle.prototype.fxMuzzle; Battle.prototype.fxMuzzle = function (v, x, y, a, sh) {
+    const r = fm.apply(this, arguments);
+    try { if (v && v._ph && sh && (sh.type === 'MG' || sh === v.mgSh || sh === v.rfSh)) { const k = Recoil.base * Recoil.MG * clamp(32 / (v.def.mass || 32), 0.45, 1.7), rel = a - v.ang; v._ph.vp += Math.cos(rel) * k * (0.7 + Math.random() * 0.6); v._ph.vr += Math.sin(rel) * k * 1.5 * (0.7 + Math.random() * 0.6); } } catch (e) { }
+    return r;
+  };
+});
+
+// ---------------------------------------------------------------- the M163's Vulcan: six barrels that spin up when it fires and run down after
+const Vulcan = {
+  mesh() { if (this.m) return this.m; const o = [], ST = [0.17, 0.17, 0.16], ST2 = [0.26, 0.26, 0.25];
+    for (let k = 0; k < 6; k++) { const q = k / 6 * TAU, y = Math.cos(q) * 0.075, z = Math.sin(q) * 0.075; Phys.tube(o, [0, y, z], [1.25, y, z], 0.017, 0.015, ST, 6); }
+    for (const x of [0.62, 1.2]) Phys.tube(o, [x, 0, 0], [x + 0.06, 0, 0], 0.11, 0.11, ST2, 12);
+    Phys.tube(o, [-0.05, 0, 0], [0.05, 0, 0], 0.1, 0.1, ST2, 12);
+    return this.m = new Float32Array(o); },
+  spin(v, now) { const dt = Math.min(0.1, (now - (v._vsT || now)) / 1000); v._vsT = now; const firing = now - (v._fireT || -1e9) < 160 && v.alive; const tgt = firing ? 68 : 0, w = v._vsW || 0;
+    v._vsW = firing ? Math.min(tgt, w + 160 * dt) : w * Math.exp(-dt * 1.6) - (w > 0 ? 2 * dt : 0); if (v._vsW < 0.05) v._vsW = 0; v._vsA = ((v._vsA || 0) + v._vsW * dt) % TAU; return v._vsA; },
+  draw(list, shadow) {
+    const L = list.filter(v => v.def && TANK_GEAR[v.def.id] && TANK_GEAR[v.def.id].vads && !v.hidden && !v.turretOff); if (!L.length) return;
+    const gl = W3.gl, WT = W3.WT, U = (shadow ? W3.P.sTank : W3.P.tank).U; Phys.prep0(shadow); const buf = Phys.buf('vulcan', this.mesh()), now = performance.now();
+    for (const v of L) {
+      const d = v.def, M = WT.mesh(d), ap = d.arcPivot ? d.arcPivot[v.arcI || 0] : [0, 0], T = W3.tankMatrix(v, d.tx + ap[0], M.H + (d.mountZ || 0), v.turretAng || 0, ap[1]), e = v.gunElev || 0, c = Math.cos(e), s = Math.sin(e);
+      const q = shadow ? (v._vsA || 0) : this.spin(v, now), cq = Math.cos(q), sq = Math.sin(q), gx = M.gunX || 0, gz = M.gunZ || 0.5;
+      const A = M4.mul(M4.mul(T, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, gx, M.gunY || 0, gz, 1]), M4.mul([c, 0, s, 0, 0, 1, 0, 0, -s, 0, c, 0, 0, 0, 0, 1], M4.mul([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0.75 - gx - (v.recoil || 0) * 0.3, 0, 0.5 - gz, 1], [1, 0, 0, 0, 0, cq, sq, 0, 0, -sq, cq, 0, 0, 0, 0, 1])));
+      gl.uniformMatrix4fv(U.uM, false, A); WT.draw(gl, buf);
+    }
+  },
+};
+window.addEventListener('load', () => {
+  const dl = W3.drawTankList; W3.drawTankList = function (list, shadow) { const r = dl.apply(this, arguments); try { Vulcan.draw(list, shadow); } catch (e) { if (!Vulcan._e) { Vulcan._e = 1; console.error(e); } } return r; };
+  const fg = Vehicle.prototype.fireGun; Vehicle.prototype.fireGun = function () { this._fireT = performance.now(); return fg.apply(this, arguments); };
+});
+
+// ---------------------------------------------------------------- aircraft coming down: a trail you can follow, a crash you can see
+const AirFX = {
+  trail(a, dt) { // dense, slow-spreading black smoke laid along the path, fire at its head
+    const d = Math.hypot(a.x - (a._tx ?? a.x), a.y - (a._ty ?? a.y), a.z - (a._tz ?? a.z)); a._td = (a._td || 0) + d; a._tx = a.x; a._ty = a.y; a._tz = a.z;
+    let n = 0; while (a._td > 2.2 && n++ < 12) { a._td -= 2.2; const f = n / 12; W3.fxZ = a.z + rnd(-0.4, 0.4); FX.add('dark', a.x - (a.vx || 0) * f * 0.02, a.y - (a.vy || 0) * f * 0.02, { r: rnd(1.3, 1.8), gr: 1.5, life: rnd(9, 13), a: 0.9, wind: 0.35, drag: 0.6 }); }
+    a._ft = (a._ft || 0) - dt; if (a._ft <= 0) { a._ft = 0.03; W3.fxZ = a.z; FX.add('fire', a.x, a.y, { r: rnd(1.6, 2.4), life: 0.28, add: true }); FX.add('flame', a.x, a.y, { r: rnd(1, 1.6), life: 0.4, a: 0.9 }); }
+    W3.fxZ = undefined;
+  },
+  crash(x, y, kg) { // a fireball, the burning fuel and wreckage thrown out, a column of black smoke that hangs — big enough to see from across the map
+    const W = B.map.W, H = B.map.H, gz = W3.gz(clamp(x, 0, W), clamp(y, 0, H)) || 0; W3.fxZ = gz + 1.5;
+    FX.add('flash', x, y, { r: 20, life: 0.18, add: true }); FX.add('glow', x, y, { r: 14, life: 0.5, add: true });
+    for (let i = 0; i < 22; i++) { const a = rnd(TAU), s = rnd(2, 10); FX.add('fire', x + rnd(-2, 2), y + rnd(-2, 2), { vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: rnd(3, 14), r: rnd(4, 8), life: rnd(0.9, 1.9), add: true }); }
+    for (let i = 0; i < 30; i++) { const a = rnd(TAU), s = rnd(1, 5); W3.fxZ = gz + rnd(2, 16); FX.add('dark', x + rnd(-5, 5), y + rnd(-5, 5), { vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: rnd(3, 8), r: rnd(5, 9), gr: 3.5, life: rnd(14, 22), a: 0.88, wind: 0.6, drag: 0.4 }); }
+    W3.fxZ = gz + 1; for (let i = 0; i < 24; i++) { const a = rnd(TAU), s = rnd(4, 14); FX.add('chunk', x, y, { vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: rnd(4, 12), r: rnd(0.25, 0.6), life: rnd(1.6, 3), col: '#2a2724' }); }
+    W3.fxZ = undefined; try { Sfx.play('explosion', x, y, 1.9); } catch (e) { }
+  },
+};
+window.addEventListener('load', () => {
+  Air.fall = function (a, dt) {
+    a.p = Math.max(-0.9, a.p - dt * 0.35); a.r += a.spin * dt; a.h += a.spin * 0.15 * dt;
+    a.x += Math.cos(a.h) * Math.cos(a.p) * a.v * dt; a.y += Math.sin(a.h) * Math.cos(a.p) * a.v * dt; a.z += Math.sin(a.p) * a.v * dt;
+    AirFX.trail(a, dt);
+    const W = B.map.W, H = B.map.H, gz = W3.gz(clamp(a.x, 0, W), clamp(a.y, 0, H)) || 0;
+    if (a.z <= gz + 1) { a.gone = true; W3.fxZ = undefined; const on = a.x > -50 && a.y > -50 && a.x < W + 50 && a.y < H + 50;
+      if (Math.hypot(a.x - W / 2, a.y - H / 2) < Math.max(W, H) * 0.5 + 1500) AirFX.crash(a.x, a.y, a.T.kg);
+      if (on) { B.fxExplosion(a.x, a.y, 4.5, true); B.fxCrater(a.x, a.y, 4); if (a.bombs > 0 && !a.g.test) this.boom({ x: a.x, y: a.y, z: gz, a }); B.map.fxSources && B.map.fxSources.push({ x: clamp(a.x, 5, W - 5), y: clamp(a.y, 5, H - 5), kind: 'smoke' }); } }
+  };
+  // the guests: the same trail, and the crash where the aircraft was last seen
+  if (typeof AirSync !== 'undefined') {
+    const rc = AirSync.recv; AirSync.recv = function (m) { const before = (B.air || []).filter(a => a.down && !a.gone).map(a => [a.id, a.x, a.y, a.z, a.T]); const r = rc.apply(this, arguments); const now = new Set((B.air || []).map(a => a.id)); for (const [id, x, y, z, T] of before) if (!now.has(id) && z < (W3.gz(clamp(x, 0, B.map.W), clamp(y, 0, B.map.H)) || 0) + 60) AirFX.crash(x, y, T.kg); return r; };
+    const tk = AirSync.tick; AirSync.tick = function (dt) { const L = B && B.air ? B.air.filter(a => a.down) : []; for (const a of L) a.smT = 1; const r = tk.apply(this, arguments); for (const a of L) AirFX.trail(a, dt); return r; };
+  }
+
+  // ---------------------------------------------------------------- anti-aircraft shells bursting round the aircraft
+  // An anti-aircraft high-explosive round that passes close to an aircraft bursts there (the miss everyone sees: a small flash and a
+  // puff of black smoke), splinters for a few metres; one that finds nothing bursts at the end of its flight (the self-destruct fuze).
+  const AA = {
+    puff(x, y, z, big) { W3.fxZ = z; FX.add('flash', x, y, { r: big ? 1.6 : 0.9, life: 0.06, add: true }); FX.add('fire', x, y, { r: big ? 0.9 : 0.5, life: 0.08, add: true }); FX.add('dark', x, y, { r: big ? 1.4 : 0.9, gr: big ? 1.8 : 1.2, life: rnd(3.5, 5.5), a: 0.8, col: [0.06, 0.06, 0.06], wind: 0.7, drag: 0.5 }); W3.fxZ = undefined; },
+    shell(p) { return p.T && p.T.he && p.z !== undefined && !p.airP; },
+    tick(dt, host) {
+      const L = (B.air || []).filter(a => !a.gone && !a.down); if (!B.projs.length) return;
+      for (const p of B.projs) {
+        if (!p.alive && host) continue; if (p.dead || !this.shell(p)) continue; if (host && !(p.owner && p.owner.def && p.owner.def.aa)) continue;
+        const gz = W3.gz(clamp(p.x, 0, B.map.W), clamp(p.y, 0, B.map.H)) || 0; if (p.z < gz + 18) continue;
+        let best = null, bd = 1e9; for (const a of L) { const d = Math.hypot(a.x - p.x, a.y - p.y, a.z - p.z); if (d < bd) { bd = d; best = a; } }
+        const prev = p._aaD; p._aaD = bd;
+        const near = best && bd < 26 && prev !== undefined && bd > prev + 0.2, spent = !(p.sh && p.sh.sdT) && (p.trav > p.range - 25 || (p.age || 0) > 5.5);
+        if (near || spent) { const big = (p.sh && p.sh.cal || 20) >= 35; this.puff(p.x, p.y, p.z, big);
+          if (host) { p.alive = false; if (best && bd < (big ? 9 : 5)) Air.damage(best, (big ? 30 : 14) * (1 - bd / (big ? 9 : 5)) + 3, p.owner, true); } else p.dead = true; }
+      }
+    },
+  };
+  const hits = Air.hits; Air.hits = function (dt) { const r = hits.apply(this, arguments); try { if (B.air && B.air.length) AA.tick(dt, true); } catch (e) { } return r; };
+  const cu = Battle.prototype.clientUpdate; Battle.prototype.clientUpdate = function (dt) { const r = cu.apply(this, arguments); try { if (this.air && this.air.length) AA.tick(dt, false); } catch (e) { } return r; };
+
+  // ---------------------------------------------------------------- the muzzle blast
+  // A tank gun firing throws out a ball of fire that is gone in a blink (the hot propellant gas burning as it meets the air), jets of it
+  // sideways from the muzzle brake, and a great cloud of grey-brown smoke rolling forward and out from the muzzle, which hangs; under the
+  // gun the blast kicks the dust up off the ground in a ring. Bigger guns, bigger blast. Automatic cannon and anti-aircraft guns: a sharp
+  // flash and a small puff with every round. Machine guns: a flicker.
+  const mz = Battle.prototype.fxMuzzle; Battle.prototype.fxMuzzle = function (v, x, y, a, sh) {
+    const r = mz.apply(this, arguments);
+    try {
+      if (!W3.ok || !v || !sh || sh.type === 'MG' || sh === v.mgSh || sh === v.rfSh) return r;
+      const cal = sh.cal || v.def.cal || 75, z = W3.fxZ !== undefined ? W3.fxZ : (v.z3 || 0) + hullHeight(v.def) + 0.4, c = Math.cos(a), s = Math.sin(a), gz = W3.gz(x, y) || 0, save = W3.fxZ;
+      if (v.def.aa || cal < 45) { // autocannon: flash and a small round puff
+        W3.fxZ = z; FX.add('fire', x + c * 0.4, y + s * 0.4, { r: 0.35 + cal / 120, life: 0.05, add: true, vx: c * 12, vy: s * 12 }); if (Math.random() < 0.5) FX.add('smoke', x + c * 0.6, y + s * 0.6, { vx: c * rnd(2, 5), vy: s * rnd(2, 5), r: 0.35 + cal / 140, gr: 0.9, life: rnd(0.8, 1.4), a: 0.32, wind: 1 }); W3.fxZ = save; return r; }
+      const k = clamp(cal / 90, 0.6, 1.6);
+      W3.fxZ = z;
+      // the fireball and the jets from the brake
+      for (let i = 0; i < 5; i++) { const f = rnd(0.6, 3.2) * k; FX.add('fire', x + c * f, y + s * f, { r: rnd(0.8, 1.5) * k, life: rnd(0.07, 0.14), add: true, vx: c * rnd(10, 26), vy: s * rnd(10, 26), vz: rnd(-1, 2) }); }
+      FX.add('glow', x + c * 1.5 * k, y + s * 1.5 * k, { r: 2.6 * k, life: 0.09, add: true });
+      for (const side of [-1, 1]) for (let i = 0; i < 2; i++) FX.add('fire', x - s * side * 0.6, y + c * side * 0.6, { r: rnd(0.5, 0.9) * k, life: rnd(0.06, 0.1), add: true, vx: -s * side * rnd(12, 22) + c * 4, vy: c * side * rnd(12, 22) + s * 4 });
+      // the cloud: rolling out forward and sideways from the muzzle, grey with the brown of the propellant, hanging a while
+      for (let i = 0; i < 24; i++) { const f = rnd(0.5, 5) * k, aa = a + gauss() * 0.55, sp = rnd(3, 16) * (1 - f / (7 * k)), sd = (Math.random() - 0.5) * 2; W3.fxZ = z + rnd(-0.3, 0.6) * k; FX.add('smoke', x + c * f - s * sd * k, y + s * f + c * sd * k, { vx: Math.cos(aa) * sp, vy: Math.sin(aa) * sp, vz: rnd(0, 1.2), r: rnd(1.1, 2.0) * k, gr: rnd(1.8, 3.2), life: rnd(3.5, 7), a: rnd(0.62, 0.82), drag: 0.55, wind: 1, c3: Math.random() < 0.45 ? [0.38, 0.34, 0.28] : [0.5, 0.49, 0.47] }); }
+      for (const side of [-1, 1]) for (let i = 0; i < 3; i++) { W3.fxZ = z; FX.add('smoke', x, y, { vx: -s * side * rnd(5, 11) + c * rnd(1, 4), vy: c * side * rnd(5, 11) + s * rnd(1, 4), r: rnd(0.8, 1.3) * k, gr: 2.2, life: rnd(2.5, 4.5), a: 0.5, drag: 0.6, wind: 1 }); }
+      // the dust ring under the muzzle
+      W3.fxZ = gz + 0.3; for (let i = 0; i < 10; i++) { const q = rnd(TAU), sp = rnd(4, 11) * k; FX.add('dust', x - c * 1.5 + Math.cos(q), y - s * 1.5 + Math.sin(q), { vx: Math.cos(q) * sp, vy: Math.sin(q) * sp, r: rnd(0.9, 1.6) * k, gr: 2, life: rnd(1.8, 3.2), a: 0.38, drag: 0.7, wind: 0.6 }); }
+      W3.fxZ = save;
+    } catch (e) { if (!AA._me) { AA._me = 1; console.error(e); } }
+    return r;
+  };
+
+  // ---------------------------------------------------------------- the tank tester: unlimited ammunition
+  const tester = () => !!(B && B.cfg && (B.cfg.testDrive || B.cfg.gm === 'test'));
+  const vu = Vehicle.prototype.update; Vehicle.prototype.update = function (dt) {
+    const r = vu.apply(this, arguments);
+    if (this.isPlayer && tester()) { if (!this._am0) this._am0 = this.ammo.map(q => q.n); this.ammo.forEach((q, i) => { if (q.n < this._am0[i]) q.n = this._am0[i]; }); if (this.mg && this.mgN !== undefined) this.mgN = Math.max(this.mgN, this.mg.belt || this.mgN); if (this.ax3) this.ax3.ammo.forEach(q => { q.n = Math.max(q.n, q.max || q.n0 || (q.n0 = q.n)); }); }
+    return r;
+  };
+  const ab = Render.ammoBar; Render.ammoBar = function (c, v, cx, y) {
+    if (!tester()) return ab.apply(this, arguments);
+    const t0 = this.text; this.text = function (cc, s, ...rest) { return t0.call(this, cc, typeof s === 'string' && /^\d+$/.test(s) ? '∞' : s, ...rest); };
+    try { return ab.apply(this, arguments); } finally { this.text = t0; }
+  };
+});
+
 // ---------------------------------------------------------------- the tactical map (M)
 // A paper map of the whole battlefield laid over the screen: the printed map, a squared grid lettered down the side and numbered along the
 // top, the objectives, and every friendly vehicle. Enemies are not on it: what you know about them you see for yourself. The mouse wheel
@@ -29639,36 +29859,6 @@ function rtcWaitIce(pc, ms = 5000) {
 // Messages are sent over several free public services at once and de-duplicated,
 // so the game still works when one of them is down or blocked.
 const qp = k => { const m = location.search.match(new RegExp('[?&]' + k + '=([^&]+)')); return m ? decodeURIComponent(m[1]) : null; };
-class SupabaseRoute {
-  constructor(cfg, id, cb) {
-    this.cb = cb; this.ok = false; this.id = id; this.chans = {};
-    if (!sb) { setTimeout(() => cb.fail('signal'), 0); return; }
-    this.rx = sb.channel(SIG_TOPIC + id, { config: { broadcast: { self: false } } });
-    this.rx.on('broadcast', { event: 'sig' }, ({ payload }) => {
-      if (payload) cb.msg(payload);
-    }).subscribe(status => {
-      if (status === 'SUBSCRIBED' && !this.ok) { this.ok = true; cb.open(); }
-      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') { if (!this.ok) cb.fail('signal'); }
-    });
-  }
-  send(p) {
-    if (!sb || !this.ok) return false;
-    const topic = SIG_TOPIC + p.dst;
-    let ch = this.chans[topic];
-    if (!ch) {
-      ch = this.chans[topic] = sb.channel(topic);
-      ch.subscribe();
-    }
-    ch.send({ type: 'broadcast', event: 'sig', payload: p }).catch(() => {});
-    return true;
-  }
-  close() {
-    if (!sb) return;
-    try { sb.removeChannel(this.rx); } catch (e) {}
-    for (const ch of Object.values(this.chans)) { try { sb.removeChannel(ch); } catch (e) {} }
-    this.chans = {};
-  }
-}
 const sigRoutes = () => {
   if (location.protocol === 'file:' || /(^|[#&])local\b/.test(location.hash)) return [{ kind: 'bc', name: 'local' }];
   const only = qp('routes'); // test override, e.g. routes=pj,mqtt
@@ -29769,8 +29959,8 @@ class BcRoute { // same-browser tabs (file:// testing)
   send(p) { try { this.bc.postMessage(p); } catch (e) { } }
   close() { try { this.bc.close(); } catch (e) { } }
 }
-const ROUTE_CLS = { sb: SupabaseRoute, pj: PjRoute, mqtt: MqttRoute, ntfy: NtfyRoute, bc: BcRoute };
-const RELAY_KINDS = ['sb', 'bc'];
+const ROUTE_CLS = { pj: PjRoute, mqtt: MqttRoute, ntfy: NtfyRoute, bc: BcRoute };
+const RELAY_KINDS = ['mqtt', 'bc']; // routes fast enough to carry game traffic when a direct connection is blocked
 class Signal { // sends every message over all routes; first copy to arrive wins
   constructor(id, h, routes = sigRoutes()) {
     this.id = id; this.h = h; this.open = false; this.seen = new Set(); this.routes = []; this.failed = 0;
@@ -30425,7 +30615,7 @@ const Lobby = {
         const P = S.players[pid];
         if (!P || P.waiting) { l.send({ t: 'inprogress' }); continue; }
         const team = teamOf(pid);
-        l.send({ t: 'start', mapCfg: B.mapCfg, pid: +pid, team, settings: mp.settings, tank: P.tank, tanks: P.tanks, name: P.name });
+        l.send({ t: 'start', mapCfg: B.mapCfg0 || B.mapCfg, pid: +pid, team, settings: mp.settings, tank: P.tank, tanks: P.tanks, name: P.name });
       }
       this.broadcast();
     }, loadMs);
@@ -30815,7 +31005,7 @@ const Lobby = {
     ctx.team = team; ctx.name = P.name; ctx.tanks = P.tanks; ctx.pref = P.tank; ctx.sp = Math.max(ctx.sp || 0, 120); ctx.freeSpawn = true; ctx.vehicle = null; ctx.deathT = -1; ctx.spawnScreen = false;
     ctx.specOnly = true; ctx.spectate = B.vehicles.find(v => v.alive && !v.hidden && v.team === team) || null;
     P.waiting = false;
-    link.send({ t: 'start', mapCfg: B.mapCfg, pid, team, settings: B.mp.settings, tank: P.tank, tanks: P.tanks, name: P.name });
+    link.send({ t: 'start', mapCfg: B.mapCfg0 || B.mapCfg, pid, team, settings: B.mp.settings, tank: P.tank, tanks: P.tanks, name: P.name });
     const E = B.vehicles.filter(v => v.alive && !v.hidden).map(v => ['va', v.id, v.def.id, v.team, v.name, v.human != null ? v.human : -1, r2(v.x), r2(v.y), r3(v.ang)])
     if (B.mode.cvCols) for (const c of B.mode.cvCols) E.push(['cvr', c.id, c.pts]);
     link.send({ t: 'e', E });
@@ -30834,7 +31024,7 @@ const Lobby = {
     const ctx = B.humans[pid] || B.addHuman(pid, P.name, team);
     ctx.team = team; ctx.name = P.name; ctx.tanks = P.tanks; ctx.pref = P.tank; ctx.sp = Math.max(ctx.sp || 0, 120); ctx.freeSpawn = true; ctx.vehicle = null; ctx.deathT = -1;
     P.waiting = false;
-    link.send({ t: 'start', mapCfg: B.mapCfg, pid, team, settings: B.mp.settings, tank: P.tank, tanks: P.tanks, name: P.name });
+    link.send({ t: 'start', mapCfg: B.mapCfg0 || B.mapCfg, pid, team, settings: B.mp.settings, tank: P.tank, tanks: P.tanks, name: P.name });
     const E = B.vehicles.filter(v => v.alive && !v.hidden).map(v => ['va', v.id, v.def.id, v.team, v.name, v.human != null ? v.human : -1, r2(v.x), r2(v.y), r3(v.ang)])
     if (B.mode.cvCols) for (const c of B.mode.cvCols) E.push(['cvr', c.id, c.pts]);
     link.send({ t: 'e', E });
@@ -31121,72 +31311,19 @@ class MqttLite { // MQTT 3.1.1 over WebSocket, QoS 0, retained publish + wildcar
   close() { this.closed = true; clearTimeout(this.rt); clearInterval(this.hb); try { this.ws.send(new Uint8Array([0xE0, 0])); this.ws.close(); } catch (e) { } }
 }
 
-const SB_URL = "https://yremplebuzxcjdpbbmbi.supabase.co/rest/v1/";
-const SB_KEY = "sb_publishable_OZdph5clyuP6FVrxGqPF_A_zIqkH_cD";
-const sb = window.supabase ? window.supabase.createClient(SB_URL, SB_KEY) : null;
-
 const RoomList = {
-  code: null, info: null, timer: null,
+  // ---------------------------------------------------------- host side
+  pubs: null, code: null, info: null, timer: null,
   announce(code, info) {
     if (this.code && this.code !== code) this.unannounce();
     this.code = code; this.info = info;
-    if (!this.timer) this.timer = setInterval(() => this.send(), 10000);
+    if (!this.pubs) {
+      const topic = ROOMS_TOPIC + code;
+      this.pubs = ROOM_BROKERS.map(u => new MqttLite(u, { will: topic, onUp: () => this.send() }));
+      this.timer = setInterval(() => this.send(), 15000);
+    }
     this.send();
   },
-  async send() {
-    if (!sb || !this.code || !this.info) return;
-    await sb.from('lobbies').upsert({
-      id: this.code,
-      room_name: JSON.stringify(Object.assign({ code: this.code, build: GAME_BUILD, t: Date.now() }, this.info)),
-      player_count: this.info.n || 1,
-      is_public: true,
-      updated_at: new Date().toISOString()
-    });
-  },
-  async unannounce() {
-    const oldCode = this.code;
-    this.code = null; this.info = null;
-    clearInterval(this.timer); this.timer = null;
-    if (sb && oldCode) await sb.from('lobbies').delete().eq('id', oldCode);
-  },
-  rooms: {}, onChange: null, tick: null,
-  watch(onChange) {
-    this.onChange = onChange;
-    if (this.tick) { if (onChange) onChange(this.list()); return; }
-    this.rooms = {};
-    this.fetchNow();
-    this.tick = setInterval(() => this.fetchNow(), 3000);
-  },
-  async fetchNow() {
-    if (!sb) return;
-    const cutoff = new Date(Date.now() - 45000).toISOString();
-    const { data, error } = await sb.from('lobbies').select('*').eq('is_public', true).gte('updated_at', cutoff);
-    if (error || !data) return;
-    const fresh = {};
-    for (const row of data) {
-      try {
-        const parsed = JSON.parse(row.room_name);
-        parsed.n = row.player_count;
-        parsed.seen = Date.now();
-        fresh[row.id] = parsed;
-      } catch (e) {}
-    }
-    this.rooms = fresh;
-    if (this.onChange) this.onChange(this.list());
-  },
-  list() {
-    const now = Date.now();
-    return Object.values(this.rooms)
-      .filter(r => r.build === GAME_BUILD && Math.abs(now - (r.t || 0)) < 90000 && (r.n || 0) < (r.max || 12))
-      .sort((a, b) => (b.n || 0) - (a.n || 0));
-  },
-  stop() {
-    clearInterval(this.tick);
-    this.tick = null;
-    this.onChange = null;
-  },
-};
-
   send() { if (!this.pubs || !this.code) return; const m = Object.assign({ code: this.code, build: GAME_BUILD, t: Date.now() }, this.info); for (const p of this.pubs) p.pub(ROOMS_TOPIC + this.code, m, true); },
   unannounce() {
     if (!this.pubs) { this.code = null; return; }
